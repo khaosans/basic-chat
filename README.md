@@ -72,7 +72,11 @@ graph TB
 
 2. **Install Dependencies**:
    ```bash
-   pip install -r requirements.txt
+   # Install Poetry if you haven't already
+   curl -sSL https://install.python-poetry.org | python3 -
+
+   # Install project dependencies
+   poetry install
    ```
 
 3. **Pull Required Models**:
@@ -84,7 +88,7 @@ graph TB
 
 4. **Run Application**:
    ```bash
-   streamlit run app.py
+   poetry run streamlit run app.py
    ```
 
 ## Usage Guide
@@ -175,6 +179,17 @@ stateDiagram-v2
   - Similarity search
   - Metadata management
   - Automatic recovery
+
+### ChromaDB Setup
+The application uses ChromaDB for vector storage. Setup is handled automatically when you run the application, but here are some details:
+
+1. **Installation**: ChromaDB is included in the project dependencies and will be installed automatically when you run `poetry install`
+2. **Configuration**: The application creates a `./chroma_db` directory in your project folder to store vector embeddings
+3. **Persistence**: All document embeddings are automatically saved to disk and will be available between application restarts
+4. **Troubleshooting**: If you encounter any issues with ChromaDB:
+   - Ensure you have proper write permissions to the project directory
+   - Try deleting the `./chroma_db` folder and restarting the application
+   - Check that the ChromaDB version (0.3.0) is compatible with your system
 
 ### Document Processor
 - **Capabilities**:
