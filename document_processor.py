@@ -12,41 +12,171 @@ from ollama_api import get_available_models
 import base64
 from io import BytesIO
 import shutil
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
+import chromadb
+from chromadb.config import Settings
+from chromadb.utils import embedding_functions
 
 def is_package_installed(package_name):
     return importlib.util.find_spec(package_name) is not None
 
+@dataclass
+class ProcessedFile:
+    name: str
+    size: int
+    type: str
+    collection_name: str
+
 class DocumentProcessor:
     def __init__(self):
-        self.reset_state()
+        """Initialize the document processor with Chroma DB"""
+        self.embeddings = OllamaEmbeddings(
+            model="nomic-embed-text",
+            base_url="http://localhost:11434"
+        )
         
-    def reset_state(self):
-        """Reset all internal state and storage"""
-        self._clear_vector_store()
-        self.processed_files = {}
-        try:
-            self.embeddings = OllamaEmbeddings(
-                model=EMBEDDING_MODEL,  # Use fixed embedding model
-                base_url="http://localhost:11434"
-            )
-            
-            os.makedirs("./chroma_db", exist_ok=True)
-            
-            self.vector_store = Chroma(
-                embedding_function=self.embeddings,
-                persist_directory="./chroma_db",
-                collection_name="document_store"
-            )
-        except Exception as e:
-            print(f"Warning: Failed to initialize vector store: {str(e)}")
-            self.vector_store = None
-            
+        # Initialize Chroma settings
+        self.chroma_settings = Settings(
+            persist_directory="./chroma_db",
+            anonymized_telemetry=False
+        )
+        
+        # Create Chroma client
+        self.client = chromadb.Client(self.chroma_settings)
+        
+        # Initialize processed files list
+        self.processed_files: List[ProcessedFile] = []
+        
+        # Text splitter for documents
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200,
-            length_function=len
+            length_function=len,
         )
+        
+        # Create persistent directory if it doesn't exist
+        if not os.path.exists("./chroma_db"):
+            os.makedirs("./chroma_db")
+
+    def process_file(self, uploaded_file) -> None:
+        """Process an uploaded file and store it in Chroma DB"""
+        try:
+            # Create temporary file to process
+            with tempfile.NamedTemporaryFile(delete=False, suffix=f".{uploaded_file.name.split('.')[-1]}") as tmp_file:
+                tmp_file.write(uploaded_file.getvalue())
+                file_path = tmp_file.name
+
+            # Determine file type and load accordingly
+            file_type = uploaded_file.type
+            if file_type == "application/pdf":
+                loader = PyPDFLoader(file_path)
+            elif file_type.startswith("image/"):
+                loader = UnstructuredImageLoader(file_path)
+            else:
+                raise ValueError(f"Unsupported file type: {file_type}")
+
+            # Load and split documents
+            documents = loader.load()
+            splits = self.text_splitter.split_documents(documents)
+
+            # Create collection name from file name
+            collection_name = f"collection_{uploaded_file.name.replace('.', '_')}"
+
+            # Create or get collection
+            collection = self.client.get_or_create_collection(
+                name=collection_name,
+                embedding_function=embedding_functions.OllamaEmbeddingFunction(
+                    model_name="nomic-embed-text",
+                    base_url="http://localhost:11434"
+                )
+            )
+
+            # Create Chroma vectorstore
+            vectorstore = Chroma(
+                client=self.client,
+                collection_name=collection_name,
+                embedding_function=self.embeddings,
+            )
+
+            # Add documents to vectorstore
+            vectorstore.add_documents(splits)
+
+            # Store file info
+            processed_file = ProcessedFile(
+                name=uploaded_file.name,
+                size=len(uploaded_file.getvalue()),
+                type=file_type,
+                collection_name=collection_name
+            )
+            self.processed_files.append(processed_file)
+
+            # Cleanup temporary file
+            os.unlink(file_path)
+
+        except Exception as e:
+            raise Exception(f"Error processing file: {str(e)}")
+
+    def get_processed_files(self) -> List[Dict]:
+        """Get list of processed files"""
+        return [
+            {"name": f.name, "size": f.size, "type": f.type}
+            for f in self.processed_files
+        ]
+
+    def remove_file(self, file_name: str) -> None:
+        """Remove a file from the processor and its collection from Chroma"""
+        try:
+            # Find the file in processed files
+            file_to_remove = next(
+                (f for f in self.processed_files if f.name == file_name),
+                None
+            )
+            
+            if file_to_remove:
+                # Delete collection from Chroma
+                self.client.delete_collection(file_to_remove.collection_name)
+                
+                # Remove from processed files list
+                self.processed_files = [
+                    f for f in self.processed_files if f.name != file_name
+                ]
+            else:
+                raise ValueError(f"File {file_name} not found")
+
+        except Exception as e:
+            raise Exception(f"Error removing file: {str(e)}")
+
+    def search_documents(self, query: str, k: int = 3) -> List[Dict]:
+        """Search across all collections for relevant documents"""
+        results = []
+        for processed_file in self.processed_files:
+            collection = self.client.get_collection(processed_file.collection_name)
+            query_results = collection.query(
+                query_texts=[query],
+                n_results=k
+            )
+            results.extend(query_results['documents'][0])
+        return results
+
+    def reset_state(self) -> None:
+        """Reset the processor state and clear all collections"""
+        try:
+            # Delete all collections
+            for processed_file in self.processed_files:
+                self.client.delete_collection(processed_file.collection_name)
+            
+            # Clear processed files list
+            self.processed_files.clear()
+            
+            # Delete persistence directory
+            if os.path.exists("./chroma_db"):
+                import shutil
+                shutil.rmtree("./chroma_db")
+                os.makedirs("./chroma_db")
+
+        except Exception as e:
+            raise Exception(f"Error resetting state: {str(e)}")
 
     def _clear_vector_store(self):
         """Safely clear the vector store and its directory"""
@@ -87,130 +217,6 @@ class DocumentProcessor:
         except Exception as e:
             print(f"Warning: Failed to load processed files: {str(e)}")
         return processed_files
-
-    def process_file(self, uploaded_file):
-        """Process an uploaded file with improved duplicate handling"""
-        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
-        
-        # Check if exact file already exists
-        if file_id in self.processed_files:
-            print(f"Identical file '{uploaded_file.name}' already processed")
-            return True
-
-        # Remove any older version of the file if it exists
-        if uploaded_file.name in self.processed_files:
-            print(f"Removing older version of '{uploaded_file.name}'")
-            self.remove_file(uploaded_file.name)
-
-        # Create a temporary file to store the uploaded content
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
-            tmp_file.write(uploaded_file.getvalue())
-            file_path = tmp_file.name
-
-        try:
-            # Process different file types
-            if uploaded_file.name.lower().endswith('.pdf'):
-                loader = PyPDFLoader(file_path)
-                documents = loader.load()
-            elif uploaded_file.name.lower().endswith(('.png', '.jpg', '.jpeg')):
-                if not is_package_installed('PIL'):
-                    raise ImportError("The 'pillow' package is required for processing images. Please install it with 'pip install pillow'.")
-                
-                # Use fixed image model
-                llava = ChatOllama(
-                    model=IMAGE_MODEL,  # Use fixed image model
-                    base_url="http://localhost:11434"
-                )
-                
-                # Use llava model for image understanding
-                image = Image.open(file_path)
-                
-                # Convert image to base64
-                buffered = BytesIO()
-                image.save(buffered, format=image.format)
-                img_str = base64.b64encode(buffered.getvalue()).decode()
-                
-                # Get detailed image analysis from llava with multiple prompts
-                prompts = [
-                    "Describe this image in detail, focusing on the main subjects and their arrangement.",
-                    "What text or written content can you see in this image? Please be specific.",
-                    "What objects, shapes, or notable visual elements can you identify?",
-                    "Describe the colors, lighting, and overall visual composition of this image."
-                ]
-                
-                analysis_results = []
-                for i, prompt in enumerate(prompts):
-                    try:
-                        print(f"Processing image analysis step {i+1}/4: {prompt.split('.')[0]}...")
-                        response_stream = llava.stream(f"<image>{img_str}</image>{prompt}")
-                        result = ""
-                        for chunk in response_stream:
-                            if hasattr(chunk, 'content'):
-                                result += chunk.content
-                                print(f"\rProgress: {len(result)} characters processed", end="")
-                        analysis_results.append(result)
-                        print("\nStep completed successfully.")
-                    except Exception as e:
-                        print(f"\nWarning: Failed to analyze image with prompt '{prompt}': {str(e)}")
-                        analysis_results.append("Analysis failed for this aspect")
-                
-                # Combine all analysis results
-                full_analysis = {
-                    "general_description": analysis_results[0],
-                    "text_content": analysis_results[1],
-                    "objects_and_elements": analysis_results[2],
-                    "visual_composition": analysis_results[3]
-                }
-                
-                # Create a Document object with comprehensive image content and metadata
-                documents = [Document(
-                    page_content=f"Image: {uploaded_file.name}\n" +
-                                f"Size: {image.size}\n" +
-                                f"Mode: {image.mode}\n" +
-                                f"General Description: {full_analysis['general_description']}\n" +
-                                f"Text Content: {full_analysis['text_content']}\n" +
-                                f"Objects and Elements: {full_analysis['objects_and_elements']}\n" +
-                                f"Visual Composition: {full_analysis['visual_composition']}",
-                    metadata={
-                        "source": uploaded_file.name,
-                        "type": "image",
-                        "description": full_analysis['general_description'],
-                        "text_content": full_analysis['text_content'],
-                        "objects": full_analysis['objects_and_elements'],
-                        "composition": full_analysis['visual_composition'],
-                        "size": uploaded_file.size
-                    }
-                )]
-            else:
-                raise ValueError(f"Unsupported file type: {uploaded_file.name}")
-
-            # Split documents into chunks
-            splits = self.text_splitter.split_documents(documents)
-
-            # Create or update vector store
-            if self.vector_store is None:
-                self.vector_store = Chroma.from_documents(
-                    documents=splits,
-                    embedding=self.embeddings,
-                    persist_directory="./chroma_db",
-                    collection_name="document_store"
-                )
-            else:
-                self.vector_store.add_documents(splits)
-                self.vector_store.persist()
-            
-            # Store file information
-            self.processed_files[uploaded_file.name] = {
-                'name': uploaded_file.name,
-                'type': uploaded_file.type,
-                'size': uploaded_file.size
-            }
-            return True
-        except Exception as e:
-            raise e
-        finally:
-            # Clean up temporary file
-            os.unlink(file_path)
 
     def get_relevant_context(self, query, k=3):
         """Get relevant context from documents with enhanced debug logging."""
@@ -258,36 +264,6 @@ class DocumentProcessor:
             print(f"Error during document search: {str(e)}")
             return f"Error searching documents: {str(e)}"
 
-    def remove_file(self, filename: str) -> bool:
-        """Remove a file and ensure state consistency"""
-        if filename in self.processed_files:
-            try:
-                # Remove from vector store
-                if self.vector_store is not None:
-                    docs = self.vector_store.get(where={"source": filename})
-                    if docs and docs['ids']:
-                        try:
-                            self.vector_store.delete(ids=docs['ids'])
-                            self.vector_store.persist()
-                        except Exception as e:
-                            print(f"Error removing documents: {str(e)}")
-                            # If vector store is corrupted, reset everything
-                            self.reset_state()
-                            return True
-                
-                # Remove from processed files
-                del self.processed_files[filename]
-                return True
-            except Exception as e:
-                print(f"Warning: Failed to remove file: {str(e)}")
-                # Attempt recovery by resetting state
-                self.reset_state()
-                return True
-        return False
-
-    def get_processed_files(self):
-        return list(self.processed_files.values())
-
     def cleanup(self):
         """Clean up resources and delete stored data"""
         try:
@@ -300,7 +276,7 @@ class DocumentProcessor:
                     self.vector_store = None
             
             self._clear_vector_store()
-            self.processed_files = {}
+            self.processed_files = []
             print("Cleanup completed successfully")
             
         except Exception as e:
