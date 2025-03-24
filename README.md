@@ -1,265 +1,175 @@
-# Document-Aware Local LLM Chatbot
+# Document-Aware Chatbot
 
-A locally-hosted RAG (Retrieval Augmented Generation) implementation using Ollama and LangChain.
+A Streamlit-based chatbot that can understand and respond to questions about uploaded documents and images using local LLMs through Ollama.
 
-## Core Features
+## Architecture
 
-- 🤖 **Local LLM Processing**: Runs entirely locally using Ollama models
-- 📄 **Document Analysis**:
-  - PDF document parsing and chunking
-  - Image analysis using LLaVA model
-  - Persistent document storage with Chroma
-- 🔍 **Smart Context Retrieval**:
-  - Semantic search across documents
-  - Relevance scoring
-  - Automatic context integration
-- 💾 **Robust State Management**:
-  - Automatic state recovery
-  - Safe document deletion
-  - Session persistence
-- 🖼️ **Advanced Image Analysis**:
-  - Visual content description
-  - Text extraction from images
-  - Object and element detection
-  - Color and composition analysis
-
-## Architecture Overview
-
+### System Overview
 ```mermaid
-graph TB
-    U[User] --> W[Web Interface]
-    subgraph Streamlit
-        W --> FM[File Manager]
-        W --> CH[Chat Handler]
-    end
+graph TD
+    A[Client Browser] -->|HTTP| B[Streamlit App]
+    B -->|Upload| C[Document Processor]
+    C -->|Store| D[(ChromaDB)]
+    B -->|Query| E[Ollama Service]
+    D -->|Context| E
+    E -->|Response| B
     
-    subgraph Document Processing
-        FM --> DP[Document Processor]
-        DP --> IS[Image Scanner]
-        DP --> PS[PDF Scanner]
-        IS --> VDB[(Vector DB)]
-        PS --> VDB
-    end
-    
-    subgraph RAG System
-        CH --> QP[Query Processor]
-        QP --> VDB
-        VDB --> CR[Context Retriever]
-        CR --> PP[Prompt Preparer]
-        PP --> LLM[Local LLM]
-    end
-    
-    subgraph Ollama
-        LLM --> OM[Model: llama2/codellama]
-        IS --> LV[Model: llava]
-        VDB --> NE[Model: nomic-embed]
+    subgraph Local LLMs
+        E -->|Chat| F[llama2]
+        E -->|Embeddings| G[nomic-embed]
+        E -->|Images| H[llava]
     end
 ```
 
-## Technical Requirements
-
-- Python 3.8+
-- Ollama server running locally
-- Required Ollama models:
-  - `llama2` (or any chat model)
-  - `llava` (for image processing)
-  - `nomic-embed-text` (for document embeddings)
-
-## Quick Start
-
-1. **Install Ollama**:
-   Follow instructions at [Ollama.ai](https://ollama.ai)
-
-2. **Install Dependencies**:
-   ```bash
-   # Install Poetry if you haven't already
-   curl -sSL https://install.python-poetry.org | python3 -
-
-   # Install project dependencies
-   poetry install
-   ```
-
-3. **Pull Required Models**:
-   ```bash
-   ollama pull llama2
-   ollama pull llava
-   ollama pull nomic-embed-text
-   ```
-
-4. **Run Application**:
-   ```bash
-   poetry run streamlit run app.py
-   ```
-
-## Usage Guide
-
-1. **Document Management**:
-   - Upload PDFs or images via sidebar
-   - Monitor processing progress
-   - Remove documents as needed
-   - Reset all data with one click
-
-2. **Chat Interface**:
-   - Select LLM model from available options
-   - Ask questions about documents
-   - Request document summaries
-   - Get image analysis results
-
-3. **System Features**:
-   - Rate limiting (20 requests/minute)
-   - Automatic error recovery
-   - Progress tracking for processing
-   - Debug logging for transparency
-
-## Implementation Details
-
-### 1. RAG Implementation
-
-Our RAG system works in three key phases:
-
+### Document Processing Flow
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant S as System
-    participant V as Vector Store
+    participant S as Streamlit
+    participant P as Processor
+    participant DB as ChromaDB
     participant L as LLM
 
     U->>S: Upload Document
-    S->>S: Process & Chunk
-    S->>V: Store Embeddings
+    S->>P: Process File
+    P->>L: Generate Embeddings
+    P->>DB: Store Vectors
     U->>S: Ask Question
-    S->>V: Search Context
-    V->>S: Return Relevant Chunks
-    S->>L: Enhanced Prompt + Context
-    L->>U: Contextual Response
+    S->>DB: Search Context
+    DB->>S: Return Relevant Docs
+    S->>L: Generate Response
+    L->>S: Return Answer
+    S->>U: Display Response
 ```
 
-#### Document Processing
-- Chunking Strategy: RecursiveCharacterTextSplitter
-  - Chunk size: 1000 characters
-  - Overlap: 200 characters
-- Embedding Model: nomic-embed-text
-- Storage: ChromaDB for persistence
-
-### 2. Multi-Modal Analysis
-
-Image processing workflow:
-
+### Component Architecture
 ```mermaid
-graph LR
-    A[Image Upload] --> B[LLaVA Model]
-    B --> C1[Description]
-    B --> C2[Text Content]
-    B --> C3[Object Detection]
-    B --> C4[Visual Analysis]
-    C1 & C2 & C3 & C4 --> D[Vector Store]
+classDiagram
+    class StreamlitApp {
+        +session_state
+        +chat_history
+        +process_upload()
+        +handle_chat()
+    }
+    class DocumentProcessor {
+        +process_file()
+        +get_context()
+        +remove_file()
+    }
+    class OllamaService {
+        +available_models
+        +generate_response()
+        +create_embeddings()
+    }
+    class VectorStore {
+        +add_documents()
+        +similarity_search()
+        +delete_collection()
+    }
+    
+    StreamlitApp --> DocumentProcessor
+    StreamlitApp --> OllamaService
+    DocumentProcessor --> VectorStore
+    DocumentProcessor --> OllamaService
 ```
 
-### 3. State Management
+## Data Flow
 
-```mermaid
-stateDiagram-v2
-    [*] --> Initialize
-    Initialize --> Ready: Load Models
-    Ready --> Processing: Upload File
-    Processing --> Ready: Success
-    Processing --> Error: Failure
-    Error --> Ready: Reset
-    Ready --> Searching: Query
-    Searching --> Responding: Context Found
-    Responding --> Ready: Complete
+```ascii
+User Input/Files
+      │
+      ▼
+┌──────────────────────┐
+│ Document Processing  │
+│  ┌───────────────┐  │
+│  │ PDF Parsing   │  │
+│  │ Image Analysis│  │
+│  └───────────────┘  │
+└──────────────────────┘
+      │
+      ▼
+┌──────────────────────┐
+│  Vector Database    │
+│  ┌───────────────┐  │
+│  │ Embeddings    │  │
+│  │ Search Index  │  │
+│  └───────────────┘  │
+└──────────────────────┘
+      │
+      ▼
+┌──────────────────────┐
+│   Chat Interface    │
+│  ┌───────────────┐  │
+│  │ Context Aware │  │
+│  │ Responses     │  │
+│  └───────────────┘  │
+└──────────────────────┘
 ```
 
-## System Components
+## Features
 
-### Vector Store (ChromaDB)
-- **Purpose**: Document embedding storage and retrieval
-- **Features**:
-  - Persistent storage
-  - Similarity search
-  - Metadata management
-  - Automatic recovery
+- 📄 Document Processing (PDF, Images)
+- 💬 Interactive Chat Interface
+- 🤖 Local LLM Integration via Ollama
+- 📊 Document Context Awareness
+- 🖼️ Image Analysis Capabilities
+- 🔄 Rate Limiting Protection
 
-### ChromaDB Setup
-The application uses ChromaDB for vector storage. Setup is handled automatically when you run the application, but here are some details:
+## Prerequisites
 
-1. **Installation**: ChromaDB is included in the project dependencies and will be installed automatically when you run `poetry install`
-2. **Configuration**: The application creates a `./chroma_db` directory in your project folder to store vector embeddings
-3. **Persistence**: All document embeddings are automatically saved to disk and will be available between application restarts
-4. **Troubleshooting**: If you encounter any issues with ChromaDB:
-   - Ensure you have proper write permissions to the project directory
-   - Try deleting the `./chroma_db` folder and restarting the application
-   - Check that the ChromaDB version (0.3.0) is compatible with your system
+- Python 3.8.1 or higher
+- Poetry for dependency management
+- Ollama for local LLM support
 
-### Document Processor
-- **Capabilities**:
-  ```python
-  class DocumentProcessor:
-      # Key methods:
-      def process_file()     # Handles uploads
-      def get_relevant_context() # RAG retrieval
-      def reset_state()      # State management
-  ```
+## Installation
 
-### LLM Integration
-- **Models**:
-  - Chat: llama2/codellama
-  - Vision: llava
-  - Embeddings: nomic-embed-text
-- **Features**:
-  - Streaming responses
-  - Context window management
-  - Error recovery
-  - Rate limiting
-
-## Performance Considerations
-
-1. **Memory Management**
-   - Chunking for efficient processing
-   - Automatic garbage collection
-   - State cleanup on restart
-
-2. **Response Time**
-   - Async document processing
-   - Optimized context retrieval
-   - Progress tracking
-
-3. **Error Handling**
-   - Automatic recovery
-   - State persistence
-   - User feedback
-
-## Project Structure
-```
-.
-├── app.py                 # Main Streamlit application
-├── document_processor.py  # Document handling and storage
-├── ollama_api.py         # Ollama interface
-└── requirements.txt      # Dependencies
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd <repository-name>
 ```
 
-## Known Limitations
+2. Install dependencies using Poetry:
+```bash
+poetry install
+```
 
-- Requires local Ollama installation
-- Processing large PDFs may be slow
-- Image analysis requires significant memory
-- Limited to supported file formats (PDF, PNG, JPG)
+3. Install and start Ollama:
+```bash
+# Install Ollama (macOS/Linux)
+curl https://ollama.ai/install.sh | sh
 
-## Error Recovery
+# Start Ollama server
+ollama serve
+```
 
-The system includes automatic recovery for:
-- Corrupted vector stores
-- Failed document processing
-- Connection issues
-- State inconsistencies
+4. Pull required models:
+```bash
+# Base chat model
+ollama pull llama2
 
-## Future Improvements
+# Embedding model for document search
+ollama pull nomic-embed-text
 
-1. **Enhanced RAG**
-   - Hybrid search
-   - Re-ranking
-   - Dynamic context window
+# Image analysis model
+ollama pull llava
+```
 
-2. **Performance**
-   - Batch processing
-   - Caching
+5. Create a `.env.local` file:
+```env
+# Add any environment variables here
+```
+
+## Running the Application
+
+1. Start the Ollama server (if not already running):
+```bash
+ollama serve
+```
+
+2. Launch the Streamlit application:
+```bash
+poetry run streamlit run app.py
+```
+
+3. Open your browser and navigate to:
