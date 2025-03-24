@@ -1,55 +1,250 @@
-# AI Assistant with DeFi Insights
+# Document-Aware Local LLM Chatbot
 
-An AI-powered chatbot that combines general knowledge with real-time crypto and DeFi data.
+A locally-hosted RAG (Retrieval Augmented Generation) implementation using Ollama and LangChain.
 
-## Features
+## Core Features
 
-- Real-time conversations with AI
-- Internet search capabilities
-- Cryptocurrency price checking
-- DeFi protocol TVL tracking
-- Document generation
-- Streaming responses
+- 🤖 **Local LLM Processing**: Runs entirely locally using Ollama models
+- 📄 **Document Analysis**:
+  - PDF document parsing and chunking
+  - Image analysis using LLaVA model
+  - Persistent document storage with Chroma
+- 🔍 **Smart Context Retrieval**:
+  - Semantic search across documents
+  - Relevance scoring
+  - Automatic context integration
+- 💾 **Robust State Management**:
+  - Automatic state recovery
+  - Safe document deletion
+  - Session persistence
+- 🖼️ **Advanced Image Analysis**:
+  - Visual content description
+  - Text extraction from images
+  - Object and element detection
+  - Color and composition analysis
 
-## Installation
+## Architecture Overview
 
-1. Install Poetry if you haven't already:
-```bash
-curl -sSL https://install.python-poetry.org | python3 -
+```mermaid
+graph TB
+    U[User] --> W[Web Interface]
+    subgraph Streamlit
+        W --> FM[File Manager]
+        W --> CH[Chat Handler]
+    end
+    
+    subgraph Document Processing
+        FM --> DP[Document Processor]
+        DP --> IS[Image Scanner]
+        DP --> PS[PDF Scanner]
+        IS --> VDB[(Vector DB)]
+        PS --> VDB
+    end
+    
+    subgraph RAG System
+        CH --> QP[Query Processor]
+        QP --> VDB
+        VDB --> CR[Context Retriever]
+        CR --> PP[Prompt Preparer]
+        PP --> LLM[Local LLM]
+    end
+    
+    subgraph Ollama
+        LLM --> OM[Model: llama2/codellama]
+        IS --> LV[Model: llava]
+        VDB --> NE[Model: nomic-embed]
+    end
 ```
 
-2. Clone the repository and install dependencies:
-```bash
-git clone <repository-url>
-cd robotv4
-poetry install
+## Technical Requirements
+
+- Python 3.8+
+- Ollama server running locally
+- Required Ollama models:
+  - `llama2` (or any chat model)
+  - `llava` (for image processing)
+  - `nomic-embed-text` (for document embeddings)
+
+## Quick Start
+
+1. **Install Ollama**:
+   Follow instructions at [Ollama.ai](https://ollama.ai)
+
+2. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Pull Required Models**:
+   ```bash
+   ollama pull llama2
+   ollama pull llava
+   ollama pull nomic-embed-text
+   ```
+
+4. **Run Application**:
+   ```bash
+   streamlit run app.py
+   ```
+
+## Usage Guide
+
+1. **Document Management**:
+   - Upload PDFs or images via sidebar
+   - Monitor processing progress
+   - Remove documents as needed
+   - Reset all data with one click
+
+2. **Chat Interface**:
+   - Select LLM model from available options
+   - Ask questions about documents
+   - Request document summaries
+   - Get image analysis results
+
+3. **System Features**:
+   - Rate limiting (20 requests/minute)
+   - Automatic error recovery
+   - Progress tracking for processing
+   - Debug logging for transparency
+
+## Implementation Details
+
+### 1. RAG Implementation
+
+Our RAG system works in three key phases:
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant S as System
+    participant V as Vector Store
+    participant L as LLM
+
+    U->>S: Upload Document
+    S->>S: Process & Chunk
+    S->>V: Store Embeddings
+    U->>S: Ask Question
+    S->>V: Search Context
+    V->>S: Return Relevant Chunks
+    S->>L: Enhanced Prompt + Context
+    L->>U: Contextual Response
 ```
 
-3. Create a `.env` file with your API keys:
-```bash
-OPENAI_API_KEY=your_openai_key
-SERPAPI_API_KEY=your_serpapi_key
+#### Document Processing
+- Chunking Strategy: RecursiveCharacterTextSplitter
+  - Chunk size: 1000 characters
+  - Overlap: 200 characters
+- Embedding Model: nomic-embed-text
+- Storage: ChromaDB for persistence
+
+### 2. Multi-Modal Analysis
+
+Image processing workflow:
+
+```mermaid
+graph LR
+    A[Image Upload] --> B[LLaVA Model]
+    B --> C1[Description]
+    B --> C2[Text Content]
+    B --> C3[Object Detection]
+    B --> C4[Visual Analysis]
+    C1 & C2 & C3 & C4 --> D[Vector Store]
 ```
 
-## Running the Chatbot
+### 3. State Management
 
-```bash
-poetry run streamlit run src/app.py
+```mermaid
+stateDiagram-v2
+    [*] --> Initialize
+    Initialize --> Ready: Load Models
+    Ready --> Processing: Upload File
+    Processing --> Ready: Success
+    Processing --> Error: Failure
+    Error --> Ready: Reset
+    Ready --> Searching: Query
+    Searching --> Responding: Context Found
+    Responding --> Ready: Complete
 ```
 
-## Example Usage
+## System Components
 
-Try these example queries:
-- "What's the current price of Bitcoin?"
-- "Show me the TVL of Aave protocol"
-- "Search for the latest news about Ethereum"
-- "Create a document summarizing DeFi trends"
+### Vector Store (ChromaDB)
+- **Purpose**: Document embedding storage and retrieval
+- **Features**:
+  - Persistent storage
+  - Similarity search
+  - Metadata management
+  - Automatic recovery
 
-## Configuration
+### Document Processor
+- **Capabilities**:
+  ```python
+  class DocumentProcessor:
+      # Key methods:
+      def process_file()     # Handles uploads
+      def get_relevant_context() # RAG retrieval
+      def reset_state()      # State management
+  ```
 
-Required API keys:
-- OpenAI API key
-- SerpAPI key (for web searches)
+### LLM Integration
+- **Models**:
+  - Chat: llama2/codellama
+  - Vision: llava
+  - Embeddings: nomic-embed-text
+- **Features**:
+  - Streaming responses
+  - Context window management
+  - Error recovery
+  - Rate limiting
 
-The application uses environment variables for configuration. Create a `.env` file in the project root with the required API keys.
-# basic-chat
+## Performance Considerations
+
+1. **Memory Management**
+   - Chunking for efficient processing
+   - Automatic garbage collection
+   - State cleanup on restart
+
+2. **Response Time**
+   - Async document processing
+   - Optimized context retrieval
+   - Progress tracking
+
+3. **Error Handling**
+   - Automatic recovery
+   - State persistence
+   - User feedback
+
+## Project Structure
+```
+.
+├── app.py                 # Main Streamlit application
+├── document_processor.py  # Document handling and storage
+├── ollama_api.py         # Ollama interface
+└── requirements.txt      # Dependencies
+```
+
+## Known Limitations
+
+- Requires local Ollama installation
+- Processing large PDFs may be slow
+- Image analysis requires significant memory
+- Limited to supported file formats (PDF, PNG, JPG)
+
+## Error Recovery
+
+The system includes automatic recovery for:
+- Corrupted vector stores
+- Failed document processing
+- Connection issues
+- State inconsistencies
+
+## Future Improvements
+
+1. **Enhanced RAG**
+   - Hybrid search
+   - Re-ranking
+   - Dynamic context window
+
+2. **Performance**
+   - Batch processing
+   - Caching
