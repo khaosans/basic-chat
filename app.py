@@ -289,7 +289,6 @@ Requirements:
                     message_placeholder.markdown(full_response)
                 except Exception as e:
                     st.error(f"Error generating response: {str(e)}")
-                    return
     except Exception as e:
         error_msg = str(e)
         if "connection" in error_msg.lower():
