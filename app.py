@@ -3,6 +3,7 @@ from langchain_community.chat_models import ChatOllama
 from ollama_api import get_available_models, check_ollama_server
 from document_processor import DocumentProcessor
 import shutil, os
+import time
 
 def clear_session_state():
     """Clear all session state and stored data"""
@@ -57,7 +58,15 @@ if not check_ollama_server():
 
 # Initialize session state variables
 if 'messages' not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [{
+        "role": "assistant",
+        "content": """👋 Hi! I'm your document-aware assistant. I can help you with:
+        - 📄 Analyzing uploaded documents
+        - 🖼️ Understanding images
+        - 💬 General questions and discussions
+        
+        Feel free to upload a document or ask me anything!"""
+    }]
 if 'error' not in st.session_state:
     st.session_state.error = None
 
@@ -65,238 +74,252 @@ if 'error' not in st.session_state:
 if 'doc_processor' not in st.session_state:
     st.session_state.doc_processor = DocumentProcessor()
 
-# Initialize session state for model selection
-if 'selected_model' not in st.session_state:
-    st.session_state.selected_model = 'llama2'
+# Define fixed models for different tasks
+CHAT_MODEL = "mistral"  # Main chat model
+EMBEDDING_MODEL = "nomic-embed-text"  # For document embeddings
+IMAGE_MODEL = "llava"  # For image analysis
 
-# Initialize chat parameters
+# Remove model selection from session state since we're using fixed models
 if 'chat_params' not in st.session_state:
     st.session_state.chat_params = {
         'last_request_time': None,
         'request_count': 0,
-        'max_requests_per_minute': 20
+        'max_requests_per_minute': 20,
+        'system_prompt': """You are a helpful AI assistant that can:
+        1. Answer questions about uploaded documents
+        2. Handle general queries
+        3. Analyze images
+        4. Provide clear and concise responses"""
     }
 
-# Sidebar for model selection and file upload
-with st.sidebar:
-    st.title("Settings")
-    
-    # Model selection with additional info
-    st.subheader("Model Settings")
-    available_models = get_available_models()
-    selected_model = st.selectbox(
-        "Select Model",
-        options=available_models,
-        index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0,
-        help="Choose the AI model to use for chat responses"
-    )
-    st.session_state.selected_model = selected_model
-    
-    # Add model information
-    st.info(f"""
-    Currently using: {selected_model}
-    - Temperature: 0.7
-    - Server: localhost:11434
-    """)
-    
-    # File upload section with better instructions
-    st.subheader("Document Upload")
-    st.markdown("""
-    Supported files:
-    - PDF documents
-    - Images (PNG, JPG)
-    
-    Documents will be processed and used as context for answers.
-    """)
-    uploaded_file = st.file_uploader(
-        "Upload a document",
-        type=["pdf", "png", "jpg", "jpeg"],
-        help="Files will be processed and used as context for the chatbot"
-    )
-    
-    if uploaded_file is not None:
-        try:
-            # Create placeholder for progress updates
-            progress_placeholder = st.empty()
-            status_placeholder = st.empty()
-            
-            # Create a progress bar
-            progress_bar = progress_placeholder.progress(0)
-            status_text = status_placeholder.text("Starting document processing...")
-            
-            # Redirect stdout to capture processing updates
-            import sys
-            from io import StringIO
-            import re
-            
-            class StreamCapture:
-                def __init__(self, progress_bar, status_text):
-                    self.progress_bar = progress_bar
-                    self.status_text = status_text
-                
-                def write(self, text):
-                    if "Processing image analysis step" in text:
-                        step = int(re.search(r'step (\d+)/4', text).group(1))
-                        self.progress_bar.progress(step * 0.25)
-                        self.status_text.text(text.strip())
-                    elif "Progress:" in text:
-                        self.status_text.text(text.strip())
-                    sys.__stdout__.write(text)
-                
-                def flush(self):
-                    pass
-            
-            # Capture stdout
-            old_stdout = sys.stdout
-            sys.stdout = StreamCapture(progress_bar, status_text)
-            
-            try:
-                st.session_state.doc_processor.process_file(uploaded_file)
-                progress_bar.progress(1.0)
-                status_text.success(f"Document '{uploaded_file.name}' processed successfully!")
-            finally:
-                sys.stdout = old_stdout
-                
-            # Clear placeholders after success
-            progress_placeholder.empty()
-            status_placeholder.empty()
-            
-        except Exception as e:
-            st.error(f"Error processing document: {str(e)}")
-    
-    # Display processed files
-    st.subheader("Processed Documents")
-    processed_files = st.session_state.doc_processor.get_processed_files()
-    
-    if not processed_files:
-        st.info("No documents uploaded yet.")
-    else:
-        for file in processed_files:
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                st.text(f"📄 {file['name']} ({file['size']} bytes)")
-            with col2:
-                if st.button("🗑️", key=f"remove_{file['name']}"):
-                    try:
-                        if st.session_state.doc_processor.remove_file(file['name']):
-                            # Verify document removal
-                            processed_files = st.session_state.doc_processor.get_processed_files()
-                            if file['name'] not in [f['name'] for f in processed_files]:
-                                st.success(f"Removed {file['name']}")
-                            else:
-                                st.warning("Document removal may not be complete. Try resetting all data.")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error removing document: {str(e)}")
-                        # Offer manual reset
-                        if st.button("Reset All Data"):
-                            clear_session_state()
-                            st.rerun()
-
-# Initialize ChatOllama with selected model
+# Initialize ChatOllama with fixed model
 llm = ChatOllama(
-    model=st.session_state.selected_model,
+    model=CHAT_MODEL,
     temperature=0.7,
     base_url="http://localhost:11434"
 )
 
-# Chat interface with welcome message
+# Add custom CSS for better UI
+st.markdown("""
+<style>
+    /* Responsive container */
+    .stApp {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    /* Better chat messages */
+    .chat-message {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        animation: fadeIn 0.3s ease-in;
+    }
+    
+    .user-message {
+        background: #e3f2fd;
+        margin-left: 20%;
+    }
+    
+    .assistant-message {
+        background: #f5f5f5;
+        margin-right: 20%;
+    }
+    
+    /* Loading animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Better file upload area */
+    .uploadedFile {
+        border: 2px dashed #ccc;
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .uploadedFile:hover {
+        border-color: #2196F3;
+    }
+    
+    /* Improved buttons */
+    .stButton>button {
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* Progress bars */
+    .stProgress > div > div {
+        background-color: #2196F3;
+        transition: all 0.3s ease;
+    }
+    
+    /* Responsive layout */
+    @media (max-width: 768px) {
+        .user-message, .assistant-message {
+            margin-left: 5%;
+            margin-right: 5%;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Update the chat interface
+def create_message_container(role: str, content: str):
+    """Create a styled message container"""
+    class_name = "user-message" if role == "user" else "assistant-message"
+    with st.container():
+        st.markdown(f"""
+        <div class="chat-message {class_name}">
+            {content}
+        </div>
+        """, unsafe_allow_html=True)
+
+# Update the main layout
 st.title("📚 Document-Aware Chatbot")
-st.caption(f"Using model: {st.session_state.selected_model}")
 
-# Add welcome message if no messages exist
-if not st.session_state.messages:
-    st.info("""
-    👋 Welcome! I can help you with:
-    - Answering questions about uploaded documents
-    - General knowledge queries
-    - Document analysis and understanding
+# Improved sidebar layout
+with st.sidebar:
+    st.title("💡 Assistant Settings")
     
-    Try uploading a document and asking questions about it!
-    """)
-
-# Display error message if exists
-if st.session_state.error:
-    st.error(st.session_state.error)
-    st.session_state.error = None
-
-# Display chat messages
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
-
-# Accept user input
-if prompt := st.chat_input("What's up?"):
-    if not check_rate_limit():
-        st.error("Too many requests. Please wait a moment before sending more messages.")
-        st.stop()
-        
-    if not prompt.strip():
-        st.warning("Please enter a non-empty message.")
-        st.stop()
+    # System info with better styling
+    st.markdown("""
+    <div style='background-color: #f8f9fa; padding: 1rem; border-radius: 8px;'>
+        <h4>🤖 System Configuration</h4>
+        <ul style='list-style-type: none; padding-left: 0;'>
+            <li>📝 Chat: Mistral</li>
+            <li>🔍 Embeddings: Nomic</li>
+            <li>🖼️ Images: Llava</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Check if any documents are loaded
-    processed_files = st.session_state.doc_processor.get_processed_files()
-    if not processed_files and any(word in prompt.lower() for word in ['summarize', 'summary', 'pdf', 'document', 'image']):
-        st.warning("No documents have been uploaded yet. Please upload a document first.")
-        st.stop()
-        
-    try:
-        # Validate model connection before processing
-        llm.invoke("test")
-        
-        # Add user message to chat history
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+    # File upload section
+    st.markdown("""
+    <div style='margin-top: 2rem;'>
+        <h4>📎 Upload Documents</h4>
+        <p>Supported formats:</p>
+        <ul>
+            <li>PDF documents</li>
+            <li>Images (PNG, JPG)</li>
+        </ul>
+    </div>
+    """, unsafe_allow_html=True)
 
-        # Display assistant response
+# Update file upload handling
+def show_upload_progress(uploaded_file):
+    """Show upload progress with better UI"""
+    progress_bar = st.progress(0)
+    status_text = st.empty()
+    
+    for i in range(100):
+        progress_bar.progress(i + 1)
+        status_text.text(f"Processing {uploaded_file.name}... {i+1}%")
+        time.sleep(0.01)
+    
+    status_text.success(f"✅ {uploaded_file.name} processed successfully!")
+    time.sleep(1)
+    progress_bar.empty()
+    status_text.empty()
+
+# Update chat interface
+def display_chat_interface():
+    """Display chat interface with improved styling"""
+    # Display chat messages
+    for message in st.session_state.messages:
+        create_message_container(message["role"], message["content"])
+    
+    # Chat input with better UX
+    if prompt := st.chat_input("💭 Ask me anything...", key="chat_input"):
+        # Show typing indicator
         with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            full_response = ""
+            typing_placeholder = st.empty()
+            typing_placeholder.markdown("_Thinking..._")
             
-            # Get relevant context with status indicator and debug info
-            with st.spinner("Searching documents..."):
-                doc_context = st.session_state.doc_processor.get_relevant_context(prompt)
-                if doc_context:
-                    st.info("📄 Found relevant content in documents")
-                    print(f"Context length: {len(doc_context)} characters")
-                else:
-                    print("No relevant document context found")
-            
-            # Enhanced prompt handling
-            if doc_context:
-                enhanced_prompt = f"""You are a helpful assistant with access to document content. Here is the relevant context:
+            try:
+                # Process message
+                response = process_chat_message(prompt)
+                
+                # Update UI
+                typing_placeholder.empty()
+                create_message_container("assistant", response)
+                
+            except Exception as e:
+                typing_placeholder.error(f"Error: {str(e)}")
 
-{doc_context}
+# Add loading states and error handling
+def show_loading_state():
+    """Show loading state with animation"""
+    with st.spinner("Loading..."):
+        time.sleep(0.5)  # Simulate loading
+        
+def show_error(message: str):
+    """Show error message with style"""
+    st.error(f"❌ {message}")
 
-Using this context, please answer: {prompt}
+# Update the document display
+def display_documents():
+    """Display processed documents with better UI"""
+    if processed_files := st.session_state.doc_processor.get_processed_files():
+        st.markdown("""
+        <div style='background-color: #f8f9fa; padding: 1rem; border-radius: 8px; margin-top: 1rem;'>
+            <h4>📑 Processed Documents</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        for file in processed_files:
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.markdown(f"""
+                <div style='padding: 0.5rem; border-radius: 4px; background-color: #fff;'>
+                    📄 {file['name']} ({file['size']} bytes)
+                </div>
+                """, unsafe_allow_html=True)
+            with col2:
+                if st.button("🗑️", key=f"remove_{file['name']}"):
+                    with st.spinner(f"Removing {file['name']}..."):
+                        st.session_state.doc_processor.remove_file(file['name'])
+                        st.rerun()
 
-Requirements:
-1. If the query asks for a summary, provide a clear and concise summary
-2. Always mention which documents or images you're referencing
-3. Include relevance scores when available
-4. If you can't find relevant information in the context, clearly state that"""
-            else:
-                if any(word in prompt.lower() for word in ['summarize', 'summary', 'pdf', 'document', 'image']):
-                    enhanced_prompt = f"I apologize, but I don't have access to any relevant document content for: {prompt}"
-                else:
-                    enhanced_prompt = f"You are a helpful assistant. Please answer: {prompt}"
-            
-            # Display response
-            with st.spinner("Thinking..."):
-                try:
-                    for chunk in llm.stream(enhanced_prompt):
-                        if hasattr(chunk, 'content'):
-                            full_response += chunk.content
-                            message_placeholder.markdown(full_response + "▌")
-                    message_placeholder.markdown(full_response)
-                except Exception as e:
-                    st.error(f"Error generating response: {str(e)}")
+# Main app layout
+def main():
+    """Main application layout"""
+    try:
+        show_loading_state()
+        display_chat_interface()
+        display_documents()
     except Exception as e:
-        error_msg = str(e)
-        if "connection" in error_msg.lower():
-            st.error("Lost connection to Ollama server. Please check if it's running.")
-        else:
-            st.error(f"Error processing message: {error_msg}")
-        st.stop()
+        show_error(str(e))
+
+if __name__ == "__main__":
+    main()
+
+# Update the chat handling section
+def process_chat_message(prompt: str, llm: ChatOllama) -> str:
+    """Process chat messages with better error handling and model fallbacks"""
+    try:
+        # First try with selected model
+        response = llm.invoke(prompt)
+        return response.content
+    except Exception as primary_error:
+        print(f"Primary model error: {primary_error}")
+        try:
+            # Fallback to llama2 if primary model fails
+            fallback_llm = ChatOllama(
+                model="llama2",
+                temperature=0.7,
+                base_url="http://localhost:11434"
+            )
+            response = fallback_llm.invoke(prompt)
+            return response.content + "\n\n(Response generated using fallback model)"
+        except Exception as fallback_error:
+            raise Exception(f"Chat failed: {str(fallback_error)}")
