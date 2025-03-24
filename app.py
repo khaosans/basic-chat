@@ -22,6 +22,25 @@ def clear_session_state():
         if os.path.exists("./chroma_db"):
             shutil.rmtree("./chroma_db", ignore_errors=True)
 
+def check_rate_limit():
+    """Rate limiting function to prevent too many requests"""
+    from datetime import datetime, timedelta
+    
+    now = datetime.now()
+    if st.session_state.chat_params['last_request_time']:
+        time_diff = now - st.session_state.chat_params['last_request_time']
+        if time_diff < timedelta(minutes=1):
+            if st.session_state.chat_params['request_count'] >= st.session_state.chat_params['max_requests_per_minute']:
+                return False
+        else:
+            # Reset counter after 1 minute
+            st.session_state.chat_params['request_count'] = 0
+    
+    # Update last request time and count
+    st.session_state.chat_params['last_request_time'] = now
+    st.session_state.chat_params['request_count'] += 1
+    return True
+
 # Initialize Streamlit app
 st.set_page_config(page_title="Streamlit Chatbot", layout="wide")
 
@@ -35,6 +54,12 @@ with st.sidebar:
 if not check_ollama_server():
     st.error("Cannot connect to Ollama server. Please ensure it's running on http://localhost:11434")
     st.stop()
+
+# Initialize session state variables
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
+if 'error' not in st.session_state:
+    st.session_state.error = None
 
 # Initialize document processor
 if 'doc_processor' not in st.session_state:
@@ -51,21 +76,6 @@ if 'chat_params' not in st.session_state:
         'request_count': 0,
         'max_requests_per_minute': 20
     }
-
-# Rate limiting function
-def check_rate_limit():
-    from datetime import datetime, timedelta
-    now = datetime.now()
-    if st.session_state.chat_params['last_request_time']:
-        time_diff = now - st.session_state.chat_params['last_request_time']
-        if time_diff < timedelta(minutes=1):
-            if st.session_state.chat_params['request_count'] >= st.session_state.chat_params['max_requests_per_minute']:
-                return False
-        else:
-            st.session_state.chat_params['request_count'] = 0
-    st.session_state.chat_params['last_request_time'] = now
-    st.session_state.chat_params['request_count'] += 1
-    return True
 
 # Sidebar for model selection and file upload
 with st.sidebar:
@@ -204,12 +214,6 @@ if not st.session_state.messages:
     
     Try uploading a document and asking questions about it!
     """)
-
-# Initialize chat history and error state
-if 'messages' not in st.session_state:
-    st.session_state.messages = []
-if 'error' not in st.session_state:
-    st.session_state.error = None
 
 # Display error message if exists
 if st.session_state.error:
