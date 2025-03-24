@@ -1,175 +1,135 @@
-# Document-Aware Chatbot
+# Document-Aware Chatbot with Local LLM Integration
 
-A Streamlit-based chatbot that can understand and respond to questions about uploaded documents and images using local LLMs through Ollama.
+## Abstract
+A streamlined implementation of a document-aware chatbot that leverages local Large Language Models (LLMs) through Ollama. The system integrates document processing, vector storage, and multi-modal analysis capabilities while maintaining data privacy and reducing latency through local processing.
 
-## Architecture
+## System Architecture
 
-### System Overview
+### Core Components
 ```mermaid
 graph TD
-    A[Client Browser] -->|HTTP| B[Streamlit App]
-    B -->|Upload| C[Document Processor]
-    C -->|Store| D[(ChromaDB)]
-    B -->|Query| E[Ollama Service]
-    D -->|Context| E
-    E -->|Response| B
+    subgraph Client
+        A[Browser/User Interface] --> B[Streamlit Frontend]
+    end
     
-    subgraph Local LLMs
-        E -->|Chat| F[llama2]
-        E -->|Embeddings| G[nomic-embed]
-        E -->|Images| H[llava]
+    subgraph Backend
+        B --> C[Document Processor]
+        C --> D[ChromaDB]
+        B --> E[Chat Handler]
+        D --> E
+        E --> F[Ollama]
+    end
+    
+    subgraph Storage
+        D[(Vector Store)]
+        G[(Document Cache)]
+        C --> G
+    end
+    
+    subgraph LLM Services
+        F --> H[mistral]
+        F --> I[nomic-embed]
+        F --> J[llava]
     end
 ```
 
-### Document Processing Flow
+**Architecture Analysis:**
+- **Client Layer**: Streamlit-based interface providing real-time interaction
+- **Backend Processing**: Modular design separating document processing from chat handling
+- **Storage Layer**: Dual-storage approach with vector embeddings and document caching
+- **LLM Integration**: Task-specific model selection for optimal performance
+
+### Data Flow and Processing
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant S as Streamlit
-    participant P as Processor
-    participant DB as ChromaDB
-    participant L as LLM
-
-    U->>S: Upload Document
-    S->>P: Process File
-    P->>L: Generate Embeddings
-    P->>DB: Store Vectors
-    U->>S: Ask Question
-    S->>DB: Search Context
-    DB->>S: Return Relevant Docs
-    S->>L: Generate Response
-    L->>S: Return Answer
-    S->>U: Display Response
-```
-
-### Component Architecture
-```mermaid
-classDiagram
-    class StreamlitApp {
-        +session_state
-        +chat_history
-        +process_upload()
-        +handle_chat()
-    }
-    class DocumentProcessor {
-        +process_file()
-        +get_context()
-        +remove_file()
-    }
-    class OllamaService {
-        +available_models
-        +generate_response()
-        +create_embeddings()
-    }
-    class VectorStore {
-        +add_documents()
-        +similarity_search()
-        +delete_collection()
-    }
+    participant User
+    participant Frontend
+    participant DocProcessor
+    participant VectorStore
+    participant LLM
     
-    StreamlitApp --> DocumentProcessor
-    StreamlitApp --> OllamaService
-    DocumentProcessor --> VectorStore
-    DocumentProcessor --> OllamaService
+    User->>Frontend: Upload Document
+    Frontend->>DocProcessor: Process File
+    DocProcessor->>LLM: Generate Embeddings
+    DocProcessor->>VectorStore: Store Vectors
+    
+    User->>Frontend: Ask Question
+    Frontend->>VectorStore: Search Context
+    VectorStore-->>Frontend: Return Relevant Context
+    Frontend->>LLM: Generate Response
+    LLM-->>Frontend: Return Answer
+    Frontend-->>User: Display Response
 ```
 
-## Data Flow
+**Flow Analysis:**
+- Asynchronous document processing with progress tracking
+- Context-aware query processing
+- Efficient vector storage and retrieval
+- Real-time response streaming
 
-```ascii
-User Input/Files
-      │
-      ▼
-┌──────────────────────┐
-│ Document Processing  │
-│  ┌───────────────┐  │
-│  │ PDF Parsing   │  │
-│  │ Image Analysis│  │
-│  └───────────────┘  │
-└──────────────────────┘
-      │
-      ▼
-┌──────────────────────┐
-│  Vector Database    │
-│  ┌───────────────┐  │
-│  │ Embeddings    │  │
-│  │ Search Index  │  │
-│  └───────────────┘  │
-└──────────────────────┘
-      │
-      ▼
-┌──────────────────────┐
-│   Chat Interface    │
-│  ┌───────────────┐  │
-│  │ Context Aware │  │
-│  │ Responses     │  │
-│  └───────────────┘  │
-└──────────────────────┘
+## Technical Implementation
+
+### Model Configuration
+```python
+CHAT_MODEL = "mistral"        # Primary chat interface
+EMBEDDING_MODEL = "nomic-embed-text"  # Document vectorization
+IMAGE_MODEL = "llava"         # Image analysis
 ```
 
-## Features
+### Key Features
+1. **Document Processing**
+   - PDF parsing with chunk optimization
+   - Image analysis with multi-prompt understanding
+   - Vector embedding for semantic search
 
-- 📄 Document Processing (PDF, Images)
-- 💬 Interactive Chat Interface
-- 🤖 Local LLM Integration via Ollama
-- 📊 Document Context Awareness
-- 🖼️ Image Analysis Capabilities
-- 🔄 Rate Limiting Protection
+2. **Chat Interface**
+   - Stream-based response generation
+   - Context-aware responses
+   - Error handling with model fallbacks
 
-## Prerequisites
+3. **Storage Management**
+   - Efficient vector storage with ChromaDB
+   - Document caching for quick retrieval
+   - Automatic cleanup and maintenance
 
-- Python 3.8.1 or higher
-- Poetry for dependency management
-- Ollama for local LLM support
+## Performance Considerations
 
-## Installation
+### Optimization Strategies
+- Chunk size optimization (1000 tokens with 200 overlap)
+- Rate limiting (20 requests/minute)
+- Response streaming for better UX
+- Local model inference reducing latency
 
-1. Clone the repository:
+### Resource Management
+- Automatic memory cleanup
+- Document version control
+- Storage optimization
+
+## Installation and Setup
+
+### Prerequisites
+- Python 3.8.1+
+- Ollama server
+- 8GB+ RAM recommended
+- SSD storage recommended
+
+### Quick Start
 ```bash
-git clone <repository-url>
-cd <repository-name>
-```
-
-2. Install dependencies using Poetry:
-```bash
+# Install dependencies
 poetry install
-```
 
-3. Install and start Ollama:
-```bash
-# Install Ollama (macOS/Linux)
-curl https://ollama.ai/install.sh | sh
+# Pull required models
+ollama pull mistral
+ollama pull nomic-embed-text
+ollama pull llava
 
 # Start Ollama server
 ollama serve
-```
 
-4. Pull required models:
-```bash
-# Base chat model
-ollama pull llama2
-
-# Embedding model for document search
-ollama pull nomic-embed-text
-
-# Image analysis model
-ollama pull llava
-```
-
-5. Create a `.env.local` file:
-```env
-# Add any environment variables here
-```
-
-## Running the Application
-
-1. Start the Ollama server (if not already running):
-```bash
-ollama serve
-```
-
-2. Launch the Streamlit application:
-```bash
+# Launch application
 poetry run streamlit run app.py
 ```
 
-3. Open your browser and navigate to:
+## Development Guidelines
+
+### Code Structure

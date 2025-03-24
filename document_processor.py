@@ -27,7 +27,7 @@ class DocumentProcessor:
         self.processed_files = {}
         try:
             self.embeddings = OllamaEmbeddings(
-                model="nomic-embed-text",
+                model=EMBEDDING_MODEL,  # Use fixed embedding model
                 base_url="http://localhost:11434"
             )
             
@@ -116,6 +116,12 @@ class DocumentProcessor:
                 if not is_package_installed('PIL'):
                     raise ImportError("The 'pillow' package is required for processing images. Please install it with 'pip install pillow'.")
                 
+                # Use fixed image model
+                llava = ChatOllama(
+                    model=IMAGE_MODEL,  # Use fixed image model
+                    base_url="http://localhost:11434"
+                )
+                
                 # Use llava model for image understanding
                 image = Image.open(file_path)
                 
@@ -123,9 +129,6 @@ class DocumentProcessor:
                 buffered = BytesIO()
                 image.save(buffered, format=image.format)
                 img_str = base64.b64encode(buffered.getvalue()).decode()
-                
-                # Create llava model instance
-                llava = ChatOllama(model="llava", base_url="http://localhost:11434")
                 
                 # Get detailed image analysis from llava with multiple prompts
                 prompts = [
