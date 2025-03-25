@@ -7,6 +7,12 @@ A Retrieval-Augmented Generation (RAG) chatbot using local LLMs and vector stora
 ![Document-Aware Chat Interface](./assets/chat-interface.png)
 *The chatbot analyzing a PDF about DeFi and blockchain technology, demonstrating document-aware responses*
 
+## 📚 Example Documents
+
+The repository includes sample documents to test the RAG capabilities:
+
+- [Retrieval-Augmented Generation Paper](./docs/rag-paper.pdf) - The original research paper introducing RAG (Retrieval-Augmented Generation) for enhancing language models with external knowledge
+
 ## Key Features
 - 📄 Process and understand multiple document formats
 - 🔍 Retrieve relevant context from documents
