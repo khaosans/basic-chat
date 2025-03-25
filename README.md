@@ -1,128 +1,236 @@
-# 🤖 Document-Aware Chatbot
+# 🤖 RAG-Enabled Local Chatbot
 
-An AI-powered chatbot that processes documents and images using local LLM (Ollama) with RAG capabilities.
+A Retrieval-Augmented Generation (RAG) chatbot using local LLMs and vector storage for document-aware conversations.
 
-## 🏗️ Architecture
+## 📸 Screenshots
+
+![Document-Aware Chat Interface](./assets/chat-interface.png)
+*The chatbot analyzing a PDF about DeFi and blockchain technology, demonstrating document-aware responses*
+
+## Key Features
+- 📄 Process and understand multiple document formats
+- 🔍 Retrieve relevant context from documents
+- 💬 Natural conversation with document awareness
+- 🏃 Fast local processing with Ollama
+- 🔒 Privacy-focused (all data stays local)
+
+## 🏗️ System Architecture
 
 ```mermaid
 graph TD
-    subgraph Frontend["Frontend (Streamlit)"]
-        UI[Web Interface]
+    subgraph UserInterface["Streamlit Interface"]
         Upload[Document Upload]
         Chat[Chat Interface]
+        History[Chat History]
     end
 
-    subgraph Processing["Document Processing"]
-        DP[Document Processor]
-        TS[Text Splitter]
-        OCR[Tesseract OCR]
+    subgraph RAGPipeline["RAG Pipeline"]
+        subgraph DocumentProcessing["Document Processing"]
+            DP[Document Processor]
+            TS[Text Splitter]
+            OCR[Tesseract OCR]
+        end
+
+        subgraph Embeddings["Embedding Layer"]
+            OE[Ollama Embeddings]
+            VDB[Vector Database]
+        end
+
+        subgraph Retrieval["Context Retrieval"]
+            CS[Context Search]
+            CR[Context Ranking]
+        end
     end
 
-    subgraph Storage["Vector Storage"]
-        CD[ChromaDB]
-    end
-
-    subgraph LLM["Language Models"]
+    subgraph LLMLayer["Local LLM Layer"]
         OL[Ollama - Mistral]
-        OE[Ollama Embeddings]
+        PM[Prompt Management]
     end
 
     Upload --> DP
     DP --> |PDFs/Text| TS
     DP --> |Images| OCR
-    TS --> OE
     OCR --> TS
-    OE --> CD
-    Chat --> |Query| CD
-    CD --> |Context| OL
-    OL --> |Response| Chat
+    TS --> OE
+    OE --> VDB
+    Chat --> CS
+    CS --> VDB
+    VDB --> CR
+    CR --> PM
+    PM --> OL
+    OL --> History
 ```
 
-## 🔄 Document Processing Flow
+## 🔄 RAG Implementation Flow
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant UI as Streamlit
-    participant DP as Doc Processor
-    participant DB as ChromaDB
-    participant LLM as Ollama
+    participant U as User
+    participant I as Interface
+    participant R as RAG System
+    participant L as Local LLM
 
-    User->>UI: Upload Document
-    UI->>DP: Process File
-    alt PDF/Text
-        DP->>DP: Split Content
-        DP->>DB: Store Chunks
-    else Image
-        DP->>DP: OCR Text
-        DP->>DP: Split Content
-        DP->>DB: Store Chunks
-    end
+    U->>I: Upload Document
+    I->>R: Process Document
+    activate R
+    R->>R: Extract Text
+    R->>R: Split into Chunks
+    R->>R: Generate Embeddings
+    R->>R: Store in Vector DB
+    deactivate R
 
-    User->>UI: Ask Question
-    UI->>DB: Retrieve Context
-    DB->>LLM: Provide Context
-    LLM->>UI: Generate Response
-    UI->>User: Show Answer
+    U->>I: Ask Question
+    I->>R: Process Query
+    activate R
+    R->>R: Generate Query Embedding
+    R->>R: Search Similar Chunks
+    R->>R: Rank Relevance
+    R->>R: Build Context
+    R->>L: Context + Query
+    activate L
+    L->>L: Generate Response
+    L->>I: Return Answer
+    deactivate L
+    deactivate R
+    I->>U: Display Response
 ```
 
-## 🛠️ Technical Stack
+## 🛠️ Technical Implementation
 
-- **Frontend**: Streamlit (^1.24.0)
-- **LLM Integration**: 
-  - Ollama (local LLM)
-  - Model: Mistral
-- **Document Processing**:
-  - Text Splitting: LangChain RecursiveCharacterTextSplitter
-  - PDF Processing: PyPDF
-  - Image Processing: Tesseract OCR
-- **Vector Storage**: ChromaDB (^0.3.0)
-- **Embeddings**: Ollama Embeddings
-- **Dependencies**:
-  - Python >=3.8.1
-  - LangChain ^0.0.330
-  - ChromaDB ^0.3.0
-  - Streamlit ^1.24.0
+### Local Models
+- **LLM**: Ollama (Mistral)
+  - Local inference
+  - No data leaves system
+  - Customizable parameters
 
-## 📝 Features
-
+### RAG Components
 1. **Document Processing**
-   - PDF documents
-   - Text files
-   - Images (OCR)
-   - Chunk optimization for better context
+   ```python
+   # Text splitting configuration
+   text_splitter = RecursiveCharacterTextSplitter(
+       chunk_size=1000,
+       chunk_overlap=200,
+       length_function=len,
+   )
+   ```
 
-2. **Chat Interface**
-   - Real-time responses
-   - Document-aware context
-   - History tracking
-   - Clear conversation option
+2. **Embedding Generation**
+   ```python
+   embeddings = OllamaEmbeddings(
+       model="nomic-embed-text",
+       base_url="http://localhost:11434"
+   )
+   ```
 
-3. **RAG Implementation**
-   - Local embeddings generation
-   - Semantic search
-   - Context-aware responses
-   - Document source tracking
+3. **Vector Storage**
+   ```python
+   vectorstore = Chroma(
+       persist_directory="./chroma_db",
+       embedding_function=embeddings
+   )
+   ```
 
-## 🚀 Getting Started
+### Supported Formats
+- 📄 PDF Documents
+- 📝 Text Files
+- 🖼️ Images (OCR-enabled)
+- 📊 Markdown Files
 
-1. **Prerequisites**
+## 🚀 Quick Start
+
+1. **System Requirements**
 ```bash
-# Install system dependencies
-brew install tesseract  # OCR support
-brew install poppler   # PDF processing
+# Core dependencies
+brew install ollama
+brew install tesseract
 ```
 
-2. **Installation**
+2. **Environment Setup**
 ```bash
-# Install Python dependencies
+# Initialize project
 poetry install
 
-# Run setup
+# Run setup script
 poetry run python setup.py
 
-# Start application
+# Start Ollama
+ollama serve
+```
+
+3. **Launch Application**
+```bash
 poetry run streamlit run app.py
 ```
 
-## �� Project Structure
+## 🔧 Configuration
+
+### Environment Variables
+```env
+OLLAMA_BASE_URL=http://localhost:11434
+CHUNK_SIZE=1000
+CHUNK_OVERLAP=200
+```
+
+### LLM Settings
+```python
+llm = ChatOllama(
+    model="mistral",
+    temperature=0.7,
+    base_url="http://localhost:11434"
+)
+```
+
+## 📊 Performance Considerations
+
+1. **Memory Usage**
+   - Vector DB scaling
+   - Document chunk size
+   - Embedding cache
+
+2. **Processing Speed**
+   - OCR optimization
+   - Batch processing
+   - Concurrent operations
+
+3. **Response Quality**
+   - Context window size
+   - Chunk overlap
+   - Relevance threshold
+
+## 🔍 Debugging
+
+```bash
+# Check Ollama status
+curl http://localhost:11434/api/version
+
+# Verify vector store
+poetry run python -c "import chromadb; print(chromadb.__version__)"
+
+# Test OCR
+poetry run python -c "import pytesseract; print(pytesseract.get_tesseract_version())"
+```
+
+## 🐛 Known Issues
+
+1. **Image Processing**
+   - OCR quality varies with image clarity
+   - Large images may require preprocessing
+   - PNG transparency can affect OCR
+
+2. **Vector Storage**
+   - ChromaDB requires periodic optimization
+   - Large collections need index management
+   - Memory usage scales with document count
+
+## 🔒 Security
+
+- All processing done locally
+- No external API calls
+- Data remains on system
+- Configurable access controls
+
+## 📚 References
+
+- [LangChain Documentation](https://python.langchain.com/docs/get_started/introduction)
+- [Ollama GitHub](https://github.com/ollama/ollama)
+- [ChromaDB Documentation](https://docs.trychroma.com/)
