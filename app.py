@@ -1,8 +1,9 @@
+import asyncio
 import streamlit as st
 from langchain_community.chat_models import ChatOllama
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.embeddings import OllamaEmbeddings
-from langchain.vectorstores import Chroma
+from langchain_community.vectorstores import Chroma
 import os
 import time
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -14,6 +15,9 @@ from rag_chatbot.core.rag_engine import RAGEngine
 from rag_chatbot.services.cache_service import CacheService
 from rag_chatbot.services.state_service import StateService
 import logging
+from typing import Optional
+from pathlib import Path
+import shutil
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -84,15 +88,8 @@ class DocumentProcessor:
             length_function=len,
         )
         self.processed_files = []
-        
-        # Initialize vectorstore if exists
-        if os.path.exists("./chroma_db"):
-            self.vectorstore = Chroma(
-                persist_directory="./chroma_db",
-                embedding_function=self.embeddings
-            )
-        else:
-            self.vectorstore = None
+        self.vector_engine = VectorEngine()  # Use VectorEngine instead of direct Chroma
+        self.vectorstore = self.vector_engine.store
 
     def process_file(self, file) -> None:
         """Process and store file with proper chunking and embedding"""
@@ -232,8 +229,18 @@ class ChatBot:
         self.rag_engine = RAGEngine()
         self.cache_service = CacheService()
         self.state_service = StateService()
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
     
-    async def process_document(self, file):
+    def process_document(self, file) -> bool:
+        """Synchronous wrapper for async process_document"""
+        try:
+            return self.loop.run_until_complete(self._process_document(file))
+        except Exception as e:
+            logger.error(f"Error in document processing: {e}")
+            return False
+    
+    async def _process_document(self, file) -> bool:
         try:
             # Process document
             batch = await self.document_engine.process_document(file)
@@ -242,46 +249,87 @@ class ChatBot:
             await self.vector_engine.vectorize(batch)
             
             # Update state
-            await self.state_service.update_document_state(
-                file.name, 
-                "processed"
-            )
+            self.state_service.update_document_state(file.name, "processed")
             
             return True
         except Exception as e:
             logger.error(f"Error in document processing: {e}")
             return False
     
-    async def process_query(self, query: str) -> str:
+    def process_query(self, query: str) -> str:
+        """Synchronous wrapper for async process_query"""
         try:
+            return self.loop.run_until_complete(self._process_query(query))
+        except Exception as e:
+            logger.error(f"Error in query processing: {e}")
+            return str(e)
+    
+    async def _process_query(self, query: str) -> str:
+        try:
+            # Check cache first
+            cached_response = self.cache_service.get_cached_response(query)
+            if cached_response:
+                return cached_response
+            
             # Get response with context
             response = await self.rag_engine.process_query(
                 query,
-                self.state_service.chat_history
+                self.state_service.get_chat_history()
             )
             
             # Update history
-            await self.state_service.add_to_history({
+            self.state_service.add_to_history({
                 "role": "user",
                 "content": query
             })
-            await self.state_service.add_to_history({
+            self.state_service.add_to_history({
                 "role": "assistant",
                 "content": response
             })
+            
+            # Cache response
+            self.cache_service.cache_response(query, response)
             
             return response
         except Exception as e:
             logger.error(f"Error in query processing: {e}")
             return str(e)
 
+def cleanup():
+    """Clean up resources"""
+    try:
+        # Clean ChromaDB
+        chroma_path = Path("./chroma_db")
+        if chroma_path.exists():
+            shutil.rmtree(chroma_path)
+            logger.info("✅ Cleaned ChromaDB data")
+        
+        # Clear session state
+        if 'chatbot' in st.session_state:
+            del st.session_state['chatbot']
+        if 'doc_processor' in st.session_state:
+            del st.session_state['doc_processor']
+            
+        logger.info("✅ Cleanup completed")
+    except Exception as e:
+        logger.error(f"Cleanup failed: {e}")
+
 def main():
     """Main application with RAG integration"""
     st.title("💬 Document-Aware Chat")
     
+    # Cleanup on session start
+    if 'initialized' not in st.session_state:
+        cleanup()
+        st.session_state.initialized = True
+    
     # Initialize chatbot
     if 'chatbot' not in st.session_state:
         st.session_state.chatbot = ChatBot()
+    
+    # Initialize document processor
+    if 'doc_processor' not in st.session_state:
+        st.session_state.doc_processor = DocumentProcessor()
     
     # Sidebar
     with st.sidebar:

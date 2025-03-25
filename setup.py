@@ -3,6 +3,7 @@ import sys
 import logging
 from pathlib import Path
 import shutil
+import os
 
 # Add project root to Python path
 project_root = Path(__file__).parent
@@ -35,9 +36,6 @@ def clean_chroma():
 def verify_components():
     """Verify all components are working"""
     try:
-        # Clean existing ChromaDB data
-        clean_chroma()
-        
         # Initialize components
         doc_engine = DocumentEngine()
         vector_engine = VectorEngine()
@@ -48,10 +46,11 @@ def verify_components():
         
         # Test vector engine
         assert vector_engine.store is not None, "Vector store not initialized"
-        assert vector_engine.collection is not None, "ChromaDB collection not initialized"
+        assert vector_engine.client is not None, "ChromaDB client not initialized"
         
-        # Test RAG engine
-        assert rag_engine.llm is not None, "LLM not initialized"
+        # Only reset if testing
+        if os.getenv("TESTING"):
+            vector_engine.reset_store()
         
         # Test basic vector store operation
         test_doc = "This is a test document"
@@ -59,6 +58,10 @@ def verify_components():
         results = vector_engine.store.similarity_search("test", k=1)
         assert len(results) > 0, "Vector store search failed"
         
+        # Test RAG engine
+        assert rag_engine.llm is not None, "LLM not initialized"
+        
+        logging.info("✅ All components verified successfully")
         return True
     except Exception as e:
         logging.error(f"Component verification failed: {e}")

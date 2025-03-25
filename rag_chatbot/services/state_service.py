@@ -1,13 +1,13 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 import logging
 
 logger = logging.getLogger(__name__)
 
 class StateService:
     def __init__(self):
-        self.document_states = {}
-        self.chat_history = []
-        self.processing_state = {}
+        self.document_states: Dict[str, str] = {}
+        self.chat_history: List[Dict[str, str]] = []
+        self.processing_state: Dict[str, Any] = {}
         logger.info("✅ State service initialized")
     
     def update_document_state(self, doc_id: str, state: str) -> None:
@@ -19,11 +19,11 @@ class StateService:
         """Get document state"""
         return self.document_states.get(doc_id)
     
-    def add_to_history(self, message: Dict) -> None:
+    def add_to_history(self, message: Dict[str, str]) -> None:
         """Add message to chat history"""
         self.chat_history.append(message)
     
-    def get_chat_history(self) -> List[Dict]:
+    def get_chat_history(self) -> List[Dict[str, str]]:
         """Get chat history"""
         return self.chat_history
     
