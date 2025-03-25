@@ -8,6 +8,16 @@ import time
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredImageLoader
 import tempfile
+from rag_chatbot.core.document_engine import DocumentEngine
+from rag_chatbot.core.vector_engine import VectorEngine
+from rag_chatbot.core.rag_engine import RAGEngine
+from rag_chatbot.services.cache_service import CacheService
+from rag_chatbot.services.state_service import StateService
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Must be first Streamlit command
 st.set_page_config(
@@ -215,13 +225,63 @@ def render_chat():
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.write(response)
 
+class ChatBot:
+    def __init__(self):
+        self.document_engine = DocumentEngine()
+        self.vector_engine = VectorEngine()
+        self.rag_engine = RAGEngine()
+        self.cache_service = CacheService()
+        self.state_service = StateService()
+    
+    async def process_document(self, file):
+        try:
+            # Process document
+            batch = await self.document_engine.process_document(file)
+            
+            # Generate and store vectors
+            await self.vector_engine.vectorize(batch)
+            
+            # Update state
+            await self.state_service.update_document_state(
+                file.name, 
+                "processed"
+            )
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error in document processing: {e}")
+            return False
+    
+    async def process_query(self, query: str) -> str:
+        try:
+            # Get response with context
+            response = await self.rag_engine.process_query(
+                query,
+                self.state_service.chat_history
+            )
+            
+            # Update history
+            await self.state_service.add_to_history({
+                "role": "user",
+                "content": query
+            })
+            await self.state_service.add_to_history({
+                "role": "assistant",
+                "content": response
+            })
+            
+            return response
+        except Exception as e:
+            logger.error(f"Error in query processing: {e}")
+            return str(e)
+
 def main():
     """Main application with RAG integration"""
     st.title("💬 Document-Aware Chat")
     
-    # Initialize document processor
-    if 'doc_processor' not in st.session_state:
-        st.session_state.doc_processor = DocumentProcessor()
+    # Initialize chatbot
+    if 'chatbot' not in st.session_state:
+        st.session_state.chatbot = ChatBot()
     
     # Sidebar
     with st.sidebar:
@@ -235,12 +295,11 @@ def main():
         )
         
         if uploaded_file:
-            try:
-                with st.spinner("Processing document..."):
-                    result = st.session_state.doc_processor.process_file(uploaded_file)
-                    st.success(result)
-            except Exception as e:
-                st.error(f"Error: {str(e)}")
+            with st.spinner("Processing document..."):
+                if st.session_state.chatbot.process_document(uploaded_file):
+                    st.success("✅ Document processed successfully")
+                else:
+                    st.error("❌ Error processing document")
         
         # Show processed files
         if st.session_state.doc_processor.processed_files:

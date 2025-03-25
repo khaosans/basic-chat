@@ -1,63 +1,75 @@
-import subprocess
+#!/usr/bin/env python3
 import sys
-import os
+import logging
+from pathlib import Path
+import shutil
 
-def install_requirements():
-    """Install required packages"""
-    requirements = [
-        "streamlit",
-        "langchain-community",
-        "chromadb",
-        "pillow",
-        "python-magic",
-        "pypdf",
-        "unstructured",
-        "sentence-transformers",
-    ]
-    
-    print("📦 Installing required packages...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install"] + requirements)
+# Add project root to Python path
+project_root = Path(__file__).parent
+sys.path.append(str(project_root))
 
-def setup_directories():
-    """Create necessary directories"""
-    directories = [
-        "./chroma_db",
-        "./temp",
-        "./uploads"
-    ]
-    
-    print("📁 Creating directories...")
-    for directory in directories:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+from rag_chatbot.core.document_engine import DocumentEngine
+from rag_chatbot.core.vector_engine import VectorEngine
+from rag_chatbot.core.rag_engine import RAGEngine
 
-def check_ollama():
-    """Check if Ollama is installed and running"""
-    import requests
-    
-    print("🤖 Checking Ollama installation...")
+def setup_logging():
+    """Configure logging"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('setup.log'),
+            logging.StreamHandler()
+        ]
+    )
+
+def clean_chroma():
+    """Clean existing ChromaDB data"""
     try:
-        response = requests.get("http://localhost:11434/api/version")
-        if response.status_code == 200:
-            print("✅ Ollama is running")
-            return True
-    except:
-        print("""❌ Ollama is not running. Please:
-        1. Install Ollama from https://ollama.ai
-        2. Run: ollama pull mistral
-        3. Run: ollama pull nomic-embed-text
-        4. Run: ollama pull llava""")
+        if Path("./chroma_db").exists():
+            shutil.rmtree("./chroma_db")
+            logging.info("✅ Cleaned existing ChromaDB data")
+    except Exception as e:
+        logging.error(f"Failed to clean ChromaDB: {e}")
+
+def verify_components():
+    """Verify all components are working"""
+    try:
+        # Clean existing ChromaDB data
+        clean_chroma()
+        
+        # Initialize components
+        doc_engine = DocumentEngine()
+        vector_engine = VectorEngine()
+        rag_engine = RAGEngine()
+        
+        # Test document engine
+        assert doc_engine.processor is not None, "Document processor not initialized"
+        
+        # Test vector engine
+        assert vector_engine.store is not None, "Vector store not initialized"
+        assert vector_engine.collection is not None, "ChromaDB collection not initialized"
+        
+        # Test RAG engine
+        assert rag_engine.llm is not None, "LLM not initialized"
+        
+        # Test basic vector store operation
+        test_doc = "This is a test document"
+        vector_engine.store.add_texts([test_doc])
+        results = vector_engine.store.similarity_search("test", k=1)
+        assert len(results) > 0, "Vector store search failed"
+        
+        return True
+    except Exception as e:
+        logging.error(f"Component verification failed: {e}")
         return False
 
 def main():
-    """Main setup function"""
-    print("🚀 Starting setup...")
-    
-    install_requirements()
-    setup_directories()
-    check_ollama()
-    
-    print("✨ Setup complete! Run 'streamlit run app.py' to start the application")
+    setup_logging()
+    if verify_components():
+        logging.info("✅ All components verified successfully")
+    else:
+        logging.error("❌ Component verification failed")
 
 if __name__ == "__main__":
     main() 
