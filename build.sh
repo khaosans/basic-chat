@@ -1,22 +1,37 @@
 #!/bin/bash
 
-# Exit on error
-set -e
+# Exit on error and undefined variables
+set -eu
 
-echo "🧹 Cleaning up previous builds..."
-rm -rf dist/ build/ .eggs/ *.egg-info
+# Function to print step information
+print_step() {
+    echo "\n🔄 $1..."
+}
 
-echo "📦 Installing dependencies..."
+# Function to handle errors
+handle_error() {
+    echo "\n❌ Error occurred in build process"
+    echo "Error on line $1"
+    exit 1
+}
+
+# Set up error handling
+trap 'handle_error $LINENO' ERR
+
+print_step "Cleaning up previous builds"
+rm -rf dist/ build/ .eggs/ *.egg-info __pycache__/ .pytest_cache/ .mypy_cache/
+
+print_step "Installing dependencies"
 poetry install
 
-echo "🔍 Running type checks..."
+print_step "Running type checks"
 poetry run mypy .
 
-echo "✨ Formatting code..."
+print_step "Formatting code"
 poetry run black .
 poetry run isort .
 
-echo "🧪 Running tests..."
+print_step "Running tests"
 poetry run pytest
 
-echo "�� Build complete!" 
+echo "\n✅ Build completed successfully!"
