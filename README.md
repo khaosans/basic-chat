@@ -193,6 +193,24 @@ cd basic-chat2
 poetry install
 ```
 
+### Build and Verify
+We provide an automated build script that handles dependency installation, code quality checks, and testing:
+
+```bash
+# Make the build script executable
+chmod +x build.sh
+
+# Run the build process
+./build.sh
+```
+
+The build script performs the following steps:
+1. Cleans up previous build artifacts
+2. Installs project dependencies
+3. Runs type checking with MyPy
+4. Formats code using Black and isort
+5. Executes test suite with pytest
+
 ### Launch the Application
 ```bash
 streamlit run app.py
