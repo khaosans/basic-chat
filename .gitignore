@@ -33,3 +33,6 @@ Thumbs.db
 # Project specific
 temp/
 uploads/
+
+# Text-to-speech generated files
+temp_*.mp3
