@@ -11,11 +11,29 @@ BasicChat is a privacy-focused AI assistant that runs locally using Ollama. It f
 
 ### Core Capabilities
 - Local LLM integration via Ollama
-- Context-aware conversations
-- Multi-modal support (text, documents, images)
+  - Configurable model selection (Mistral, LLaVA)
+  - Streaming responses for real-time interaction
+  - Memory-efficient processing
+- Advanced context management
+  - Long-term conversation memory
+  - Dynamic context window optimization
+  - Intelligent context pruning
+- Multi-modal support
+  - Text and document processing
+  - Image analysis and understanding
+  - Multiple document format support (PDF, TXT, MD)
 - RAG-powered document analysis
-- Efficient vector storage with ChromaDB
-- Smart tools for date/time operations and document processing
+  - Semantic search capabilities
+  - Automatic document chunking
+  - Efficient embedding generation
+- Vector storage with ChromaDB
+  - Fast similarity search
+  - Persistent knowledge storage
+  - Optimized index management
+- Smart system features
+  - Comprehensive error handling
+  - Custom tool integration
+  - Real-time system monitoring
 
 ## 🏗️ Architecture
 
