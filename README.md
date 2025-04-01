@@ -1,37 +1,21 @@
 # BasicChat: Your Intelligent Local AI Assistant
 
-## Project Overview
-BasicChat is a powerful, privacy-focused AI assistant that combines local language models with advanced features like RAG (Retrieval Augmented Generation), multi-modal processing, and intelligent tools. Built on Streamlit and powered by Ollama, it offers secure offline operation while delivering sophisticated capabilities including document analysis, image processing, and context-aware conversations - all with a modern, intuitive interface.
+## Overview
+BasicChat is a privacy-focused AI assistant that runs locally using Ollama. It features RAG (Retrieval Augmented Generation), multi-modal processing, and smart tools - all through a clean Streamlit interface.
 
-![Chat Interface: The original interface showcases our commitment to simplicity and usability, featuring a clean layout with intuitive message history, smart input suggestions, and real-time response indicators - demonstrating how we prioritize user experience from day one](assets/chat-interface.png)
+![Chat Interface: Clean layout with message history and real-time response indicators](assets/chat-interface.png)
 
-![Latest Interface: Our evolved interface represents a quantum leap in functionality, featuring seamless integration of RAG-powered document analysis, multi-modal processing with image understanding, and intelligent tool orchestration - all while maintaining the clean, user-friendly design that our users love](latest-interface.png)
-
-
+![Latest Interface: Enhanced with RAG-powered document analysis and multi-modal processing](latest-interface.png)
 
 ## 🌟 Key Features
 
-### 🤖 Core Chat Functionality
-- **Local LLM Integration**: Powered by Ollama for privacy-focused, offline-capable AI interactions
-- **Context-Aware Responses**: Maintains conversation history for coherent dialogue
-- **Multi-Modal Support**: Handles text, documents, and images seamlessly
-
-### 📚 Document Processing
-- **PDF Processing**: Extract and analyze content from PDF documents
-- **Image Analysis**: Process and understand images using LLaVA model
-- **RAG Implementation**: Enhances responses with relevant document context
-- **Efficient Storage**: ChromaDB for vector storage and quick retrieval
-
-### 🛠️ Smart Tools
-- **Date Tool**: Intelligent date-related queries and calculations
-- **Time Tool**: Timezone-aware time operations and conversions
-- **Document Tool**: Smart document summarization and analysis
-
-### 🎯 User Experience
-- **Clean Interface**: Streamlit-powered UI for intuitive interactions
-- **Text-to-Speech**: Audio output with playback controls
-- **Real-time Processing**: Fast response times with local processing
-- **File Management**: Automatic cleanup of temporary files
+### Core Capabilities
+- Local LLM integration via Ollama
+- Context-aware conversations
+- Multi-modal support (text, documents, images)
+- RAG-powered document analysis
+- Efficient vector storage with ChromaDB
+- Smart tools for date/time operations and document processing
 
 ## 🏗️ Architecture
 
@@ -52,15 +36,8 @@ graph TD
     C -->|Embeddings| E
     F -->|Response| D
     D -->|Final Output| B
-
-    %% Tooltips
-    click A "Primary user interaction point"
-    click B "Core application logic"
-    click C "Handles document processing and analysis"
-    click D "Manages chat interactions and responses"
-    click E "ChromaDB for vector storage"
-    click F "Local LLM integration"
 ```
+System architecture showing the flow of data through the application's core components.
 
 ### Document Processing Pipeline
 ```mermaid
@@ -83,6 +60,7 @@ graph LR
     E --> I[RAG Integration]:::output
     E --> J[Semantic Search]:::output
 ```
+Document and image processing workflow showing how different types of inputs are processed and stored.
 
 ### Memory Management System
 ```mermaid
@@ -106,171 +84,66 @@ graph TD
     G --> I[Response Generation]:::output
     H --> J[Knowledge Retrieval]:::output
 ```
+Memory management architecture showing how conversation context and knowledge are maintained.
 
-### Tool Integration Flow
+### Model Interaction Flow
 ```mermaid
 graph TD
     %% Color definitions
-    classDef input fill:#4285f4,stroke:#2956a3,color:white
+    classDef model fill:#4285f4,stroke:#2956a3,color:white
     classDef process fill:#34a853,stroke:#1e7e34,color:white
-    classDef tool fill:#fbbc05,stroke:#cc9a04,color:black
+    classDef data fill:#fbbc05,stroke:#cc9a04,color:black
     classDef output fill:#ea4335,stroke:#b92d22,color:white
 
-    A[User Query]:::input -->|Parse| B[Tool Registry]:::process
-    B -->|Match| C{Tool Selection}:::process
-    C -->|Date Query| D[Date Tool]:::tool
-    C -->|Time Query| E[Time Tool]:::tool
-    C -->|Document Query| F[Document Tool]:::tool
-    D -->|Format| G[Response Handler]:::output
-    E -->|Format| G
-    F -->|Format| G
-    G -->|Display| H[User Interface]:::output
-
-    %% Tooltips
-    click D "Handles date-related operations"
-    click E "Manages timezone conversions"
-    click F "Processes document operations"
-    click G "Formats tool outputs"
+    A[User Input]:::data --> B{Input Type}
+    B -->|Text| C[Mistral]:::model
+    B -->|Image| D[LLaVA]:::model
+    B -->|Document| E[Text Embeddings]:::model
+    
+    C --> F[Response Generation]:::process
+    D --> F
+    E --> G[Vector Database]:::data
+    
+    G -->|Context| F
+    F --> H[Final Output]:::output
 ```
+Model interaction diagram showing how different AI models process various types of inputs.
 
-## 🚀 Getting Started
-
-## 💻 System Requirements
-
-### Minimum Requirements
-- **CPU**: 4 cores (8 recommended for better performance)
-- **RAM**: 8GB (16GB recommended)
-- **Storage**: 10GB free space
-- **OS**: macOS 10.15+, Ubuntu 20.04+, or Windows 10/11
-- **Python**: 3.11 or higher
-- **GPU**: Optional but recommended for faster processing
+## 🚀 Quick Start
 
 ### Prerequisites
-1. Install [Ollama](https://ollama.ai) following the official guide for your OS
-2. Install Python 3.11+ from [python.org](https://python.org) or using your OS package manager
-3. Install Git from [git-scm.com](https://git-scm.com)
+1. Install [Ollama](https://ollama.ai)
+2. Python 3.11+
+3. Git
 
 ### Required Models
-Pull these models using Ollama:
 ```bash
-# Core language model
-ollama pull mistral
-
-# Embedding model for document processing
-ollama pull nomic-embed-text
-
-# Vision model for image analysis
-ollama pull llava
+ollama pull mistral        # Core language model
+ollama pull nomic-embed-text   # Embedding model
+ollama pull llava         # Vision model
 ```
 
-## 🚀 Installation Guide
-
-### Using pip (Recommended)
+### Installation
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/basic-chat2.git
-cd basic-chat2
+# Clone repository
+git clone https://github.com/khaosans/basic-chat-template.git
+cd basic-chat-template
 
-# Create and activate virtual environment
+# Set up environment
 python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+source venv/bin/activate  # Windows: .\venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the setup script
-python setup.py
-```
-
-### Using Poetry (Alternative)
-```bash
-# Install Poetry if not already installed
-curl -sSL https://install.python-poetry.org | python3 -
-
-# Clone and setup
-git clone https://github.com/yourusername/basic-chat2.git
-cd basic-chat2
-poetry install
-```
-
-### Build and Verify
-We provide an automated build script that handles dependency installation, code quality checks, and testing:
-
-```bash
-# Make the build script executable
-chmod +x build.sh
-
-# Run the build process
-./build.sh
-```
-
-The build script performs the following steps:
-1. Cleans up previous build artifacts
-2. Installs project dependencies
-3. Runs type checking with MyPy
-4. Formats code using Black and isort
-5. Executes test suite with pytest
-
-### Launch the Application
-```bash
+# Start the app
 streamlit run app.py
 ```
-The application will be available at `http://localhost:8501`
 
 ## 🔧 Troubleshooting
-
-### Common Issues
-
-1. **Ollama Connection Error**
-   ```
-   Solution: Ensure Ollama is running with 'ollama serve'
-   ```
-
-2. **Model Download Issues**
-   ```
-   Solution: Check internet connection and retry with 'ollama pull [model]'
-   ```
-
-3. **Memory Issues**
-   ```
-   Solution: Close other applications or increase swap space
-   ```
-
-4. **Port Conflicts**
-   ```
-   Solution: Kill process using port 8501 or specify different port:
-   streamlit run app.py --server.port [PORT]
-   ```
-
-## 🛣️ Roadmap
-
-### Upcoming Features
-- [ ] Multi-model switching capability
-- [ ] Advanced memory management for longer conversations
-- [ ] Custom tool creation interface
-- [ ] Enhanced document processing with more formats
-- [ ] Collaborative chat sessions
-- [ ] API endpoint for headless operation
-
-### Performance Improvements
-- [ ] Optimized vector storage and retrieval
-- [ ] Improved context window management
-- [ ] Better prompt engineering for RAG
-
-## 🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-### Development Guidelines
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+- Ensure Ollama is running (`ollama serve`)
+- Check model downloads (`ollama list`)
+- Verify port 8501 is available
 
 ## 📝 License
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-- Ollama team for the amazing local LLM runtime
-- Streamlit team for the powerful UI framework
-- All contributors and users of this project
+MIT License - See LICENSE file for details.
