@@ -3,7 +3,9 @@
 ## Project Overview
 BasicChat is a powerful, privacy-focused AI assistant that combines local language models with advanced features like RAG (Retrieval Augmented Generation), multi-modal processing, and intelligent tools. Built on Streamlit and powered by Ollama, it offers secure offline operation while delivering sophisticated capabilities including document analysis, image processing, and context-aware conversations - all with a modern, intuitive interface.
 
-![Chat Interface: The original interface showcasing the clean, intuitive chat layout with message history and input area](assets/chat-interface.png)
+![Chat Interface: The original interface showcases our commitment to simplicity and usability, featuring a clean layout with intuitive message history, smart input suggestions, and real-time response indicators - demonstrating how we prioritize user experience from day one](assets/chat-interface.png)
+
+![Latest Interface: Our evolved interface represents a quantum leap in functionality, featuring seamless integration of RAG-powered document analysis, multi-modal processing with image understanding, and intelligent tool orchestration - all while maintaining the clean, user-friendly design that our users love](latest-interface.png)
 
 
 
@@ -36,28 +38,99 @@ BasicChat is a powerful, privacy-focused AI assistant that combines local langua
 ### System Overview
 ```mermaid
 graph TD
-    A[User Interface] -->|Query/Input| B[Streamlit App]
-    B -->|Document Upload| C[Document Processor]
-    B -->|Chat Query| D[Chat Engine]
-    D -->|RAG Query| E[Vector Store]
-    D -->|LLM Request| F[Ollama API]
+    %% Color definitions
+    classDef primary fill:#4285f4,stroke:#2956a3,color:white
+    classDef secondary fill:#34a853,stroke:#1e7e34,color:white
+    classDef accent fill:#ea4335,stroke:#b92d22,color:white
+    classDef storage fill:#fbbc05,stroke:#cc9a04,color:black
+
+    A[User Interface]:::primary -->|Query/Input| B[Streamlit App]:::primary
+    B -->|Document Upload| C[Document Processor]:::secondary
+    B -->|Chat Query| D[Chat Engine]:::accent
+    D -->|RAG Query| E[Vector Store]:::storage
+    D -->|LLM Request| F[Ollama API]:::accent
     C -->|Embeddings| E
     F -->|Response| D
     D -->|Final Output| B
+
+    %% Tooltips
+    click A "Primary user interaction point"
+    click B "Core application logic"
+    click C "Handles document processing and analysis"
+    click D "Manages chat interactions and responses"
+    click E "ChromaDB for vector storage"
+    click F "Local LLM integration"
+```
+
+### Document Processing Pipeline
+```mermaid
+graph LR
+    %% Color definitions
+    classDef input fill:#4285f4,stroke:#2956a3,color:white
+    classDef process fill:#34a853,stroke:#1e7e34,color:white
+    classDef storage fill:#fbbc05,stroke:#cc9a04,color:black
+    classDef output fill:#ea4335,stroke:#b92d22,color:white
+
+    A[Document Input]:::input --> B[Text Extraction]:::process
+    B --> C[Chunking]:::process
+    C --> D[Embedding Generation]:::process
+    D --> E[Vector Storage]:::storage
+    
+    F[Image Input]:::input --> G[LLaVA Analysis]:::process
+    G --> H[Feature Extraction]:::process
+    H --> E
+    
+    E --> I[RAG Integration]:::output
+    E --> J[Semantic Search]:::output
+```
+
+### Memory Management System
+```mermaid
+graph TD
+    %% Color definitions
+    classDef memory fill:#4285f4,stroke:#2956a3,color:white
+    classDef process fill:#34a853,stroke:#1e7e34,color:white
+    classDef storage fill:#fbbc05,stroke:#cc9a04,color:black
+    classDef output fill:#ea4335,stroke:#b92d22,color:white
+
+    A[Chat History]:::memory --> B{Memory Manager}:::process
+    C[Context Window]:::memory --> B
+    D[Vector Store]:::storage --> B
+    
+    B --> E[Short-term Memory]:::memory
+    B --> F[Long-term Memory]:::memory
+    
+    E --> G[Active Context]:::output
+    F --> H[Persistent Storage]:::storage
+    
+    G --> I[Response Generation]:::output
+    H --> J[Knowledge Retrieval]:::output
 ```
 
 ### Tool Integration Flow
 ```mermaid
 graph TD
-    A[User Query] -->|Parse| B[Tool Registry]
-    B -->|Match| C{Tool Selection}
-    C -->|Date Query| D[Date Tool]
-    C -->|Time Query| E[Time Tool]
-    C -->|Document Query| F[Document Tool]
-    D -->|Format| G[Response Handler]
+    %% Color definitions
+    classDef input fill:#4285f4,stroke:#2956a3,color:white
+    classDef process fill:#34a853,stroke:#1e7e34,color:white
+    classDef tool fill:#fbbc05,stroke:#cc9a04,color:black
+    classDef output fill:#ea4335,stroke:#b92d22,color:white
+
+    A[User Query]:::input -->|Parse| B[Tool Registry]:::process
+    B -->|Match| C{Tool Selection}:::process
+    C -->|Date Query| D[Date Tool]:::tool
+    C -->|Time Query| E[Time Tool]:::tool
+    C -->|Document Query| F[Document Tool]:::tool
+    D -->|Format| G[Response Handler]:::output
     E -->|Format| G
     F -->|Format| G
-    G -->|Display| H[User Interface]
+    G -->|Display| H[User Interface]:::output
+
+    %% Tooltips
+    click D "Handles date-related operations"
+    click E "Manages timezone conversions"
+    click F "Processes document operations"
+    click G "Formats tool outputs"
 ```
 
 ## 🚀 Getting Started
