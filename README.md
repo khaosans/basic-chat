@@ -3,6 +3,8 @@
 ## Project Overview
 BasicChat is a powerful, privacy-focused AI assistant that combines local language models with advanced features like RAG (Retrieval Augmented Generation), multi-modal processing, and intelligent tools. Built on Streamlit and powered by Ollama, it offers secure offline operation while delivering sophisticated capabilities including document analysis, image processing, and context-aware conversations - all with a modern, intuitive interface.
 
+![Chat Interface](assets/chat-interface.png)
+
 ## 🌟 Key Features
 
 ### 🤖 Core Chat Functionality
@@ -146,11 +148,6 @@ The application will be available at `http://localhost:8501`
    Solution: Kill process using port 8501 or specify different port:
    streamlit run app.py --server.port [PORT]
    ```
-
-### Getting Help
-- Check the [Issues](https://github.com/yourusername/basic-chat2/issues) page
-- Join our [Discord Community](https://discord.gg/yourdiscord)
-- Read the [FAQ](https://github.com/yourusername/basic-chat2/wiki/FAQ)
 
 ## 🛣️ Roadmap
 
