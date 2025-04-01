@@ -3,7 +3,9 @@
 ## Project Overview
 BasicChat is a powerful, privacy-focused AI assistant that combines local language models with advanced features like RAG (Retrieval Augmented Generation), multi-modal processing, and intelligent tools. Built on Streamlit and powered by Ollama, it offers secure offline operation while delivering sophisticated capabilities including document analysis, image processing, and context-aware conversations - all with a modern, intuitive interface.
 
-![Chat Interface](assets/chat-interface.png)
+![Chat Interface: The original interface showcasing the clean, intuitive chat layout with message history and input area](assets/chat-interface.png)
+
+
 
 ## 🌟 Key Features
 
