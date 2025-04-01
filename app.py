@@ -18,22 +18,23 @@ st.set_page_config(
 )
 
 # Simple utility functions
-def check_ollama_server():
-    """Check if Ollama server is running"""
-    try:
-        import requests
-        response = requests.get("http://localhost:11434/api/version")
-        return response.status_code == 200
-    except:
-        return False
+def clear_temp_audio():
+    """Remove temporary audio files created by TTS"""
+    import glob, os
+    for f in glob.glob("/tmp/audio_*.mp3"):
+        try:
+            os.remove(f)
+        except Exception as e:
+            print(f"Error removing temp audio file {f}: {e}")
 
 def clear_session():
-    """Clear session state and stored data"""
+    """Clear session state and stored data, including temporary TTS files"""
     if 'messages' in st.session_state:
         st.session_state.messages.clear()
     if os.path.exists("./chroma_db"):
         import shutil
         shutil.rmtree("./chroma_db")
+    clear_temp_audio()
 
 # Initialize session state
 if 'messages' not in st.session_state:
@@ -149,7 +150,6 @@ class DocumentProcessor:
             print(f"Error getting context: {e}")
             return ""
 
-# Update chat processing
 def process_message(prompt: str) -> str:
     """Process chat message with RAG integration"""
     try:
@@ -158,20 +158,20 @@ def process_message(prompt: str) -> str:
         if hasattr(st.session_state, 'doc_processor'):
             context = st.session_state.doc_processor.get_relevant_context(prompt)
 
-        # Prepare messages with context
+        # Prepare messages with context if available
         if context:
             messages = [
                 SystemMessage(content="""You are a helpful AI assistant. When answering:
-                1. Use the provided context to give accurate information
-                2. Cite specific parts of the context when relevant
-                3. If the context doesn't fully answer the question, say so
-                4. Be clear about what information comes from the context vs. your general knowledge"""),
+1. Use the provided context to give accurate information
+2. Cite specific parts of the context when relevant
+3. If the context doesn't fully answer the question, say so
+4. Be clear about what information comes from the context vs. your general knowledge"""),
                 HumanMessage(content=f"""Context information:
-                {context}
-                
-                User question: {prompt}
-                
-                Please provide a detailed answer based on the context above and your knowledge.""")
+{context}
+
+User question: {prompt}
+
+Please provide a detailed answer based on the context above and your knowledge.""")
             ]
         else:
             messages = [
@@ -179,10 +179,10 @@ def process_message(prompt: str) -> str:
                 HumanMessage(content=prompt)
             ]
 
-        # Get response
+        # Get response from the LLM
         response = llm.invoke(messages)
-        
-        # Format response
+ 
+        # Format and return the assistant's response
         if context:
             return f"{response.content}\n\n_Response based on available document context_"
         return response.content
@@ -191,22 +191,65 @@ def process_message(prompt: str) -> str:
         st.error(f"Error: {str(e)}")
         return "I encountered an error. Please try again."
 
-def render_message(message):
-    """Render a single message"""
+# Replace the text_to_speech function with the following implementation using gTTS
+def text_to_speech(text):
+    """Convert text to speech using gTTS and return the audio file path."""
+    from gtts import gTTS
+    import os
+    import time
+
+    audio_path = f"/tmp/audio_{hash(text)}.mp3"
+    
+    # Check if the audio file already exists
+    if not os.path.exists(audio_path):
+        try:
+            # Generate the speech using gTTS
+            tts = gTTS(text=text, lang='en')
+            tts.save(audio_path)
+            
+            # Verify that the file was created and has content
+            if not os.path.exists(audio_path) or os.path.getsize(audio_path) == 0:
+                raise Exception(f"gTTS failed to generate audio file: {audio_path}")
+        
+        except Exception as e:
+            st.error(f"gTTS error: {e}")
+            return None  # Return None to indicate failure
+    
+    return audio_path
+
+def get_audio_html(audio_file):
+    """Generate HTML for audio playback"""
+    return f"""
+    <audio controls>
+        <source src="{audio_file}" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    """
+
+def render_message(message, idx):
+    """Render a single message with voice playback for all assistant responses"""
     with st.chat_message(message["role"]):
         st.write(message["content"])
+        if message["role"] == "assistant":
+            if st.button("🔊 Play Voice", key=f"audio_{idx}"):
+                audio_file = text_to_speech(message["content"])
+                if audio_file:  # Check if audio_file is not None
+                    # Use st.audio to render the audio player instead of st.markdown
+                    st.audio(audio_file, format="audio/mpeg")
+                else:
+                    st.error("Failed to generate audio for this message.")
 
 def render_chat():
     """Render chat interface"""
-    # Display chat messages
-    for message in st.session_state.messages:
-        render_message(message)
+    # Display chat messages with unique keys for voice button playback
+    for idx, message in enumerate(st.session_state.messages):
+        render_message(message, idx)
     
     # Chat input
     if prompt := st.chat_input("Type your message..."):
-        # Add user message
+        # Add user message and render it
         st.session_state.messages.append({"role": "user", "content": prompt})
-        render_message({"role": "user", "content": prompt})
+        render_message({"role": "user", "content": prompt}, len(st.session_state.messages)-1)
         
         # Get and render assistant response
         with st.chat_message("assistant"):
@@ -214,6 +257,7 @@ def render_chat():
                 response = process_message(prompt)
                 st.session_state.messages.append({"role": "assistant", "content": response})
                 st.write(response)
+        st.rerun()
 
 def main():
     """Main application with RAG integration"""
