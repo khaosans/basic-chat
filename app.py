@@ -3,19 +3,20 @@ from langchain_community.chat_models import ChatOllama
 from langchain.schema import HumanMessage, SystemMessage
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain.vectorstores import Chroma
+from langchain.tools import BaseTool
+from langchain.agents import AgentExecutor, create_structured_chat_agent, AgentType
+from langchain.memory import ConversationBufferMemory
+from langchain.prompts import ChatPromptTemplate
+import requests
 import os
 import time
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader, UnstructuredImageLoader
 import tempfile
-
-# Must be first Streamlit command
-st.set_page_config(
-    page_title="AI Document Assistant",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+from typing import Optional, Dict, Any, Type, List
+from pydantic import BaseModel, Field
+import subprocess
+from datetime import datetime, timedelta
 
 # Simple utility functions
 def clear_temp_audio():
@@ -36,6 +37,55 @@ def clear_session():
         shutil.rmtree("./chroma_db")
     clear_temp_audio()
 
+def ensure_models_available(models: List[str]) -> bool:
+    """Ensure required models are available in Ollama"""
+    try:
+        for model in models:
+            result = subprocess.run(
+                ['ollama', 'list'], 
+                capture_output=True, 
+                text=True
+            )
+            if model not in result.stdout:
+                st.info(f"Pulling {model} model... This may take a few minutes.")
+                subprocess.run(['ollama', 'pull', model], check=True)
+        return True
+    except Exception as e:
+        st.error(f"Failed to initialize models: {str(e)}")
+        return False
+
+# Update to use only llama2
+REQUIRED_MODELS = ["llama2"]
+
+# Must be first Streamlit command
+st.set_page_config(
+    page_title="AI Document Assistant",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Check models availability
+if not ensure_models_available(REQUIRED_MODELS):
+    st.error("Failed to initialize required models. Please ensure Ollama is running and try again.")
+    st.stop()
+
+# Initialize LLM globally with error handling
+try:
+    llm = ChatOllama(
+        model="llama2",
+        temperature=0.7,
+        base_url="http://localhost:11434",
+        model_kwargs={
+            "num_ctx": 2048,  # Reduced context window
+            "num_gpu": 1,     # Use single GPU
+            "num_thread": 6   # Adjust based on CPU cores
+        }
+    )
+except Exception as e:
+    st.error(f"Failed to initialize LLM: {str(e)}")
+    st.stop()
+
 # Initialize session state
 if 'messages' not in st.session_state:
     st.session_state.messages = [
@@ -49,41 +99,146 @@ if 'messages' not in st.session_state:
         }
     ]
 
-# Initialize LLM
-llm = ChatOllama(
-    model="mistral",
-    temperature=0.7,
-    base_url="http://localhost:11434"
-)
+# Add constants for supported sports and default scope
+SUPPORTED_SPORTS = {
+    "soccer": ["EPL", "La Liga", "Champions League", "Serie A"],
+    "basketball": ["NBA", "EuroLeague"],
+    "tennis": ["ATP", "WTA", "Grand Slams"]
+}
 
-# Initialize embeddings
-embeddings = OllamaEmbeddings(
-    model="nomic-embed-text",
-    base_url="http://localhost:11434"
-)
+DEFAULT_SPORTS = ["soccer", "basketball", "tennis"]
+
+# Tool definition
+class SportsDataTool(BaseTool):
+    name: str = Field(default="sports_data", description="Tool name")
+    description: str = Field(
+        default="Get real-time sports data for soccer, basketball, and tennis games.",
+        description="Tool description"
+    )
+    
+    def _run(self, query: Optional[str] = None) -> Dict[str, Any]:
+        """Run sports data query with filtering by sport and date."""
+        try:
+            params = self._parse_query(query)
+            response = requests.get(
+                "https://overtimemarketsv2.xyz/overtime-v2/games-info",
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+            data = response.json()
+            return self._format_games(data)
+        except Exception as e:
+            return {"error": f"Failed to fetch sports data: {str(e)}"}
+
+    def _parse_query(self, query: Optional[str]) -> Dict[str, Any]:
+        """Parse query for date and sport filters."""
+        params = {
+            "date": datetime.now().strftime("%Y-%m-%d"),
+            "sports": DEFAULT_SPORTS
+        }
+        
+        if query:
+            if "yesterday" in query.lower():
+                params["date"] = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+            elif "tomorrow" in query.lower():
+                params["date"] = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+            
+            for sport in SUPPORTED_SPORTS.keys():
+                if sport in query.lower():
+                    params["sports"] = [sport]
+                    break
+        
+        return params
+
+    def _format_games(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Format games data for display."""
+        formatted = {
+            "games": [],
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "sports_included": []
+        }
+        
+        for game_id, game in data.items():
+            game_info = {
+                "sport": game.get("sport", "Unknown"),
+                "league": game.get("tournamentName", "Unknown"),
+                "status": game["gameStatus"],
+                "teams": [
+                    {
+                        "name": team["name"],
+                        "score": team.get("score", "N/A"),  # Use get to handle missing 'score'
+                        "is_home": team["isHome"]
+                    }
+                    for team in game["teams"]
+                ]
+            }
+            formatted["games"].append(game_info)
+            if game.get("sport") not in formatted["sports_included"]:
+                formatted["sports_included"].append(game.get("sport"))
+                
+        return formatted
 
 # Update document processing
 class DocumentProcessor:
     def __init__(self):
-        self.embeddings = OllamaEmbeddings(
-            model="nomic-embed-text",
-            base_url="http://localhost:11434"
-        )
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len,
-        )
-        self.processed_files = []
-        
-        # Initialize vectorstore if exists
-        if os.path.exists("./chroma_db"):
-            self.vectorstore = Chroma(
-                persist_directory="./chroma_db",
-                embedding_function=self.embeddings
+        try:
+            self.llm = llm
+            self.tools = [SportsDataTool()]
+            
+            # Fixed prompt template with properly escaped JSON example
+            self.prompt = ChatPromptTemplate.from_messages([
+                ("system", """You are a helpful assistant who can:
+                1. Answer questions about uploaded documents
+                2. Get sports data when asked
+                3. Help with general questions
+
+                When using tools, follow this format:
+                Action: tool_name
+                Input: {{"param": "value"}}
+                
+                Available tools: {tools}
+                Tool names: {tool_names}"""),
+                ("human", "{input}"),
+                ("assistant", "{agent_scratchpad}")
+            ])
+            
+            # Simpler memory configuration
+            self.memory = ConversationBufferMemory(
+                memory_key="chat_history",
+                return_messages=True
             )
-        else:
-            self.vectorstore = None
+            
+            # Updated agent configuration
+            self.agent = create_structured_chat_agent(
+                llm=self.llm,
+                tools=self.tools,
+                prompt=self.prompt,
+            )
+            
+            self.agent_executor = AgentExecutor(
+                agent=self.agent,
+                tools=self.tools,
+                memory=self.memory,
+                verbose=True,
+                handle_parsing_errors=True,
+                max_iterations=2,
+                early_stopping_method="generate"
+            )
+            
+            self.processed_files = []
+            
+            # Initialize vectorstore if exists
+            if os.path.exists("./chroma_db"):
+                self.vectorstore = Chroma(
+                    persist_directory="./chroma_db",
+                    embedding_function=self.embeddings
+                )
+            else:
+                self.vectorstore = None
+        except Exception as e:
+            st.error(f"Failed to initialize Document Processor: {str(e)}")
+            raise
 
     def process_file(self, file) -> None:
         """Process and store file with proper chunking and embedding"""
@@ -150,42 +305,48 @@ class DocumentProcessor:
             print(f"Error getting context: {e}")
             return ""
 
+    def process_message(self, prompt: str) -> str:
+        """Process user messages and handle sports queries."""
+        try:
+            prompt_lower = prompt.lower().strip()
+            
+            if "sports" in prompt_lower or "games" in prompt_lower:
+                sports_tool = SportsDataTool()
+                sports_data = sports_tool._run(prompt_lower)
+                
+                if "error" in sports_data:
+                    return f"Sorry, I couldn't fetch sports data: {sports_data['error']}"
+                
+                response = ["🎮 Available Games Today:"]
+                for game in sports_data["games"]:
+                    home_team = next(t for t in game["teams"] if t["is_home"])
+                    away_team = next(t for t in game["teams"] if not t["is_home"])
+                    
+                    game_str = (
+                        f"\n{game['sport']} - {game['league']}\n"
+                        f"{home_team['name']} {home_team['score']} vs "
+                        f"{away_team['name']} {away_team['score']}\n"
+                        f"Status: {game['status']}"
+                    )
+                    response.append(game_str)
+                
+                return "\n".join(response)
+            
+            # Handle other queries through the agent
+            response = self.agent_executor.invoke({"input": prompt})
+            return response.get("output", "I couldn't process that request. Please try again.")
+        except Exception as e:
+            return f"I'm here to help! Please try asking your question in a different way. Error: {str(e)}"
+
 def process_message(prompt: str) -> str:
     """Process chat message with RAG integration"""
     try:
-        # Get document context if available
-        context = ""
-        if hasattr(st.session_state, 'doc_processor'):
-            context = st.session_state.doc_processor.get_relevant_context(prompt)
-
-        # Prepare messages with context if available
-        if context:
-            messages = [
-                SystemMessage(content="""You are a helpful AI assistant. When answering:
-1. Use the provided context to give accurate information
-2. Cite specific parts of the context when relevant
-3. If the context doesn't fully answer the question, say so
-4. Be clear about what information comes from the context vs. your general knowledge"""),
-                HumanMessage(content=f"""Context information:
-{context}
-
-User question: {prompt}
-
-Please provide a detailed answer based on the context above and your knowledge.""")
-            ]
-        else:
-            messages = [
-                SystemMessage(content="You are a helpful AI assistant."),
-                HumanMessage(content=prompt)
-            ]
-
-        # Get response from the LLM
-        response = llm.invoke(messages)
- 
-        # Format and return the assistant's response
-        if context:
-            return f"{response.content}\n\n_Response based on available document context_"
-        return response.content
+        # Get document processor instance
+        doc_processor = st.session_state.doc_processor
+        
+        # Use the agent to process the message
+        response = doc_processor.process_message(prompt)
+        return response
 
     except Exception as e:
         st.error(f"Error: {str(e)}")
@@ -270,6 +431,15 @@ def main():
     # Sidebar
     with st.sidebar:
         st.title("📚 Documents")
+        
+        # Model status indicators
+        st.write("### 🤖 Model Status")
+        for model in REQUIRED_MODELS:
+            try:
+                subprocess.run(['ollama', 'list'], capture_output=True, check=True)
+                st.success(f"✅ {model}")
+            except:
+                st.error(f"❌ {model}")
         
         # File upload
         uploaded_file = st.file_uploader(
