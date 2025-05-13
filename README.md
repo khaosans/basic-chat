@@ -7,9 +7,10 @@ BasicChat is a privacy-focused AI assistant that runs locally using Ollama. It f
 
 ![Latest Interface: Enhanced with RAG-powered document analysis and multi-modal processing](latest-interface.png)
 
+# BasicChat: Your Intelligent Local AI Assistant
 ## 🌟 Key Features
-
 ### Core Capabilities
+
 - Local LLM integration via Ollama
   - Configurable model selection (Mistral, LLaVA)
   - Streaming responses for real-time interaction
@@ -35,9 +36,10 @@ BasicChat is a privacy-focused AI assistant that runs locally using Ollama. It f
   - Custom tool integration
   - Real-time system monitoring
 
+# BasicChat: Your Intelligent Local AI Assistant
 ## 🏗️ Architecture
-
 ### System Overview
+
 ```mermaid
 graph TD
     %% Color definitions
