@@ -1,5 +1,9 @@
 # System Architecture
 
+[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md)
+
+---
+
 ## Overview
 BasicChat uses a modern async architecture with intelligent caching, advanced reasoning capabilities, and multi-modal processing through a clean Streamlit interface.
 
@@ -179,4 +183,29 @@ graph LR
 ### External Services
 - **DuckDuckGo**: Web search (no API key required)
 - **Redis**: Optional distributed caching
-- **Tesseract**: OCR for image processing 
+- **Tesseract**: OCR for image processing
+
+## 🔗 Related Documentation
+
+- **[Installation Guide](INSTALLATION.md)** - Setup and configuration
+- **[Features Overview](FEATURES.md)** - Detailed feature documentation
+- **[Development Guide](DEVELOPMENT.md)** - Contributing and development
+- **[Production Roadmap](ROADMAP.md)** - Future development plans
+- **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
+
+## 📚 References
+
+### Architecture Patterns
+- **Async/Await Pattern**: [Microsoft Documentation](https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns)
+- **Caching Best Practices**: [Redis Documentation](https://redis.io/topics/optimization)
+- **Rate Limiting**: [Cloudflare Documentation](https://developers.cloudflare.com/fundamentals/get-started/concepts/rate-limiting)
+
+### Core Technologies
+- **Ollama**: [https://ollama.ai](https://ollama.ai) - Local large language model server
+- **Streamlit**: [https://streamlit.io](https://streamlit.io) - Web application framework
+- **LangChain**: [https://langchain.com](https://langchain.com) - LLM application framework
+- **ChromaDB**: [https://chromadb.ai](https://chromadb.ai) - Vector database
+
+---
+
+[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 

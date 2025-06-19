@@ -1,5 +1,12 @@
 # Development Guide
 
+[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Architecture ←](ARCHITECTURE.md) | [Roadmap →](ROADMAP.md)
+
+---
+
+## Overview
+This guide provides comprehensive information for developers who want to contribute to BasicChat, including setup, testing, development workflows, and best practices.
+
 ## Quick Start
 
 ### Setup Development Environment
@@ -284,4 +291,30 @@ docker run -p 8501:8501 basic-chat
 - Include reproduction steps
 - Provide system information
 - Attach relevant logs
-- Describe expected behavior 
+- Describe expected behavior
+
+## 🔗 Related Documentation
+
+- **[Installation Guide](INSTALLATION.md)** - Setup and configuration
+- **[Features Overview](FEATURES.md)** - Detailed feature documentation
+- **[System Architecture](ARCHITECTURE.md)** - Technical design and components
+- **[Production Roadmap](ROADMAP.md)** - Future development plans
+- **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
+
+## 📚 References
+
+### Development Tools
+- **pytest**: [https://pytest.org](https://pytest.org) - Testing framework for Python
+- **pytest-asyncio**: [https://pytest-asyncio.readthedocs.io](https://pytest-asyncio.readthedocs.io) - Async support for pytest
+- **Pydantic**: [https://pydantic.dev](https://pydantic.dev) - Data validation using Python type annotations
+- **Black**: [https://black.readthedocs.io](https://black.readthedocs.io) - Code formatter
+
+### Best Practices
+- **SOLID Principles**: Clean Architecture by Robert C. Martin
+- **Async Programming**: Python asyncio documentation
+- **Testing**: Test-Driven Development by Kent Beck
+- **Code Quality**: Clean Code by Robert C. Martin
+
+---
+
+[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Architecture ←](ARCHITECTURE.md) | [Roadmap →](ROADMAP.md) 

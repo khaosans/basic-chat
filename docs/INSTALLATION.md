@@ -1,56 +1,82 @@
 # Installation Guide
 
+[← Back to README](../README.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md)
+
+---
+
+## Overview
+This guide provides detailed setup instructions for BasicChat, including prerequisites, installation steps, configuration options, and troubleshooting.
+
 ## Prerequisites
 
 ### System Requirements
 - **Python**: 3.11 or higher
+- **Ollama**: Latest version from [ollama.ai](https://ollama.ai)
 - **Git**: For cloning the repository
-- **Ollama**: [Install Ollama](https://ollama.ai) - Local large language model server
-- **Memory**: Minimum 8GB RAM (16GB+ recommended for larger models)
-- **Storage**: 10GB+ free space for models and dependencies
+- **Memory**: Minimum 8GB RAM (16GB+ recommended)
+- **Storage**: 10GB+ free space for models
 
-### Ollama Installation
-```bash
-# macOS
-brew install ollama
-
-# Linux
-curl -fsSL https://ollama.ai/install.sh | sh
-
-# Windows
-# Download from https://ollama.ai/download
-```
-
-## Quick Start
-
-### 1. Install Required Models
+### Required Models
 ```bash
 # Core models for basic functionality
-ollama pull mistral              # Primary reasoning model (3.8GB)
-ollama pull nomic-embed-text     # Embedding model for RAG (1.2GB)
+ollama pull mistral              # Primary reasoning model
+ollama pull nomic-embed-text     # Embedding model for RAG
 
 # Optional models for enhanced capabilities
-ollama pull llava               # Vision model for image analysis (4.7GB)
-ollama pull codellama           # Code generation and analysis (6.7GB)
-ollama pull llama2              # Alternative base model (3.8GB)
+ollama pull llava               # Vision model for image analysis
+ollama pull codellama           # Code generation and analysis
 ```
 
-### 2. Clone and Setup
+## Installation Steps
+
+### 1. Clone Repository
 ```bash
-# Clone the repository
 git clone https://github.com/khaosans/basic-chat-template.git
 cd basic-chat-template
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: .\venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
 ```
 
-### 3. Configure Environment (Optional)
+### 2. Create Virtual Environment
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+source venv/bin/activate  # macOS/Linux
+# OR
+.\venv\Scripts\activate   # Windows
+```
+
+### 3. Install Dependencies
+```bash
+# Install core dependencies
+pip install -r requirements.txt
+
+# Install development dependencies (optional)
+pip install pytest pytest-asyncio pytest-cov black flake8 mypy
+```
+
+### 4. Start Ollama Service
+```bash
+# Start Ollama in background
+ollama serve &
+
+# Verify Ollama is running
+ollama list
+```
+
+### 5. Launch Application
+```bash
+# Start BasicChat
+streamlit run app.py
+```
+
+The application will be available at `http://localhost:8501`
+
+## Configuration
+
+### Environment Variables
 Create `.env.local` for custom configuration:
+
 ```bash
 # Ollama Configuration
 OLLAMA_API_URL=http://localhost:11434/api
@@ -69,70 +95,46 @@ REDIS_ENABLED=false
 # Logging
 LOG_LEVEL=INFO
 ENABLE_STRUCTURED_LOGGING=true
-
-# Vector Store Configuration
-VECTORSTORE_DIR=./chroma_db
-EMBEDDING_MODEL=nomic-embed-text
-
-# LLM Parameters
-TEMPERATURE=0.7
-MAX_TOKENS=2048
 ```
-
-### 4. Start the Application
-```bash
-# Start Ollama service (if not running)
-ollama serve &
-
-# Launch BasicChat
-streamlit run app.py
-```
-
-The application will be available at `http://localhost:8501`
-
-## Advanced Configuration
 
 ### Performance Tuning
 ```bash
-# Increase rate limits for high-traffic scenarios
+# High-traffic scenarios
 RATE_LIMIT=20
 RATE_LIMIT_PERIOD=1
 
-# Adjust caching for memory-constrained environments
+# Memory-constrained environments
 CACHE_MAXSIZE=500
 CACHE_TTL=1800
 
-# Optimize timeouts for your network
+# Network optimization
 REQUEST_TIMEOUT=60
 CONNECT_TIMEOUT=10
-MAX_RETRIES=5
 ```
 
-### Model Selection
-```bash
-# Use different models for specific tasks
-OLLAMA_MODEL=llama2          # Alternative base model
-OLLAMA_MODEL=codellama       # For code-related tasks
-OLLAMA_MODEL=llava          # For image analysis
-EMBEDDING_MODEL=nomic-embed-text  # Embedding model
-```
+## Advanced Setup
 
-### Redis Setup (Optional)
-For production use with distributed caching:
+### Redis Installation (Optional)
 ```bash
-# Install Redis
 # macOS
 brew install redis
+brew services start redis
 
 # Ubuntu/Debian
 sudo apt-get install redis-server
+sudo systemctl start redis-server
 
-# Start Redis
-redis-server
+# Windows
+# Download from https://redis.io/download
+```
 
-# Configure in .env.local
-REDIS_URL=redis://localhost:6379
-REDIS_ENABLED=true
+### Docker Setup
+```bash
+# Build image
+docker build -t basic-chat .
+
+# Run container
+docker run -p 8501:8501 basic-chat
 ```
 
 ## Troubleshooting
@@ -156,8 +158,7 @@ ollama logs
 # Check available models
 ollama list
 
-# Remove and re-download a model
-ollama rm mistral
+# Pull specific model
 ollama pull mistral
 
 # Check disk space
@@ -176,22 +177,13 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### Cache Issues
+#### Port Conflicts
 ```bash
-# Clear cache if experiencing issues
-# The cache will automatically reset on restart
-rm -rf chroma_db/
-```
+# Check if port 8501 is in use
+lsof -i :8501
 
-#### Performance Issues
-```bash
-# Check system resources
-htop
-free -h
-df -h
-
-# Adjust rate limits and timeouts in .env.local
-# Monitor cache statistics in the UI
+# Use different port
+streamlit run app.py --server.port 8502
 ```
 
 ### Debug Mode
@@ -204,60 +196,37 @@ ENABLE_STRUCTURED_LOGGING=true
 streamlit run app.py --logger.level=debug
 ```
 
-### System Requirements Check
+## Verification
+
+### Test Installation
 ```bash
-# Check Python version
-python --version  # Should be 3.11+
+# Run test suite
+pytest
 
-# Check available memory
-free -h  # Should have 8GB+ available
-
-# Check disk space
-df -h  # Should have 10GB+ free
-
-# Check Ollama installation
-ollama --version
+# Test specific components
+pytest tests/test_basic.py
+pytest tests/test_reasoning.py
 ```
 
-## Production Deployment
-
-### Docker Deployment
+### Check System Health
 ```bash
-# Build Docker image
-docker build -t basic-chat .
+# Verify Ollama models
+ollama list
 
-# Run with Docker Compose
-docker-compose up -d
+# Check Python packages
+pip list
+
+# Test Ollama API
+curl http://localhost:11434/api/tags
 ```
 
-### Environment Variables for Production
-```bash
-# Security
-LOG_LEVEL=WARNING
-ENABLE_STRUCTURED_LOGGING=true
+## Next Steps
 
-# Performance
-RATE_LIMIT=50
-REQUEST_TIMEOUT=60
-CACHE_TTL=7200
+- **[Features Overview](FEATURES.md)** - Learn about BasicChat's capabilities
+- **[System Architecture](ARCHITECTURE.md)** - Understand the technical design
+- **[Development Guide](DEVELOPMENT.md)** - Start contributing to the project
+- **[Production Roadmap](ROADMAP.md)** - See future development plans
 
-# Redis (Production)
-REDIS_URL=redis://your-redis-server:6379
-REDIS_ENABLED=true
+---
 
-# Monitoring
-ENABLE_HEALTH_CHECKS=true
-```
-
-## Support
-
-### Getting Help
-- **Documentation**: Check [README.md](../README.md) and [REASONING_FEATURES.md](../REASONING_FEATURES.md)
-- **Issues**: Report bugs on [GitHub Issues](https://github.com/khaosans/basic-chat-template/issues)
-- **Discussions**: Join [GitHub Discussions](https://github.com/khaosans/basic-chat-template/discussions)
-
-### System Compatibility
-- **macOS**: 10.15+ (Catalina and later)
-- **Linux**: Ubuntu 18.04+, CentOS 7+, Debian 9+
-- **Windows**: Windows 10+ with WSL2 recommended
-- **Docker**: Docker 20.10+ with Docker Compose 2.0+ 
+[← Back to README](../README.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 

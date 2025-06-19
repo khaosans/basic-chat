@@ -1,5 +1,12 @@
 # Features Overview
 
+[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md)
+
+---
+
+## Overview
+BasicChat offers a comprehensive suite of AI capabilities including advanced reasoning, enhanced tools, document processing, and high-performance architecture. This document provides detailed information about each feature and its capabilities.
+
 ## 🧠 Advanced Reasoning Engine
 
 ### Chain-of-Thought Reasoning
@@ -164,4 +171,29 @@
 - **99.9% uptime** with health monitoring
 - **Graceful degradation** for service failures
 - **Automatic retry** with exponential backoff
-- **Error recovery** with fallback mechanisms 
+- **Error recovery** with fallback mechanisms
+
+## 🔗 Related Documentation
+
+- **[Installation Guide](INSTALLATION.md)** - Setup and configuration
+- **[System Architecture](ARCHITECTURE.md)** - Technical design and components
+- **[Development Guide](DEVELOPMENT.md)** - Contributing and development
+- **[Production Roadmap](ROADMAP.md)** - Future development plans
+- **[Reasoning Features](../REASONING_FEATURES.md)** - Detailed reasoning engine documentation
+
+## 📚 References
+
+### Research Papers
+- **Chain-of-Thought Reasoning**: Wei et al. (2022) - [Paper](https://arxiv.org/abs/2201.11903)
+- **Retrieval-Augmented Generation**: Lewis et al. (2020) - [Paper](https://arxiv.org/abs/2005.11401)
+- **Speculative Decoding**: Chen et al. (2023) - [Paper](https://arxiv.org/abs/2302.01318)
+
+### Core Technologies
+- **Ollama**: [https://ollama.ai](https://ollama.ai) - Local large language model server
+- **Streamlit**: [https://streamlit.io](https://streamlit.io) - Web application framework
+- **LangChain**: [https://langchain.com](https://langchain.com) - LLM application framework
+- **ChromaDB**: [https://chromadb.ai](https://chromadb.ai) - Vector database
+
+---
+
+[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 

@@ -74,14 +74,19 @@ The application will be available at `http://localhost:8501`
 
 ## 📚 Documentation
 
-- **[Installation Guide](docs/INSTALLATION.md)** - Detailed setup and configuration
-- **[Features Overview](docs/FEATURES.md)** - Comprehensive feature documentation
-- **[System Architecture](docs/ARCHITECTURE.md)** - Technical architecture and design
-- **[Development Guide](docs/DEVELOPMENT.md)** - Contributing and development workflows
-- **[Production Roadmap](docs/ROADMAP.md)** - Future development plans
-- **[Reasoning Capabilities](REASONING_FEATURES.md)** - Advanced reasoning engine details
+### 📖 **Getting Started**
+- **[Installation Guide](docs/INSTALLATION.md)** - Complete setup instructions, configuration, and troubleshooting
+- **[Features Overview](docs/FEATURES.md)** - Detailed documentation of all capabilities and features
+
+### 🏗️ **Technical Documentation**
+- **[System Architecture](docs/ARCHITECTURE.md)** - Technical design, data flow diagrams, and component architecture
+- **[Development Guide](docs/DEVELOPMENT.md)** - Contributing guidelines, testing, and development workflows
+
+### 🚀 **Planning & Roadmap**
+- **[Production Roadmap](docs/ROADMAP.md)** - Future development phases and planned features
+- **[Reasoning Capabilities](REASONING_FEATURES.md)** - Advanced reasoning engine documentation
 - **[Known Issues](BUGS.md)** - Current limitations and workarounds
-- **[Development Tickets](tickets/)** - Implementation specifications
+- **[Development Tickets](tickets/)** - Implementation specifications and tickets
 
 ## 🧪 Testing
 

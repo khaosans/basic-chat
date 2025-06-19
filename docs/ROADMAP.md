@@ -1,5 +1,12 @@
 # Production Roadmap & Wishlist
 
+[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Architecture ←](ARCHITECTURE.md) | [Development ←](DEVELOPMENT.md)
+
+---
+
+## Overview
+This roadmap outlines the planned development phases for BasicChat, from core stability improvements to advanced AI capabilities. Each phase builds upon the previous one to ensure a solid foundation for future enhancements.
+
 ## 🎯 **Phase 1: Core Stability & Security** *(Weeks 1-2)*
 
 ### Security Hardening
@@ -217,6 +224,32 @@
 - **Learning Capabilities**: Tools that improve with usage
 - **Custom Tool Creation**: User-defined tool creation interface
 
+## 🔗 Related Documentation
+
+- **[Installation Guide](INSTALLATION.md)** - Setup and configuration
+- **[Features Overview](FEATURES.md)** - Current capabilities
+- **[System Architecture](ARCHITECTURE.md)** - Technical design
+- **[Development Guide](DEVELOPMENT.md)** - Contributing guidelines
+- **[Development Tickets](../tickets/)** - Implementation specifications
+
+## 📚 References
+
+### Development Methodologies
+- **Agile Development**: Scrum and Kanban practices
+- **DevOps**: CI/CD and infrastructure as code
+- **Security**: OWASP guidelines and best practices
+- **Performance**: Web performance optimization techniques
+
+### Technology Stack
+- **Docker**: [https://www.docker.com](https://www.docker.com) - Container platform
+- **Terraform**: [https://www.terraform.io](https://www.terraform.io) - Infrastructure as code
+- **GitHub Actions**: [https://github.com/features/actions](https://github.com/features/actions) - CI/CD
+- **ELK Stack**: [https://www.elastic.co/what-is/elk-stack](https://www.elastic.co/what-is/elk-stack) - Logging
+
 ---
 
-**Note**: This roadmap is flexible and will be adjusted based on user feedback, technical constraints, and business priorities. Each phase builds upon the previous one to ensure a solid foundation for future enhancements. 
+**Note**: This roadmap is flexible and will be adjusted based on user feedback, technical constraints, and business priorities. Each phase builds upon the previous one to ensure a solid foundation for future enhancements.
+
+---
+
+[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Architecture ←](ARCHITECTURE.md) | [Development ←](DEVELOPMENT.md) 
