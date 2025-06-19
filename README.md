@@ -1,39 +1,42 @@
 # BasicChat: Your Intelligent Local AI Assistant
 
 ## Overview
-BasicChat is a privacy-focused AI assistant that runs locally using Ollama. It features RAG (Retrieval Augmented Generation), multi-modal processing, and smart tools - all through a clean Streamlit interface.
+BasicChat is a privacy-focused AI assistant that runs locally using Ollama. It features advanced reasoning capabilities, RAG (Retrieval Augmented Generation), multi-modal processing, and smart tools - all through a clean Streamlit interface.
 
 ![Chat Interface: Clean layout with message history and real-time response indicators](assets/chat-interface.png)
-
-![Latest Interface: Enhanced with RAG-powered document analysis and multi-modal processing](latest-interface.png)
 
 ## 🌟 Key Features
 
 ### Core Capabilities
 - Local LLM integration via Ollama
-  - Configurable model selection (Mistral, LLaVA)
-  - Streaming responses for real-time interaction
+  - Configurable model selection (Mistral as default)
+  - Multiple reasoning modes (Chain-of-Thought, Multi-Step, Agent-Based)
+  - Streaming responses with thought process visualization
   - Memory-efficient processing
-- Advanced context management
-  - Long-term conversation memory
-  - Dynamic context window optimization
-  - Intelligent context pruning
-- Multi-modal support
-  - Text and document processing
-  - Image analysis and understanding
-  - Multiple document format support (PDF, TXT, MD)
-- RAG-powered document analysis
-  - Semantic search capabilities
-  - Automatic document chunking
-  - Efficient embedding generation
-- Vector storage with ChromaDB
-  - Fast similarity search
-  - Persistent knowledge storage
-  - Optimized index management
-- Smart system features
-  - Comprehensive error handling
-  - Custom tool integration
-  - Real-time system monitoring
+
+### Advanced Reasoning
+- Chain-of-Thought reasoning
+  - Step-by-step problem solving
+  - Visible reasoning process
+  - Confidence scoring
+- Multi-Step reasoning
+  - Complex query breakdown
+  - Context-aware processing
+  - Document-based reasoning
+- Agent-Based reasoning
+  - Tool integration (Calculator, Time, Web Search)
+  - Dynamic tool selection
+  - Real-time web search capability
+
+### Document Processing
+- Multi-format support
+  - PDF, TXT, MD file processing
+  - Image analysis capabilities
+  - Structured data handling
+- RAG implementation
+  - Semantic search
+  - Context retrieval
+  - Dynamic knowledge integration
 
 ## 🏗️ Architecture
 
@@ -48,14 +51,37 @@ graph TD
 
     A[User Interface]:::primary -->|Query/Input| B[Streamlit App]:::primary
     B -->|Document Upload| C[Document Processor]:::secondary
-    B -->|Chat Query| D[Chat Engine]:::accent
+    B -->|Query Type| D[Reasoning Engine]:::accent
     D -->|RAG Query| E[Vector Store]:::storage
     D -->|LLM Request| F[Ollama API]:::accent
+    D -->|Web Search| G[DuckDuckGo API]:::secondary
     C -->|Embeddings| E
     F -->|Response| D
-    D -->|Final Output| B
+    G -->|Search Results| D
+    D -->|Structured Output| B
 ```
-System architecture showing the flow of data through the application's core components.
+
+### Reasoning Architecture
+```mermaid
+graph TD
+    %% Color definitions
+    classDef reasoning fill:#4285f4,stroke:#2956a3,color:white
+    classDef process fill:#34a853,stroke:#1e7e34,color:white
+    classDef output fill:#ea4335,stroke:#b92d22,color:white
+
+    A[User Query]:::reasoning --> B{Reasoning Mode}
+    B -->|Chain-of-Thought| C[Step-by-Step Analysis]:::process
+    B -->|Multi-Step| D[Query Breakdown]:::process
+    B -->|Agent-Based| E[Tool Selection]:::process
+    
+    C --> F[Thought Process]:::output
+    D --> G[Context Integration]:::process
+    E --> H[Tool Execution]:::process
+    
+    F --> I[Final Answer]:::output
+    G --> I
+    H --> I
+```
 
 ### Document Processing Pipeline
 ```mermaid
@@ -71,61 +97,13 @@ graph LR
     C --> D[Embedding Generation]:::process
     D --> E[Vector Storage]:::storage
     
-    F[Image Input]:::input --> G[LLaVA Analysis]:::process
-    G --> H[Feature Extraction]:::process
+    F[Query Input]:::input --> G[Query Analysis]:::process
+    G --> H[Context Retrieval]:::process
     H --> E
     
     E --> I[RAG Integration]:::output
     E --> J[Semantic Search]:::output
 ```
-Document and image processing workflow showing how different types of inputs are processed and stored.
-
-### Memory Management System
-```mermaid
-graph TD
-    %% Color definitions
-    classDef memory fill:#4285f4,stroke:#2956a3,color:white
-    classDef process fill:#34a853,stroke:#1e7e34,color:white
-    classDef storage fill:#fbbc05,stroke:#cc9a04,color:black
-    classDef output fill:#ea4335,stroke:#b92d22,color:white
-
-    A[Chat History]:::memory --> B{Memory Manager}:::process
-    C[Context Window]:::memory --> B
-    D[Vector Store]:::storage --> B
-    
-    B --> E[Short-term Memory]:::memory
-    B --> F[Long-term Memory]:::memory
-    
-    E --> G[Active Context]:::output
-    F --> H[Persistent Storage]:::storage
-    
-    G --> I[Response Generation]:::output
-    H --> J[Knowledge Retrieval]:::output
-```
-Memory management architecture showing how conversation context and knowledge are maintained.
-
-### Model Interaction Flow
-```mermaid
-graph TD
-    %% Color definitions
-    classDef model fill:#4285f4,stroke:#2956a3,color:white
-    classDef process fill:#34a853,stroke:#1e7e34,color:white
-    classDef data fill:#fbbc05,stroke:#cc9a04,color:black
-    classDef output fill:#ea4335,stroke:#b92d22,color:white
-
-    A[User Input]:::data --> B{Input Type}
-    B -->|Text| C[Mistral]:::model
-    B -->|Image| D[LLaVA]:::model
-    B -->|Document| E[Text Embeddings]:::model
-    
-    C --> F[Response Generation]:::process
-    D --> F
-    E --> G[Vector Database]:::data
-    
-    G -->|Context| F
-    F --> H[Final Output]:::output
-```
-Model interaction diagram showing how different AI models process various types of inputs.
 
 ## 🚀 Quick Start
 
@@ -136,9 +114,13 @@ Model interaction diagram showing how different AI models process various types 
 
 ### Required Models
 ```bash
-ollama pull mistral        # Core language model
+# Install core models
+ollama pull mistral        # Primary reasoning model
 ollama pull nomic-embed-text   # Embedding model
-ollama pull llava         # Vision model
+
+# Optional models for specific tasks
+ollama pull llava         # Vision model (optional)
+ollama pull codellama    # Code tasks (optional)
 ```
 
 ### Installation
@@ -158,10 +140,52 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## 🔧 Troubleshooting
-- Ensure Ollama is running (`ollama serve`)
-- Check model downloads (`ollama list`)
-- Verify port 8501 is available
+## 🧪 Testing
+The project includes comprehensive tests for all components:
+
+```bash
+# Run all tests
+pytest
+
+# Run specific test categories
+pytest tests/test_reasoning.py  # Test reasoning capabilities
+pytest tests/test_processing.py # Test document processing
+pytest tests/test_web_search.py # Test web search functionality
+```
+
+## 🔧 Development
+
+### Project Structure
+```
+basic-chat-template/
+├── app.py                 # Main Streamlit application
+├── reasoning_engine.py    # Reasoning capabilities
+├── document_processor.py  # Document handling
+├── web_search.py         # Web search integration
+├── ollama_api.py         # Ollama API interface
+├── tests/                # Test suite
+└── assets/              # Images and resources
+```
+
+### Adding New Features
+1. Follow the existing module structure
+2. Add appropriate tests
+3. Update documentation
+4. Ensure all tests pass
 
 ## 📝 License
 MIT License - See LICENSE file for details.
+
+## 🤝 Contributing
+Contributions are welcome! Please read our contributing guidelines and submit pull requests to our GitHub repository.
+
+## 🐛 Troubleshooting
+- Ensure Ollama is running (`ollama serve`)
+- Check model downloads (`ollama list`)
+- Verify port 8501 is available
+- Check logs for detailed error messages
+
+## 📚 Documentation
+- [Reasoning Capabilities](REASONING_FEATURES.md)
+- [Known Issues](BUGS.md)
+- [License](LICENSE)
