@@ -25,6 +25,12 @@ BasicChat is a production-ready, privacy-focused AI assistant that runs locally 
 - **Image Analysis**: OCR and visual content understanding
 - **Structured Data**: Intelligent document chunking and embedding
 
+### 🛠️ **Enhanced Tools & Utilities**
+- **Smart Calculator**: Safe mathematical operations with step-by-step solutions
+- **Advanced Time Tools**: Multi-timezone support with conversion capabilities
+- **Web Search**: Real-time DuckDuckGo integration with caching and retry logic
+- **Multi-layer Caching**: Redis + memory caching with intelligent fallback
+
 ### 🔧 Developer Experience
 - **Configuration Management**: Environment-based configuration with validation
 - **Comprehensive Testing**: 46+ tests with 80%+ coverage
@@ -268,23 +274,29 @@ pytest tests/test_web_search.py # Web search integration
 ### Project Structure
 ```
 basic-chat-template/
-├── app.py                    # Main Streamlit application
-├── config.py                 # Configuration management
-├── reasoning_engine.py       # Advanced reasoning capabilities
-├── document_processor.py     # Document handling and RAG
-├── web_search.py            # Web search integration
-├── utils/                   # Utility modules
-│   ├── async_ollama.py      # Async Ollama client
-│   ├── caching.py           # Caching system
-│   └── __init__.py
-├── tests/                   # Comprehensive test suite
-│   ├── test_basic.py        # Core functionality tests
-│   ├── test_reasoning.py    # Reasoning engine tests
-│   ├── test_processing.py   # Document processing tests
-│   └── conftest.py          # Test configuration
-├── requirements.txt         # Python dependencies
-├── pytest.ini              # Test configuration
-└── README.md               # This file
+├── app.py                      # Main Streamlit application
+├── config.py                   # Configuration management
+├── reasoning_engine.py         # Advanced reasoning capabilities
+├── document_processor.py       # Document processing and RAG
+├── web_search.py              # Web search integration (DuckDuckGo)
+├── ollama_api.py              # Ollama API utilities
+├── utils/                      # Enhanced utilities and tools
+│   ├── __init__.py
+│   ├── async_ollama.py        # High-performance async Ollama client
+│   ├── caching.py             # Multi-layer caching system
+│   └── enhanced_tools.py      # Enhanced calculator and time tools
+├── tests/                      # Comprehensive test suite
+│   ├── test_basic.py          # Core functionality tests
+│   ├── test_reasoning.py      # Reasoning engine tests
+│   ├── test_processing.py     # Document processing tests
+│   ├── test_enhanced_tools.py # Enhanced tools tests
+│   ├── test_web_search.py     # Web search tests
+│   └── conftest.py            # Test configuration
+├── tickets/                    # Development tickets and specifications
+│   └── 001-speculative-decoding.md  # Speculative decoding implementation
+├── requirements.txt            # Python dependencies
+├── pytest.ini                 # Test configuration
+└── README.md                  # This file
 ```
 
 ### Key Components
@@ -448,30 +460,208 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Reasoning Capabilities](REASONING_FEATURES.md) - Detailed reasoning engine documentation
 - [Known Issues](BUGS.md) - Current limitations and workarounds
+- [Development Tickets](tickets/) - Implementation specifications and tickets
 - [API Reference](docs/api.md) - Technical API documentation
 
-## 🚀 Roadmap
+## 🚀 Production Roadmap & Wishlist
 
-### Week 2: Containerization & CI/CD
-- Docker containerization
-- GitHub Actions CI/CD pipeline
-- Automated testing and deployment
+### 🎯 **Phase 1: Core Stability & Security** *(Weeks 1-2)*
 
-### Week 3: Monitoring & Observability
-- Structured logging with ELK stack
-- Metrics collection and dashboards
-- Performance monitoring
+#### **Security Hardening**
+- **Input Validation & Sanitization**
+  - Add comprehensive input validation for all user inputs
+  - Implement SQL injection and XSS protection
+  - Add rate limiting per user/IP to prevent abuse
+  - Sanitize file uploads and document processing
 
-### Week 4: UX Improvements
-- Progressive loading and skeleton screens
-- Error boundaries and graceful degradation
-- Mobile responsiveness
+- **Environment & Secrets Management**
+  - Move sensitive configs to proper secrets management (AWS Secrets Manager, HashiCorp Vault)
+  - Implement secure API key rotation
+  - Add environment-specific configuration validation
+  - Secure session management with proper expiration
 
-### Week 5: Advanced Features
-- Multi-user support
-- Conversation persistence
-- Advanced RAG capabilities
+#### **Error Handling & Reliability**
+- **Graceful Error Recovery**
+  - Implement circuit breaker pattern for external APIs (Ollama, web search)
+  - Add exponential backoff retry logic for failed requests
+  - Create user-friendly error messages with actionable guidance
+  - Add error boundaries in UI to prevent complete crashes
+
+- **Health Monitoring**
+  - Add comprehensive health check endpoints
+  - Implement service availability monitoring
+  - Add automatic fallback mechanisms for critical services
+  - Create system status dashboard
+
+### 🎯 **Phase 2: Performance & Scalability** *(Weeks 3-4)*
+
+#### **Database & Storage**
+- **Production Vector Database**
+  - Migrate from ChromaDB to Pinecone or Weaviate for production use
+  - Implement proper connection pooling and connection management
+  - Add database backup and recovery procedures
+  - Optimize vector search performance for large document sets
+
+- **Caching Strategy**
+  - Implement Redis for distributed caching across multiple instances
+  - Add intelligent cache invalidation strategies
+  - Implement cache warming for frequently accessed data
+  - Add cache performance monitoring and metrics
+
+#### **Background Processing**
+- **Async Task Queue**
+  - Implement Celery for background document processing
+  - Add task progress tracking and status updates
+  - Implement task retry and failure handling
+  - Add queue monitoring and alerting
+
+### 🎯 **Phase 3: User Experience** *(Weeks 5-6)*
+
+#### **UI/UX Improvements**
+- **Loading & Feedback States**
+  - Add skeleton screens and progressive loading
+  - Implement real-time progress indicators for long operations
+  - Add toast notifications for user actions
+  - Create smooth transitions and animations
+
+- **Mobile Experience**
+  - Optimize UI for mobile devices and tablets
+  - Add touch-friendly interactions
+  - Implement responsive design patterns
+  - Add mobile-specific features (swipe gestures, etc.)
+
+- **Accessibility**
+  - Add ARIA labels and keyboard navigation
+  - Implement screen reader compatibility
+  - Add high contrast mode support
+  - Ensure WCAG 2.1 AA compliance
+
+#### **Advanced Features**
+- **Conversation Management**
+  - Add conversation history with search and filtering
+  - Implement conversation export (PDF, JSON, Markdown)
+  - Add conversation sharing capabilities
+  - Create conversation templates and saved prompts
+
+- **Customization Options**
+  - Add user preference settings (theme, model parameters)
+  - Implement customizable keyboard shortcuts
+  - Add personalization features (favorite tools, saved searches)
+  - Create user profiles and settings persistence
+
+### 🎯 **Phase 4: Monitoring & Observability** *(Weeks 7-8)*
+
+#### **Comprehensive Monitoring**
+- **Application Metrics**
+  - Track response times, error rates, and throughput
+  - Monitor resource usage (CPU, memory, disk)
+  - Add business metrics (user engagement, feature usage)
+  - Implement alerting for critical thresholds
+
+- **User Analytics**
+  - Add anonymized usage analytics
+  - Track feature adoption and user behavior
+  - Implement A/B testing framework
+  - Create user journey analytics
+
+#### **Logging & Debugging**
+- **Structured Logging**
+  - Implement centralized logging with ELK stack
+  - Add request tracing and correlation IDs
+  - Create log aggregation and search capabilities
+  - Add log retention and archival policies
+
+### 🎯 **Phase 5: DevOps & Deployment** *(Weeks 9-10)*
+
+#### **Containerization & Orchestration**
+- **Docker Implementation**
+  - Create multi-stage Docker builds
+  - Implement Docker Compose for local development
+  - Add container health checks and readiness probes
+  - Optimize container images for size and security
+
+- **CI/CD Pipeline**
+  - Set up GitHub Actions for automated testing
+  - Implement automated deployment to staging/production
+  - Add automated security scanning and vulnerability checks
+  - Create rollback mechanisms for failed deployments
+
+#### **Infrastructure as Code**
+- **Cloud Deployment**
+  - Implement Terraform for infrastructure management
+  - Add auto-scaling capabilities based on load
+  - Implement blue-green deployment strategy
+  - Add disaster recovery procedures
+
+### 🎯 **Phase 6: Advanced Capabilities** *(Weeks 11-12)*
+
+#### **Multi-language & Internationalization**
+- **i18n Support**
+  - Add multi-language interface support
+  - Implement locale-specific formatting
+  - Add RTL language support
+  - Create translation management system
+
+#### **API & Integrations**
+- **REST API**
+  - Create comprehensive REST API for external integrations
+  - Add API authentication and rate limiting
+  - Implement API versioning strategy
+  - Create API documentation with OpenAPI/Swagger
+
+- **Webhook System**
+  - Add webhook notifications for events
+  - Implement webhook signature verification
+  - Add webhook retry and failure handling
+  - Create webhook management interface
+
+#### **Advanced AI Features**
+- **Voice Interface**
+  - Add speech-to-text input capabilities
+  - Implement text-to-speech output
+  - Add voice command recognition
+  - Create voice preference settings
+
+- **Plugin System**
+  - Design extensible plugin architecture
+  - Create plugin marketplace
+  - Add plugin security sandboxing
+  - Implement plugin versioning and updates
+
+### 📊 **Success Metrics & KPIs**
+
+#### **Performance Targets**
+- Response time < 2 seconds for 95% of requests
+- Uptime > 99.9% availability
+- Error rate < 0.1% of requests
+- Cache hit rate > 80%
+
+#### **User Experience Goals**
+- User satisfaction score > 4.5/5
+- Feature adoption rate > 70%
+- Mobile usage > 40% of total traffic
+- Accessibility compliance score > 95%
+
+#### **Business Metrics**
+- Monthly active users growth > 20%
+- User retention rate > 80% after 30 days
+- Support ticket volume < 5% of user base
+- Feature request completion rate > 80%
+
+### 🔧 **Technical Debt & Maintenance**
+
+#### **Code Quality**
+- Maintain > 90% test coverage
+- Keep technical debt ratio < 5%
+- Regular dependency updates and security patches
+- Performance optimization sprints
+
+#### **Documentation**
+- Keep documentation 100% up-to-date
+- Add video tutorials for complex features
+- Create troubleshooting guides
+- Maintain API documentation
 
 ---
 
-**Built with ❤️ using modern Python, async/await, and best practices for production-ready AI applications.**
+**Note**: This roadmap is flexible and will be adjusted based on user feedback, technical constraints, and business priorities. Each phase builds upon the previous one to ensure a solid foundation for future enhancements.
