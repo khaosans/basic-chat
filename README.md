@@ -2,6 +2,7 @@
 
 ## 📋 Table of Contents
 - [Overview](#overview)
+- [Demo](#-demo)
 - [Key Features](#-key-features)
   - [Advanced Reasoning Engine](#-advanced-reasoning-engine)
   - [Enhanced Tools & Utilities](#️-enhanced-tools--utilities)
@@ -42,6 +43,24 @@
 - **Developers**: Code analysis, debugging, and technical documentation
 - **Professionals**: Document processing, time management, and data analysis
 - **Anyone**: Who wants a powerful, private AI assistant
+
+## 🎥 Demo
+
+![BasicChat Demo](assets/demo_seq_0.6s.gif)
+
+Experience BasicChat's powerful features in action:
+- 🧠 Multiple reasoning modes for different types of problems
+- 💬 Natural conversation with step-by-step explanations
+- 🎨 Beautiful dark theme interface
+- 📚 Support for multiple file formats and document types
+- ⚡ Real-time streaming responses
+
+### 🎯 Key Features in Action
+- **Intelligent Reasoning**: Watch the AI break down complex problems
+- **Document Processing**: Upload and analyze various file types
+- **Interactive UI**: Clean, modern design with expandable sections
+- **Real-time Updates**: See the AI's thought process as it happens
+- **Multi-Modal Support**: Handle text, images, and more
 
 ## 🌟 Key Features
 
