@@ -18,6 +18,7 @@ from langchain_ollama import ChatOllama
 from langchain.chains import LLMChain
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
+from langchain.docstore.document import Document
 from web_search import search_web
 
 # Load environment variables
@@ -67,19 +68,19 @@ class ReasoningAgent:
         """Create tools for the agent"""
         return [
             Tool(
+                name="web_search",
+                func=self._web_search,
+                description="Search the web for current information. Use this for questions about recent events, current prices, weather, or any information that might change over time."
+            ),
+            Tool(
                 name="calculator",
                 func=self._calculate,
-                description="Perform mathematical calculations and solve equations. Input should be a mathematical expression like '2 + 2' or '10 * 5'."
+                description="Perform mathematical calculations. Input should be a mathematical expression like '2 + 2' or 'sqrt(16)'."
             ),
             Tool(
-                name="current_time",
+                name="get_current_time",
                 func=self._get_current_time,
-                description="Get the current date and time. No input needed."
-            ),
-            Tool(
-                name="web_search",
-                func=search_web,
-                description="Search the web for current information. Input should be a search query. Returns relevant snippets and links from web pages."
+                description="Get the current date and time. Use this when asked about the current time or date."
             )
         ]
     
@@ -99,6 +100,19 @@ class ReasoningAgent:
     def _get_current_time(self) -> str:
         """Get current time in a readable format"""
         return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    def _web_search(self, query: str) -> str:
+        """Perform web search with improved error handling"""
+        try:
+            results = search_web(query, max_results=3)
+            
+            # Check if we got meaningful results
+            if "Unable to perform real-time search" in results or "Search Temporarily Unavailable" in results:
+                return f"Web search is currently experiencing high traffic. For '{query}', please try again in a few minutes or visit a search engine directly."
+            
+            return results
+        except Exception as e:
+            return f"Web search failed: {str(e)}. Please try again later."
     
     def run(self, query: str) -> ReasoningResult:
         """Execute agent-based reasoning"""
