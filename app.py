@@ -360,6 +360,10 @@ class ToolRegistry:
 
 def text_to_speech(text):
     """Convert text to speech and return the audio file path"""
+    # Handle empty or None text
+    if not text or text.strip() == "":
+        return None
+    
     text_hash = hashlib.md5(text.encode()).hexdigest()
     audio_file = f"temp_{text_hash}.mp3"
     if not os.path.exists(audio_file):
@@ -367,29 +371,26 @@ def text_to_speech(text):
         tts.save(audio_file)
     return audio_file
 
-def autoplay_audio(file_path):
-    """Autoplay audio file"""
-    with open(file_path, "rb") as f:
-        data = f.read()
-        b64 = base64.b64encode(data).decode()
-        md = f"""
-            <audio autoplay>
-            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-            </audio>
-            """
-        st.markdown(md, unsafe_allow_html=True)
-
 def get_audio_html(file_path):
     """Generate HTML for audio player with controls"""
-    with open(file_path, "rb") as f:
-        data = f.read()
-        b64 = base64.b64encode(data).decode()
-        md = f"""
-            <audio controls style="width: 100%; margin-top: 10px;">
-            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-            </audio>
-            """
-        return md
+    # Handle None file_path
+    if not file_path:
+        return "<p>No audio available</p>"
+    
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio controls style="width: 100%; margin-top: 10px;">
+                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                </audio>
+                """
+            return md
+    except FileNotFoundError:
+        return "<p>Audio file not found</p>"
+    except Exception as e:
+        return f"<p>Error loading audio: {str(e)}</p>"
 
 def display_reasoning_result(result: ReasoningResult):
     """Display reasoning result with enhanced formatting"""
@@ -738,7 +739,10 @@ def enhanced_chat_interface(doc_processor):
             if msg["role"] == "assistant":
                 if st.button("🔊 Play Voice", key=f"audio_{hash(msg['content'])}"):
                     audio_file = text_to_speech(msg["content"])
-                    st.markdown(get_audio_html(audio_file), unsafe_allow_html=True)
+                    if audio_file:
+                        st.markdown(get_audio_html(audio_file), unsafe_allow_html=True)
+                    else:
+                        st.warning("No content available for voice generation")
 
     # Chat input
     if prompt := st.chat_input("Type a message..."):

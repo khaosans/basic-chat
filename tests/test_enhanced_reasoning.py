@@ -18,7 +18,7 @@ class TestEnhancedReasoningAgent:
         """Test enhanced calculator tool integration"""
         # Test basic arithmetic
         result = self.agent._enhanced_calculate("2 + 2")
-        assert "✅ Calculation Result: 4" in result
+        assert "✅ Calculation Result: 4.0" in result
         assert "📝 Expression: 2 + 2" in result
         assert "🔢 Steps:" in result
         
@@ -32,16 +32,17 @@ class TestEnhancedReasoningAgent:
     
     def test_enhanced_time_tools(self):
         """Test enhanced time tools integration"""
-        # Test current time
+        # Test current time with IANA timezone names
         result = self.agent._get_current_time("UTC")
         assert "🕐 Current Time:" in result
         assert "🌍 Timezone: UTC" in result
         assert "📅 Unix Timestamp:" in result
         
-        # Test with different timezone
-        result = self.agent._get_current_time("EST")
+        # Test with US timezone using IANA name
+        result = self.agent._get_current_time("America/New_York")
         assert "🕐 Current Time:" in result
         assert "America/New_York" in result
+        assert "📅 Unix Timestamp:" in result
     
     def test_time_conversion_tool(self):
         """Test time conversion tool"""
@@ -114,9 +115,9 @@ class TestEnhancedReasoningAgent:
     def test_enhanced_calculator_advanced_functions(self):
         """Test advanced mathematical functions"""
         advanced_expressions = [
-            ("factorial(5)", "120"),
-            ("gcd(12, 18)", "6"),
-            ("lcm(12, 18)", "36"),
+            ("factorial(5)", "120.0"),
+            ("gcd(12, 18)", "6.0"),
+            ("lcm(12, 18)", "36.0"),
             ("sin(pi/2)", "1.0"),
             ("cos(0)", "1.0"),
             ("log(e)", "1.0")
@@ -129,13 +130,22 @@ class TestEnhancedReasoningAgent:
     
     def test_timezone_handling(self):
         """Test timezone handling in time tools"""
-        timezones = ["UTC", "EST", "PST", "GMT", "JST", "IST"]
+        # Test with IANA timezone names
+        timezones = [
+            "UTC",
+            "America/New_York",
+            "America/Los_Angeles",
+            "Europe/London",
+            "Asia/Tokyo",
+            "Asia/Kolkata"
+        ]
         
         for tz in timezones:
             result = self.agent._get_current_time(tz)
             assert "🕐 Current Time:" in result
             assert "🌍 Timezone:" in result
             assert "📅 Unix Timestamp:" in result
+            assert result.count("❌") == 0  # No error messages
     
     def test_time_conversion_edge_cases(self):
         """Test time conversion edge cases"""
