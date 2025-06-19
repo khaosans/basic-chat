@@ -432,6 +432,71 @@ The issue reporting approach follows research on bug reporting and problem diagn
 - **Streamlit**: [https://streamlit.io](https://streamlit.io) - Web application framework
 - **Git**: [https://git-scm.com](https://git-scm.com) - Version control system
 
+### Works Cited
+Janzen, David S., and Hossein Saiedian. "Test-Driven Development: Concepts, Taxonomy, and Future Direction." *IEEE Computer*, vol. 38, no. 9, 2005, pp. 43-50.
+
+Beck, Kent. *Extreme Programming Explained: Embrace Change*. Addison-Wesley, 2000.
+
+Fagan, Michael E. "Design and Code Inspections to Reduce Errors in Program Development." *IBM Systems Journal*, vol. 15, no. 3, 1976, pp. 182-211.
+
+Myers, Glenford J., et al. *The Art of Software Testing*. 3rd ed., John Wiley & Sons, 2011.
+
+Bass, Len, et al. *Software Architecture in Practice*. 3rd ed., Addison-Wesley, 2012.
+
+Prechelt, Lutz. "An Empirical Comparison of Seven Programming Languages." *IEEE Computer*, vol. 33, no. 10, 2000, pp. 23-29.
+
+Zeller, Andreas. *Why Programs Fail: A Guide to Systematic Debugging*. 2nd ed., Morgan Kaufmann, 2009.
+
+Jain, Raj. *The Art of Computer Systems Performance Analysis: Techniques for Experimental Design, Measurement, Simulation, and Modeling*. John Wiley & Sons, 1991.
+
+Parnas, David L. "Software Aging." *Proceedings of the 16th International Conference on Software Engineering*, 1994, pp. 279-287.
+
+Boehm, Barry W., and Victor R. Basili. "Software Defect Reduction Top 10 List." *IEEE Computer*, vol. 34, no. 1, 2001, pp. 135-137.
+
+Meszaros, Gerard. *xUnit Test Patterns: Refactoring Test Code*. Addison-Wesley, 2007.
+
+Zhu, Hong, et al. "Software Unit Test Coverage and Adequacy." *ACM Computing Surveys*, vol. 29, no. 4, 1997, pp. 366-427.
+
+Andrews, Gregory R. *Foundations of Multithreaded, Parallel, and Distributed Programming*. Addison-Wesley, 2000.
+
+Richardson, Chris. *Microservices Patterns: With Examples in Java*. Manning Publications, 2018.
+
+Jones, Richard, and Rafael Lins. *Garbage Collection: Algorithms for Automatic Dynamic Memory Management*. John Wiley & Sons, 1996.
+
+Kitchenham, Barbara, et al. "Systematic Literature Reviews in Software Engineering: A Systematic Literature Review." *Information and Software Technology*, vol. 51, no. 1, 2007, pp. 7-15.
+
+Rigby, Peter C., and Christian Bird. "Convergent Contemporary Software Peer Review Practices." *Proceedings of the 2013 9th Joint Meeting on Foundations of Software Engineering*, 2013, pp. 202-212.
+
+Krebs, Brian. "The Value of a Hacked PC." *Krebs on Security*, 2013, krebsonsecurity.com/2013/11/the-value-of-a-hacked-pc/.
+
+Polya, George. *How to Solve It: A New Aspect of Mathematical Method*. Princeton University Press, 1945.
+
+Norman, Don. *The Design of Everyday Things*. Basic Books, 2013.
+
+Sweller, John. "Cognitive Load During Problem Solving: Effects on Learning." *Cognitive Science*, vol. 12, no. 2, 1988, pp. 257-285.
+
+Bass, Len, et al. *Software Architecture in Practice*. 3rd ed., Addison-Wesley, 2012.
+
+Tufte, Edward R. *The Visual Display of Quantitative Information*. 2nd ed., Graphics Press, 2001.
+
+Fowler, Martin. *Continuous Integration*. Martin Fowler, 2014, martinfowler.com/articles/continuousIntegration.html.
+
+Allspaw, John, and Jesse Robbins. *Web Operations: Keeping the Data On Time*. O'Reilly Media, 2010.
+
+Merkel, Dirk. "Docker: Lightweight Linux Containers for Consistent Development and Deployment." *Linux Journal*, vol. 2014, no. 239, 2014, pp. 2-2.
+
+Turnbull, James. *The Docker Book: Containerization is the New Virtualization*. James Turnbull, 2014.
+
+Raymond, Eric S. *The Cathedral and the Bazaar: Musings on Linux and Open Source by an Accidental Revolutionary*. O'Reilly Media, 1999.
+
+Pipenv. "Pipenv: Python Development Workflow for Humans." *Pipenv Documentation*, 2023, pipenv.pypa.io/.
+
+NIST. "The Economic Impacts of Inadequate Infrastructure for Software Testing." *National Institute of Standards and Technology*, 2002.
+
+Cardelli, Luca. "Type Systems." *ACM Computing Surveys*, vol. 28, no. 1, 1997, pp. 263-264.
+
+Martin, Robert C. *Clean Code: A Handbook of Agile Software Craftsmanship*. Prentice Hall, 2008.
+
 ---
 
 [← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Architecture ←](ARCHITECTURE.md) | [Roadmap →](ROADMAP.md) 

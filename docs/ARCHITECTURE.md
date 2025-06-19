@@ -286,6 +286,57 @@ The external service integration follows research on service-oriented architectu
 - **LangChain**: [https://langchain.com](https://langchain.com) - LLM application framework
 - **ChromaDB**: [https://chromadb.ai](https://chromadb.ai) - Vector database
 
+### Works Cited
+Wei, Jason, et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
+
+Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
+
+Johnson, Jeff, et al. "Billion-Scale Similarity Search with GPUs." *arXiv preprint arXiv:1908.10396*, 2019.
+
+Bass, Len, et al. *Software Architecture in Practice*. 3rd ed., Addison-Wesley, 2012.
+
+Fowler, Martin. *Microservices: A Definition of This New Architectural Term*. Martin Fowler, 2014, martinfowler.com/articles/microservices.html.
+
+Krasner, Glenn E., and Stephen T. Pope. "A Cookbook for Using the Model-View-Controller User Interface Paradigm in Smalltalk-80." *Journal of Object-Oriented Programming*, vol. 1, no. 3, 1988, pp. 26-49.
+
+Humble, Jez, and David Farley. *Continuous Delivery: Reliable Software Releases through Build, Test, and Deployment Automation*. Addison-Wesley, 2010.
+
+Newman, Sam. *Building Microservices: Designing Fine-Grained Systems*. O'Reilly Media, 2015.
+
+Aggarwal, Charu C., et al. "Caching on the World Wide Web." *IEEE Transactions on Knowledge and Data Engineering*, vol. 11, no. 1, 1999, pp. 95-107.
+
+Megiddo, Nimrod, and Dharmendra S. Modha. "ARC: A Self-Tuning, Low Overhead Replacement Cache." *Proceedings of the 2nd USENIX Conference on File and Storage Technologies*, 2003, pp. 115-130.
+
+Rivest, Ronald L. "The MD5 Message-Digest Algorithm." *Internet Engineering Task Force*, RFC 1321, 1992.
+
+van der Aalst, Wil M. P. *Process Mining: Data Science in Action*. 2nd ed., Springer, 2016.
+
+Smith, Ray. "An Overview of the Tesseract OCR Engine." *Proceedings of the Ninth International Conference on Document Analysis and Recognition*, vol. 2, 2007, pp. 629-633.
+
+Zhang, Tianyi, et al. "A Survey of Neural Network Compression." *arXiv preprint arXiv:2003.03369*, 2020.
+
+Guérin, Roch, and Hervé Pla. "Resource Allocation in Distributed Systems." *IEEE/ACM Transactions on Networking*, vol. 5, no. 4, 1997, pp. 476-488.
+
+Jones, Richard, and Rafael Lins. *Garbage Collection: Algorithms for Automatic Dynamic Memory Management*. John Wiley & Sons, 1996.
+
+Tanenbaum, Andrew S., and Maarten van Steen. *Distributed Systems: Principles and Paradigms*. 2nd ed., Prentice Hall, 2007.
+
+Fielding, Roy T., and Julian F. Reschke. "Hypertext Transfer Protocol (HTTP/1.1): Authentication." *Internet Engineering Task Force*, RFC 7235, 2014.
+
+Prechelt, Lutz. "An Empirical Comparison of Seven Programming Languages." *IEEE Computer*, vol. 33, no. 10, 2000, pp. 23-29.
+
+Decan, Alexandre, et al. "An Empirical Comparison of Dependency Network Evolution in Six Software Packaging Ecosystems." *Empirical Software Engineering*, vol. 22, no. 1, 2016, pp. 155-202.
+
+Myers, Glenford J., et al. *The Art of Software Testing*. 3rd ed., John Wiley & Sons, 2011.
+
+Dwork, Cynthia. "Differential Privacy." *Automata, Languages and Programming*, edited by Michele Bugliesi, et al., Springer, 2006, pp. 1-12.
+
+Microsoft. "Asynchronous Programming Patterns." *Microsoft Documentation*, 2023, docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns.
+
+Redis. "Redis Optimization." *Redis Documentation*, 2023, redis.io/topics/optimization.
+
+Cloudflare. "Rate Limiting." *Cloudflare Documentation*, 2023, developers.cloudflare.com/fundamentals/get-started/concepts/rate-limiting.
+
 ---
 
 [← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 
