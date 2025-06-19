@@ -46,7 +46,7 @@
 
 ## 🎥 Demo
 
-![BasicChat Demo](assets/brand/social/og-image.png)
+![BasicChat Demo](assets/demo_seq_0.6s.gif)
 
 Experience BasicChat's powerful features in action:
 - 🧠 Multiple reasoning modes for different types of problems
