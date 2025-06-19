@@ -20,6 +20,7 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain.docstore.document import Document
 from web_search import search_web
+from utils.enhanced_tools import EnhancedCalculator, EnhancedTimeTools
 
 # Load environment variables
 OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api")
@@ -49,6 +50,10 @@ class ReasoningAgent:
             return_messages=True
         )
         
+        # Initialize enhanced tools
+        self.calculator = EnhancedCalculator()
+        self.time_tools = EnhancedTimeTools()
+        
         # Initialize tools
         self.tools = self._create_tools()
         
@@ -65,7 +70,7 @@ class ReasoningAgent:
         )
     
     def _create_tools(self) -> List[Tool]:
-        """Create tools for the agent"""
+        """Create enhanced tools for the agent"""
         return [
             Tool(
                 name="web_search",
@@ -73,33 +78,137 @@ class ReasoningAgent:
                 description="Search the web for current information. Use this for questions about recent events, current prices, weather, or any information that might change over time."
             ),
             Tool(
-                name="calculator",
-                func=self._calculate,
-                description="Perform mathematical calculations. Input should be a mathematical expression like '2 + 2' or 'sqrt(16)'."
+                name="enhanced_calculator",
+                func=self._enhanced_calculate,
+                description="Perform advanced mathematical calculations including trigonometry, logarithms, factorials, and more. Input should be a mathematical expression like '2 + 2', 'sqrt(16)', 'sin(pi/2)', 'factorial(5)', or 'gcd(12, 18)'."
             ),
             Tool(
                 name="get_current_time",
                 func=self._get_current_time,
-                description="Get the current date and time. Use this when asked about the current time or date."
+                description="Get the current date and time with timezone support. Use this when asked about the current time or date. You can specify a timezone like 'UTC', 'EST', 'PST', 'GMT', 'JST', etc."
+            ),
+            Tool(
+                name="time_conversion",
+                func=self._convert_time,
+                description="Convert time between different timezones. Input format: 'time_string, from_timezone, to_timezone' (e.g., '2024-01-01 12:00:00, UTC, EST')."
+            ),
+            Tool(
+                name="time_difference",
+                func=self._calculate_time_difference,
+                description="Calculate the difference between two times. Input format: 'time1, time2, timezone' (e.g., '2024-01-01 12:00:00, 2024-01-01 14:00:00, UTC')."
+            ),
+            Tool(
+                name="time_info",
+                func=self._get_time_info,
+                description="Get comprehensive time information including weekday, month, day of year, etc. Input should be a timezone name (e.g., 'UTC', 'EST')."
             )
         ]
     
-    def _calculate(self, expression: str) -> str:
-        """Safe calculator function"""
-        try:
-            # Use safer eval with limited scope
-            allowed_names = {"abs": abs, "float": float, "int": int, "pow": pow, "round": round}
-            code = compile(expression, "<string>", "eval")
-            for name in code.co_names:
-                if name not in allowed_names:
-                    raise NameError(f"Use of {name} not allowed")
-            return str(eval(expression, {"__builtins__": {}}, allowed_names))
-        except Exception as e:
-            return f"Error in calculation: {str(e)}"
+    def _enhanced_calculate(self, expression: str) -> str:
+        """Enhanced calculator function with detailed output"""
+        result = self.calculator.calculate(expression)
+        
+        if result.success:
+            # Format the output with steps
+            output = f"✅ Calculation Result: {result.result}\n"
+            output += f"📝 Expression: {result.expression}\n"
+            output += "🔢 Steps:\n"
+            for step in result.steps:
+                output += f"  {step}\n"
+            return output
+        else:
+            return f"❌ Calculation Error: {result.error}\n📝 Expression: {result.expression}"
     
-    def _get_current_time(self) -> str:
-        """Get current time in a readable format"""
-        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    def _get_current_time(self, timezone: str = "UTC") -> str:
+        """Get current time with enhanced formatting"""
+        result = self.time_tools.get_current_time(timezone)
+        
+        if result.success:
+            output = f"🕐 Current Time: {result.current_time}\n"
+            output += f"🌍 Timezone: {result.timezone}\n"
+            output += f"📅 Unix Timestamp: {result.unix_timestamp:.0f}\n"
+            
+            # Add additional time info
+            time_info = self.time_tools.get_time_info(timezone)
+            if time_info["success"]:
+                output += f"📊 Day of Week: {time_info['weekday']}\n"
+                output += f"📊 Month: {time_info['month_name']}\n"
+                output += f"📊 Day of Year: {time_info['day_of_year']}\n"
+                output += f"📊 Business Day: {'Yes' if time_info['is_business_day'] else 'No'}\n"
+            
+            return output
+        else:
+            return f"❌ Time Error: {result.error}"
+    
+    def _convert_time(self, input_str: str) -> str:
+        """Convert time between timezones"""
+        try:
+            # Parse input: "time_string, from_timezone, to_timezone"
+            parts = [part.strip() for part in input_str.split(',')]
+            if len(parts) != 3:
+                return "❌ Invalid format. Use: 'time_string, from_timezone, to_timezone'"
+            
+            time_str, from_tz, to_tz = parts
+            result = self.time_tools.convert_time(time_str, from_tz, to_tz)
+            
+            if result.success:
+                output = f"🔄 Time Conversion:\n"
+                output += f"📅 From: {time_str} ({from_tz})\n"
+                output += f"📅 To: {result.current_time}\n"
+                output += f"🌍 Target Timezone: {result.timezone}\n"
+                output += f"📅 Unix Timestamp: {result.unix_timestamp:.0f}\n"
+                return output
+            else:
+                return f"❌ Conversion Error: {result.error}"
+        except Exception as e:
+            return f"❌ Conversion Error: {str(e)}"
+    
+    def _calculate_time_difference(self, input_str: str) -> str:
+        """Calculate time difference between two times"""
+        try:
+            # Parse input: "time1, time2, timezone"
+            parts = [part.strip() for part in input_str.split(',')]
+            if len(parts) != 3:
+                return "❌ Invalid format. Use: 'time1, time2, timezone'"
+            
+            time1, time2, timezone = parts
+            result = self.time_tools.get_time_difference(time1, time2, timezone)
+            
+            if result["success"]:
+                output = f"⏱️ Time Difference:\n"
+                output += f"📅 Time 1: {time1}\n"
+                output += f"📅 Time 2: {time2}\n"
+                output += f"🌍 Timezone: {timezone}\n"
+                output += f"⏰ Difference: {result['formatted_difference']}\n"
+                output += f"📊 In seconds: {result['difference_seconds']:.0f}\n"
+                output += f"📊 In minutes: {result['difference_minutes']:.1f}\n"
+                output += f"📊 In hours: {result['difference_hours']:.2f}\n"
+                output += f"📊 In days: {result['difference_days']}\n"
+                return output
+            else:
+                return f"❌ Difference Calculation Error: {result.get('error', 'Unknown error')}"
+        except Exception as e:
+            return f"❌ Difference Calculation Error: {str(e)}"
+    
+    def _get_time_info(self, timezone: str = "UTC") -> str:
+        """Get comprehensive time information"""
+        result = self.time_tools.get_time_info(timezone)
+        
+        if result["success"]:
+            output = f"📅 Comprehensive Time Info ({timezone}):\n"
+            output += f"🕐 Current Time: {result['current_time']}\n"
+            output += f"📊 Year: {result['year']}\n"
+            output += f"📊 Month: {result['month_name']} ({result['month']})\n"
+            output += f"📊 Day: {result['day']}\n"
+            output += f"📊 Time: {result['hour']:02d}:{result['minute']:02d}:{result['second']:02d}\n"
+            output += f"📊 Day of Week: {result['weekday']}\n"
+            output += f"📊 Day of Year: {result['day_of_year']}\n"
+            output += f"🏖️ Weekend: {'Yes' if result['is_weekend'] else 'No'}\n"
+            output += f"📊 Business Day: {'Yes' if result['is_business_day'] else 'No'}\n"
+            output += f"📅 Unix Timestamp: {result['unix_timestamp']:.0f}\n"
+            return output
+        else:
+            return f"❌ Time Info Error: {result.get('error', 'Unknown error')}"
     
     def _web_search(self, query: str) -> str:
         """Perform web search with improved error handling"""
