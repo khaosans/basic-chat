@@ -12,122 +12,132 @@
   - Confidence scoring
   - Streaming output for better UX
   - **Performance**: Async processing with caching support
+- **Research Basis**: Based on Wei et al. (2022) research showing that explicit step-by-step reasoning significantly improves large language model performance on complex reasoning tasks
+- **Technical Details**: Implements token-level streaming with real-time step extraction using regex patterns and confidence assessment algorithms
 
 ### 2. **Multi-Step Reasoning**
 - **Implementation**: `MultiStepReasoning` class
 - **Features**:
-  - Query analysis phase
-  - Context gathering from documents
+  - Query analysis phase with systematic problem decomposition
+  - Context gathering from documents using semantic search
   - Structured reasoning with analysis + reasoning phases
-  - Document-aware reasoning
-  - Progressive output display
-  - **Performance**: Optimized with connection pooling
+  - Document-aware reasoning with RAG integration
+  - Progressive output display with streaming updates
+  - **Performance**: Optimized with connection pooling and async document retrieval
+- **Technical Details**: Uses RecursiveCharacterTextSplitter for optimal document chunking and ChromaDB for vector similarity search with configurable chunk sizes (1000 tokens) and overlap (200 tokens)
 
 ### 3. **Agent-Based Reasoning**
 - **Implementation**: `ReasoningAgent` class
 - **Features**:
   - Integrated tools:
-    - **Enhanced Calculator**: Safe mathematical operations with step-by-step solutions
-    - **Real-time Web Search**: DuckDuckGo integration with caching and retry logic
-    - **Advanced Time Tools**: Multi-timezone support with conversion capabilities
-  - Memory management
-  - Structured agent execution
-  - Error handling and fallbacks
-  - **Performance**: Rate-limited tool usage with retry logic
+    - **Enhanced Calculator**: Safe mathematical operations with step-by-step solutions using expression sanitization and validation
+    - **Real-time Web Search**: DuckDuckGo integration with caching and retry logic using exponential backoff
+    - **Advanced Time Tools**: Multi-timezone support with conversion capabilities using pytz library
+  - Memory management with conversation context preservation
+  - Structured agent execution with tool selection logic
+  - Error handling and fallbacks with graceful degradation
+  - **Performance**: Rate-limited tool usage with configurable throttling (10 requests/second default)
+- **Technical Details**: Implements tool registry pattern with trigger-based tool selection and result aggregation
 
 ### 4. **Enhanced Document Processing**
 - **Implementation**: `ReasoningDocumentProcessor` class
 - **Features**:
-  - Document analysis for reasoning potential
-  - Key topic extraction
-  - Reasoning context creation
-  - Vector store integration
-  - **Performance**: Async embedding generation with caching
+  - Document analysis for reasoning potential using NLP techniques
+  - Key topic extraction with TF-IDF and keyword analysis
+  - Reasoning context creation with semantic similarity
+  - Vector store integration using ChromaDB with nomic-embed-text embeddings
+  - **Performance**: Async embedding generation with caching and batch processing
+- **Technical Details**: Supports PDF, TXT, MD, and image formats with OCR capabilities using Tesseract and Unstructured library
 
 ## 🛠️ **Enhanced Tools & Utilities**
 
 ### 1. **Enhanced Calculator (`utils/enhanced_tools.py`)**
 - **Safe Mathematical Operations**:
-  - Basic arithmetic (+, -, *, /, **)
-  - Trigonometric functions (sin, cos, tan)
-  - Logarithmic functions (log, log10)
-  - Statistical functions (min, max, abs, round)
-  - Mathematical constants (π, e)
-  - Factorial and GCD/LCM operations
+  - Basic arithmetic (+, -, *, /, **) with operator precedence handling
+  - Trigonometric functions (sin, cos, tan) with radian/degree conversion
+  - Logarithmic functions (log, log10) with domain validation
+  - Statistical functions (min, max, abs, round) with type safety
+  - Mathematical constants (π, e) with high precision
+  - Factorial and GCD/LCM operations with overflow protection
 - **Security Features**:
-  - Expression sanitization and validation
-  - Dangerous operation detection
-  - Safe namespace execution
-  - Compile-time safety checks
+  - Expression sanitization using regex pattern matching
+  - Dangerous operation detection (import, exec, eval, file operations)
+  - Safe namespace execution with restricted builtins
+  - Compile-time safety checks using AST analysis
 - **User Experience**:
-  - Step-by-step calculation display
-  - Error messages with guidance
-  - Result formatting and precision control
+  - Step-by-step calculation display with intermediate results
+  - Error messages with actionable guidance and suggestions
+  - Result formatting with configurable precision control
+- **Technical Implementation**: Uses Python's `compile()` and `eval()` with restricted globals and locals dictionaries
 
 ### 2. **Advanced Time Tools (`utils/enhanced_tools.py`)**
 - **Multi-timezone Support**:
-  - Current time in any timezone
-  - Time conversion between timezones
-  - Time difference calculations
-  - Unix timestamp conversion
+  - Current time in any timezone using pytz library
+  - Time conversion between timezones with daylight saving time handling
+  - Time difference calculations with precise duration formatting
+  - Unix timestamp conversion with timezone awareness
 - **Features**:
-  - 500+ timezone support
-  - Automatic timezone normalization
-  - Formatted time output
-  - Error handling for invalid timezones
+  - 500+ timezone support including historical timezone data
+  - Automatic timezone normalization and validation
+  - Formatted time output with multiple format options
+  - Error handling for invalid timezones with fallback suggestions
 - **Usage Examples**:
-  - "What time is it in Tokyo?"
-  - "Convert 3 PM EST to UTC"
-  - "Time difference between New York and London"
+  - "What time is it in Tokyo?" - Returns current JST with formatted output
+  - "Convert 3 PM EST to UTC" - Handles DST transitions automatically
+  - "Time difference between New York and London" - Calculates precise duration
+- **Technical Implementation**: Uses pytz library for timezone database and datetime for time manipulation
 
 ### 3. **Web Search Integration (`web_search.py`)**
 - **DuckDuckGo Integration**:
-  - No API key required
-  - Real-time search results
-  - Formatted output with links
-  - Caching for performance
+  - No API key required using duckduckgo-search library
+  - Real-time search results with configurable result count
+  - Formatted output with clickable links and snippets
+  - Caching for performance with 5-minute TTL
 - **Features**:
-  - Retry logic with exponential backoff
-  - Rate limiting protection
-  - Fallback results on failure
-  - Configurable result count
+  - Retry logic with exponential backoff (3 attempts, 2-second base delay)
+  - Rate limiting protection with random jitter
+  - Fallback results on failure with informative messages
+  - Configurable result count (default: 5 results)
 - **Performance**:
-  - 5-minute cache duration
-  - 3 retry attempts with delays
-  - Graceful error handling
+  - 5-minute cache duration with automatic cleanup
+  - 3 retry attempts with progressive delays
+  - Graceful error handling with user-friendly fallbacks
+- **Technical Implementation**: Uses duckduckgo-search library with custom caching layer and error handling
 
 ### 4. **Async Ollama Client (`utils/async_ollama.py`)**
 - **High-Performance Architecture**:
-  - Connection pooling with aiohttp
-  - Rate limiting with asyncio-throttle
-  - Concurrent request handling
-  - Automatic session management
+  - Connection pooling with aiohttp (100 total connections, 30 per host)
+  - Rate limiting with asyncio-throttle (configurable rate and period)
+  - Concurrent request handling with async/await patterns
+  - Automatic session management with connection reuse
 - **Features**:
-  - Async/await support throughout
-  - Streaming response support
-  - Health monitoring
-  - Model information retrieval
+  - Async/await support throughout with proper resource cleanup
+  - Streaming response support with chunked processing
+  - Health monitoring with connection testing
+  - Model information retrieval with caching
 - **Performance Optimizations**:
-  - Connection reuse
-  - DNS caching
-  - Keepalive connections
-  - Configurable timeouts
+  - Connection reuse with keepalive (30-second timeout)
+  - DNS caching with 5-minute TTL
+  - Configurable timeouts (30s total, 5s connect)
+  - Automatic retry with exponential backoff
+- **Technical Implementation**: Uses aiohttp for HTTP client, asyncio-throttle for rate limiting, and custom session management
 
 ### 5. **Smart Caching System (`utils/caching.py`)**
 - **Multi-layer Caching**:
-  - Redis primary cache (distributed)
-  - Memory fallback cache (local)
-  - Automatic failover
-  - Configurable TTL and size limits
+  - Redis primary cache for distributed environments
+  - Memory fallback cache using TTLCache for local storage
+  - Automatic failover with health checking
+  - Configurable TTL and size limits with LRU eviction
 - **Features**:
-  - Hash-based cache keys
-  - Parameter-aware caching
-  - Cache statistics and monitoring
-  - Graceful degradation
+  - Hash-based cache keys using MD5 with parameter inclusion
+  - Parameter-aware caching with temperature and model consideration
+  - Cache statistics and monitoring with hit rate tracking
+  - Graceful degradation with fallback mechanisms
 - **Performance**:
-  - 70-85% cache hit rate
+  - 70-85% cache hit rate for repeated queries
   - 50-80% response time improvement
-  - Configurable cache policies
+  - Configurable cache policies with environment variables
+- **Technical Implementation**: Uses redis-py for Redis operations and cachetools for in-memory caching
 
 ## 🚀 Performance Enhancements (Week 1)
 
@@ -428,3 +438,125 @@ ENABLE_STRUCTURED_LOGGING=true
 - Track response times
 - Check health status
 - Review error rates 
+
+## 📚 **References & Citations**
+
+### **Research Papers & Academic Sources**
+
+**Chain-of-Thought Reasoning**
+- Wei, Jason, et al. "Chain-of-thought prompting elicits reasoning in large language models." *Advances in Neural Information Processing Systems* 35 (2022): 24824-24837. [https://arxiv.org/abs/2201.11903](https://arxiv.org/abs/2201.11903)
+
+**Retrieval-Augmented Generation (RAG)**
+- Lewis, Mike, et al. "Retrieval-augmented generation for knowledge-intensive NLP tasks." *Advances in Neural Information Processing Systems* 33 (2020): 9459-9474. [https://arxiv.org/abs/2005.11401](https://arxiv.org/abs/2005.11401)
+
+**Vector Similarity Search**
+- Johnson, Jeff, Matthijs Douze, and Hervé Jégou. "Billion-scale similarity search with GPUs." *IEEE Transactions on Big Data* 7.3 (2019): 535-547. [https://arxiv.org/abs/1702.08734](https://arxiv.org/abs/1702.08734)
+
+**Async Programming & Performance**
+- Beazley, David M., and Brian K. Jones. *Python Cookbook*. O'Reilly Media, 2013.
+- Goetz, Brian. *Java Concurrency in Practice*. Addison-Wesley, 2006.
+
+### **Technology & Library References**
+
+**Core AI & ML Libraries**
+- **LangChain**: [https://langchain.com](https://langchain.com) - Framework for developing applications with LLMs
+- **ChromaDB**: [https://chromadb.ai](https://chromadb.ai) - Vector database for AI applications
+- **Sentence Transformers**: [https://www.sbert.net](https://www.sbert.net) - Sentence embeddings library
+- **Nomic Embed**: [https://docs.nomic.ai/reference/endpoints/nomic-embed-text-v1](https://docs.nomic.ai/reference/endpoints/nomic-embed-text-v1) - Text embedding model
+
+**Async & Performance Libraries**
+- **aiohttp**: [https://aiohttp.readthedocs.io](https://aiohttp.readthedocs.io) - Async HTTP client/server framework
+- **asyncio-throttle**: [https://github.com/hallazzang/asyncio-throttle](https://github.com/hallazzang/asyncio-throttle) - Rate limiting for async operations
+- **Redis**: [https://redis.io](https://redis.io) - In-memory data structure store
+- **cachetools**: [https://github.com/tkem/cachetools](https://github.com/tkem/cachetools) - Caching utilities for Python
+
+**Document Processing**
+- **PyPDF**: [https://pypdf.readthedocs.io](https://pypdf.readthedocs.io) - Pure Python PDF library
+- **Unstructured**: [https://unstructured.io](https://unstructured.io) - Open source libraries for processing unstructured data
+- **Tesseract OCR**: [https://github.com/tesseract-ocr/tesseract](https://github.com/tesseract-ocr/tesseract) - Optical character recognition engine
+- **Pillow**: [https://python-pillow.org](https://python-pillow.org) - Python Imaging Library
+- **RecursiveCharacterTextSplitter**: [https://python.langchain.com/docs/modules/data_connection/document_transformers](https://python.langchain.com/docs/modules/data_connection/document_transformers) - LangChain text splitting utility
+
+**Mathematical & Scientific Computing**
+- **Python Math Module**: [https://docs.python.org/3/library/math.html](https://docs.python.org/3/library/math.html) - Mathematical functions and constants
+- **NumPy**: [https://numpy.org](https://numpy.org) - Numerical computing library
+- **SciPy**: [https://scipy.org](https://scipy.org) - Scientific computing library
+
+**Time & Date Handling**
+- **pytz**: [https://pythonhosted.org/pytz](https://pythonhosted.org/pytz) - World timezone definitions for Python
+- **datetime**: [https://docs.python.org/3/library/datetime.html](https://docs.python.org/3/library/datetime.html) - Python standard library for date and time
+- **IANA Time Zone Database**: [https://www.iana.org/time-zones](https://www.iana.org/time-zones) - Official timezone database
+
+**Web Search & External APIs**
+- **DuckDuckGo**: [https://duckduckgo.com](https://duckduckgo.com) - Privacy-focused search engine
+- **duckduckgo-search**: [https://github.com/deedy5/duckduckgo_search](https://github.com/deedy5/duckduckgo_search) - Python library for DuckDuckGo search
+
+**Testing & Development**
+- **pytest**: [https://pytest.org](https://pytest.org) - Testing framework for Python
+- **pytest-asyncio**: [https://pytest-asyncio.readthedocs.io](https://pytest-asyncio.readthedocs.io) - Async support for pytest
+- **Pydantic**: [https://pydantic.dev](https://pydantic.dev) - Data validation using Python type annotations
+
+**Text-to-Speech**
+- **gTTS**: [https://gtts.readthedocs.io](https://gtts.readthedocs.io) - Google Text-to-Speech library
+
+### **Architecture & Design Patterns**
+
+**SOLID Principles**
+- Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
+
+**Async Programming Patterns**
+- "Async/Await Pattern." *Microsoft Documentation*. [https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns](https://docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns)
+
+**Caching Strategies**
+- "Caching Best Practices." *Redis Documentation*. [https://redis.io/topics/optimization](https://redis.io/topics/optimization)
+
+**Rate Limiting**
+- "Rate Limiting." *Cloudflare Documentation*. [https://developers.cloudflare.com/fundamentals/get-started/concepts/rate-limiting](https://developers.cloudflare.com/fundamentals/get-started/concepts/rate-limiting)
+
+**Tool Registry Pattern**
+- Gamma, Erich, et al. *Design Patterns: Elements of Reusable Object-Oriented Software*. Addison-Wesley, 1994.
+
+### **AI & Machine Learning Resources**
+
+**Vector Databases**
+- "Vector Database Guide." *Pinecone Documentation*. [https://docs.pinecone.io/docs/overview](https://docs.pinecone.io/docs/overview)
+- "ChromaDB Documentation." *ChromaDB*. [https://docs.trychroma.com](https://docs.trychroma.com)
+
+**Embedding Models**
+- **Nomic Embed**: [https://docs.nomic.ai/reference/endpoints/nomic-embed-text-v1](https://docs.nomic.ai/reference/endpoints/nomic-embed-text-v1) - Text embedding model
+- **Sentence Transformers**: [https://www.sbert.net](https://www.sbert.net) - Sentence embeddings library
+
+**Large Language Models**
+- **Mistral AI**: [https://mistral.ai](https://mistral.ai) - Open source language models
+- **Meta AI**: [https://ai.meta.com/llama](https://ai.meta.com/llama) - LLaMA language models
+- **Microsoft**: [https://www.microsoft.com/en-us/research/project/phi-2](https://www.microsoft.com/en-us/research/project/phi-2) - Phi-2 language model
+
+**OCR & Image Processing**
+- **Tesseract**: [https://github.com/tesseract-ocr/tesseract](https://github.com/tesseract-ocr/tesseract) - OCR engine
+- **Pillow**: [https://python-pillow.org](https://python-pillow.org) - Python Imaging Library
+
+### **Security & Best Practices**
+
+**Code Injection Prevention**
+- "OWASP Code Injection." *OWASP Foundation*. [https://owasp.org/www-community/attacks/Code_Injection](https://owasp.org/www-community/attacks/Code_Injection)
+
+**Expression Evaluation Security**
+- "Python eval() Security." *Python Documentation*. [https://docs.python.org/3/library/functions.html#eval](https://docs.python.org/3/library/functions.html#eval)
+
+**Input Validation**
+- "Input Validation Cheat Sheet." *OWASP Foundation*. [https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html](https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html)
+
+### **Performance & Optimization**
+
+**Connection Pooling**
+- "HTTP Connection Pooling." *aiohttp Documentation*. [https://docs.aiohttp.org/en/stable/client_advanced.html#connectors](https://docs.aiohttp.org/en/stable/client_advanced.html#connectors)
+
+**Caching Strategies**
+- "Caching Best Practices." *Redis Documentation*. [https://redis.io/topics/optimization](https://redis.io/topics/optimization)
+
+**Async Performance**
+- "Async Python Performance." *Python Documentation*. [https://docs.python.org/3/library/asyncio.html](https://docs.python.org/3/library/asyncio.html)
+
+---
+
+*This documentation follows adapted MLA citation format for technical and academic references. For questions about citations or references, please contact the development team.* 
