@@ -15,3 +15,9 @@ pypdf>=3.0.0
 unstructured>=0.10.0
 sentence-transformers>=2.2.0
 duckduckgo-search>=4.1.1
+# Week 1 Performance Improvements
+aiohttp>=3.8.0
+asyncio-throttle>=1.0.0
+redis>=4.5.0
+cachetools>=5.3.0
+structlog>=23.1.0

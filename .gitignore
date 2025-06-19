@@ -36,3 +36,41 @@ uploads/
 
 # Text-to-speech generated files
 temp_*.mp3
+
+# VSCode
+.vscode/
+
+# Python
+*.pyc
+
+# Mac
+.DS_Store
+
+# Node
+node_modules/
+
+# Env
+.env
+.env.*
+
+# ChromaDB
+chroma_db/
+
+# MyPy
+.mypy_cache/
+
+# Dist
+dist/
+
+# Build
+build/
+
+# Eggs
+.eggs/
+*.egg-info
+
+# Assets
+assets/
+
+# Latest Interface
+latest-interface.png

@@ -3,12 +3,15 @@ Tests for the reasoning engine functionality
 """
 
 import pytest
+import asyncio
+from unittest.mock import Mock, patch
 from reasoning_engine import (
     ReasoningAgent,
     ReasoningChain,
     MultiStepReasoning,
     ReasoningResult
 )
+from utils.async_ollama import AsyncOllamaClient, AsyncOllamaChat
 
 def test_reasoning_result_creation():
     """Test creation of ReasoningResult"""
@@ -86,4 +89,71 @@ def test_reasoning_components(reasoning_class, test_model_name):
     
     assert isinstance(result, ReasoningResult)
     assert result.content is not None
-    assert result.success is True 
+    assert result.success is True
+
+# New async functionality tests
+class TestAsyncFunctionality:
+    """Test async functionality integration"""
+    
+    @pytest.mark.asyncio
+    async def test_async_ollama_client_init(self, test_model_name):
+        """Test AsyncOllamaClient initialization"""
+        client = AsyncOllamaClient(test_model_name)
+        assert client.model_name == test_model_name
+        assert client.api_url == f"http://localhost:11434/api/generate"
+        # Resources are lazily initialized
+        assert client.connector is None
+        assert client.throttler is None
+        
+        # After calling _ensure_async_resources in async context, they should be initialized
+        client._ensure_async_resources()
+        assert client.connector is not None
+        assert client.throttler is not None
+    
+    def test_async_ollama_chat_init(self, test_model_name):
+        """Test AsyncOllamaChat initialization"""
+        chat = AsyncOllamaChat(test_model_name)
+        assert chat.client is not None
+        assert isinstance(chat.client, AsyncOllamaClient)
+        assert chat.system_prompt is not None
+    
+    @pytest.mark.asyncio
+    async def test_async_chat_query(self, test_model_name, sample_query):
+        """Test async chat query functionality"""
+        chat = AsyncOllamaChat(test_model_name)
+        
+        # Mock the async client to avoid actual API calls
+        with patch.object(chat.client, 'query_async', return_value="Mock response") as mock_query:
+            result = await chat.query({"inputs": sample_query})
+            assert result == "Mock response"
+            mock_query.assert_called_once()
+    
+    @pytest.mark.asyncio
+    async def test_async_health_check(self, test_model_name):
+        """Test async health check"""
+        chat = AsyncOllamaChat(test_model_name)
+        
+        # Mock the health check
+        with patch.object(chat.client, 'health_check', return_value=True) as mock_health:
+            result = await chat.health_check()
+            assert result is True
+            mock_health.assert_called_once()
+    
+    @pytest.mark.asyncio
+    async def test_async_stream_query(self, test_model_name):
+        """Test async streaming query"""
+        chat = AsyncOllamaChat(test_model_name)
+        
+        # Mock the stream response
+        async def mock_stream():
+            yield "chunk1"
+            yield "chunk2"
+            yield "chunk3"
+        
+        with patch.object(chat.client, 'query_stream_async', return_value=mock_stream()) as mock_stream_method:
+            chunks = []
+            async for chunk in chat.query_stream({"inputs": "test"}):
+                chunks.append(chunk)
+            
+            assert chunks == ["chunk1", "chunk2", "chunk3"]
+            mock_stream_method.assert_called_once() 
