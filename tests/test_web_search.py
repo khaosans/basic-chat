@@ -95,7 +95,9 @@ class TestWebSearch(unittest.TestCase):
         mock_ddgs.return_value = mock_instance
         
         results = search_web(self.test_query)
-        self.assertEqual(results, "No results found.", "Should handle rate limiting gracefully")
+        # Now returns fallback results instead of "No results found."
+        self.assertIn("Search Results:", results, "Should return fallback results")
+        self.assertIn("Unable to perform real-time search", results, "Should indicate search failure")
     
     def test_search_result_creation(self):
         """Test SearchResult object creation"""
