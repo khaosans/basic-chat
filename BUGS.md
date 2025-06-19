@@ -3,17 +3,24 @@
 ## Current Bugs
 
 ### Reasoning Engine
-1. **Chain-of-Thought Streaming**
+1. **Time Tools and Timezone Handling**
+   - Some timezone format inconsistencies in tests
+   - EDT/EST timezone string parsing needs refinement
+   - Time format string mismatches in some cases
+   - **Workaround**: Use IANA timezone names (e.g., "America/New_York" instead of "EST")
+   - **Status**: Under investigation, planned for next release
+
+2. **Chain-of-Thought Streaming**
    - Occasional delay in thought process display
    - Some steps might appear out of order in high-load situations
    - **Workaround**: Refresh the page if streaming appears stuck
 
-2. **Multi-Step Reasoning**
+3. **Multi-Step Reasoning**
    - Context retrieval might timeout for very large documents
    - Memory usage can spike with multiple large contexts
    - **Workaround**: Split large documents into smaller chunks
 
-3. **Agent-Based Tools**
+4. **Agent-Based Tools**
    - Web search might be rate-limited by DuckDuckGo
    - Calculator tool has limited function support
    - **Workaround**: Use basic arithmetic operations, avoid complex math functions

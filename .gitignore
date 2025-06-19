@@ -69,8 +69,10 @@ build/
 .eggs/
 *.egg-info
 
-# Assets
-assets/
+# Temporary assets
+assets/temp/
+assets/*.tmp
+assets/*.temp
 
 # Latest Interface
 latest-interface.png
