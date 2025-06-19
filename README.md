@@ -1,5 +1,30 @@
 # BasicChat: Your Intelligent Local AI Assistant
 
+## 📋 Table of Contents
+- [Overview](#overview)
+- [Key Features](#-key-features)
+  - [Advanced Reasoning Engine](#-advanced-reasoning-engine)
+  - [Enhanced Tools & Utilities](#️-enhanced-tools--utilities)
+  - [Document & Multi-Modal Processing](#-document--multi-modal-processing)
+  - [Performance & Reliability](#-performance--reliability)
+- [Quick Start](#-quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Install Required Models](#1-install-required-models)
+  - [Clone and Setup](#2-clone-and-setup)
+  - [Start the Application](#3-start-the-application)
+- [Documentation](#-documentation)
+  - [Getting Started](#-getting-started)
+  - [Technical Documentation](#️-technical-documentation)
+  - [Planning & Roadmap](#-planning--roadmap)
+- [Testing](#-testing)
+- [Contributing](#-contributing)
+- [Performance Metrics](#-performance-metrics)
+- [Configuration](#-configuration)
+- [License](#-license)
+- [References & Citations](#-references--citations)
+
+---
+
 ## Overview
 BasicChat is a production-ready, privacy-focused AI assistant that runs locally using Ollama. Built with modern async architecture, intelligent caching, and advanced reasoning capabilities, it provides a professional-grade chat experience with RAG (Retrieval Augmented Generation), multi-modal processing, and smart tools - all through a clean Streamlit interface.
 
