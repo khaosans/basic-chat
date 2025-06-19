@@ -13,6 +13,7 @@ import requests
 import json
 import datetime
 import pytz
+import asyncio
 from typing import Optional, Dict, List
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
@@ -32,6 +33,11 @@ from reasoning_engine import (
     ReasoningDocumentProcessor,
     ReasoningResult
 )
+
+# Import new async components
+from config import config
+from utils.async_ollama import AsyncOllamaChat, async_chat
+from utils.caching import response_cache
 
 load_dotenv(".env.local")  # Load environment variables from .env.local
 
@@ -77,13 +83,42 @@ class Tool(ABC):
         pass
 
 class OllamaChat:
-    def __init__(self, model_name: str):
-        self.model_name = model_name
+    """Enhanced Ollama chat with async support and caching"""
+    
+    def __init__(self, model_name: str = None):
+        self.model_name = model_name or OLLAMA_MODEL
         self.api_url = f"{OLLAMA_API_URL}/generate"
         self.system_prompt = SYSTEM_PROMPT
+        
+        # Initialize async chat client
+        self.async_chat = AsyncOllamaChat(self.model_name)
+        
+        # Fallback to sync implementation if needed
+        self._use_sync_fallback = False
 
     def query(self, payload: Dict) -> Optional[str]:
-        """Query the Ollama API with retry logic"""
+        """Query the Ollama API with async support and fallback"""
+        if not self._use_sync_fallback:
+            try:
+                # Try async implementation
+                return asyncio.run(self._query_async(payload))
+            except Exception as e:
+                st.warning(f"Async query failed, falling back to sync: {e}")
+                self._use_sync_fallback = True
+        
+        # Fallback to original sync implementation
+        return self._query_sync(payload)
+    
+    async def _query_async(self, payload: Dict) -> Optional[str]:
+        """Async query implementation"""
+        try:
+            return await self.async_chat.query(payload)
+        except Exception as e:
+            st.error(f"Async query error: {e}")
+            return None
+    
+    def _query_sync(self, payload: Dict) -> Optional[str]:
+        """Original sync query implementation as fallback"""
         max_retries = 3
         retry_delay = 1  # seconds
         
@@ -124,6 +159,59 @@ class OllamaChat:
                 st.error(f"Error processing Ollama response: {e}")
                 return None
         return None
+    
+    async def query_stream(self, payload: Dict):
+        """Stream query with async support"""
+        if not self._use_sync_fallback:
+            try:
+                async for chunk in self.async_chat.query_stream(payload):
+                    yield chunk
+                return
+            except Exception as e:
+                st.warning(f"Async stream failed, falling back to sync: {e}")
+                self._use_sync_fallback = True
+        
+        # Fallback to sync implementation
+        for chunk in self._query_stream_sync(payload):
+            yield chunk
+    
+    def _query_stream_sync(self, payload: Dict):
+        """Sync stream implementation as fallback"""
+        user_input = payload.get("inputs", "")
+        ollama_payload = {
+            "model": self.model_name,
+            "prompt": user_input,
+            "system": self.system_prompt,
+            "stream": True
+        }
+        
+        try:
+            response = requests.post(self.api_url, json=ollama_payload, stream=True)
+            response.raise_for_status()
+            
+            for chunk in response.iter_content(chunk_size=512, decode_unicode=True):
+                if chunk:
+                    try:
+                        chunk_data = json.loads(chunk.strip())
+                        response_text = chunk_data.get("response", "")
+                        if response_text:
+                            yield response_text
+                    except json.JSONDecodeError:
+                        continue
+        except Exception as e:
+            st.error(f"Error in stream query: {e}")
+            yield f"Error: {str(e)}"
+    
+    async def health_check(self) -> bool:
+        """Check if the service is healthy"""
+        try:
+            return await self.async_chat.health_check()
+        except Exception:
+            return False
+    
+    def get_cache_stats(self) -> Dict:
+        """Get cache statistics"""
+        return response_cache.get_stats()
 
 class DocumentProcessor:
     def __init__(self):
