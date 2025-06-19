@@ -8,6 +8,7 @@ import time
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 import streamlit as st
+import datetime
 
 from langchain.agents import initialize_agent, AgentType, Tool
 from langchain.memory import ConversationBufferMemory
@@ -17,6 +18,7 @@ from langchain_ollama import ChatOllama
 from langchain.chains import LLMChain
 from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.vectorstores import Chroma
+from web_search import search_web
 
 # Load environment variables
 OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api")
@@ -25,10 +27,11 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "mistral")
 @dataclass
 class ReasoningResult:
     """Result from reasoning operations"""
-    content: str
-    reasoning_steps: List[str]
+    content: str  # Final answer/conclusion
+    reasoning_steps: List[str]  # Step-by-step thought process
     confidence: float
     sources: List[str]
+    intermediate_thoughts: List[str] = None  # For storing intermediate reasoning steps
     success: bool = True
     error: Optional[str] = None
 
@@ -75,42 +78,68 @@ class ReasoningAgent:
             ),
             Tool(
                 name="web_search",
-                func=self._web_search,
-                description="Search the web for current information (placeholder). Input should be a search query."
+                func=search_web,
+                description="Search the web for current information. Input should be a search query. Returns relevant snippets and links from web pages."
             )
         ]
     
     def _calculate(self, expression: str) -> str:
-        """Safe mathematical calculation"""
+        """Safe calculator function"""
         try:
-            # Basic safety check
-            allowed_chars = set('0123456789+-*/(). ')
-            if not all(c in allowed_chars for c in expression):
-                return "Error: Invalid characters in expression"
-            
-            result = eval(expression)
-            return f"Result: {result}"
+            # Use safer eval with limited scope
+            allowed_names = {"abs": abs, "float": float, "int": int, "pow": pow, "round": round}
+            code = compile(expression, "<string>", "eval")
+            for name in code.co_names:
+                if name not in allowed_names:
+                    raise NameError(f"Use of {name} not allowed")
+            return str(eval(expression, {"__builtins__": {}}, allowed_names))
         except Exception as e:
-            return f"Calculation error: {str(e)}"
+            return f"Error in calculation: {str(e)}"
     
-    def _get_current_time(self, query: str = "") -> str:
-        """Get current time"""
-        import datetime
-        return f"Current time: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    
-    def _web_search(self, query: str) -> str:
-        """Placeholder for web search functionality"""
-        return f"Web search for '{query}' would be implemented here"
+    def _get_current_time(self) -> str:
+        """Get current time in a readable format"""
+        return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     def run(self, query: str) -> ReasoningResult:
-        """Run the agent with reasoning"""
+        """Execute agent-based reasoning"""
         try:
-            response = self.agent.invoke({"input": query})
+            # Run the agent with the query
+            response = self.agent.invoke({
+                "input": query,
+                "chat_history": self.memory.chat_memory.messages if hasattr(self.memory, 'chat_memory') else []
+            })
+            
+            # Extract steps from the agent's thought process
+            steps = []
+            if hasattr(response, 'intermediate_steps'):
+                for step in response.intermediate_steps:
+                    if isinstance(step, tuple) and len(step) >= 2:
+                        action, observation = step
+                        steps.append(f"🤔 Thought: {action.log}")
+                        steps.append(f"🔍 Action: Used {action.tool}")
+                        steps.append(f"📝 Result: {observation}")
+            
+            # If no intermediate steps, try to extract from the output
+            if not steps:
+                output = response["output"] if isinstance(response, dict) else str(response)
+                # Try to parse the output for any structured information
+                if "Thought:" in output:
+                    lines = output.split('\n')
+                    for line in lines:
+                        if line.strip() and any(keyword in line for keyword in ['Thought:', 'Action:', 'Result:', 'Observation:']):
+                            steps.append(line.strip())
+            
+            # If still no steps, create a basic step from the output
+            if not steps:
+                output = response["output"] if isinstance(response, dict) else str(response)
+                steps = [f"🤔 Processed query: {query}", f"📝 Generated response: {output[:100]}..."]
+            
             return ReasoningResult(
-                content=response.get("output", "No response generated"),
-                reasoning_steps=["Agent processed query using available tools"],
-                confidence=0.8,
-                sources=["agent_tools"]
+                content=response["output"] if isinstance(response, dict) else str(response),
+                reasoning_steps=steps,
+                confidence=0.9,
+                sources=["agent_based_reasoning"],
+                intermediate_thoughts=steps
             )
         except Exception as e:
             return ReasoningResult(
@@ -128,50 +157,50 @@ class ReasoningChain:
     def __init__(self, model_name: str = OLLAMA_MODEL):
         self.llm = ChatOllama(
             model=model_name,
-            base_url=OLLAMA_API_URL.replace("/api", "")
+            base_url=OLLAMA_API_URL.replace("/api", ""),
+            streaming=True  # Enable streaming
         )
         
         # Use ChatPromptTemplate for better chat model compatibility
         self.reasoning_prompt = ChatPromptTemplate.from_messages([
             ("system", """You are an AI assistant that excels at step-by-step reasoning. 
-            When given a question, always break it down into clear steps and show your thinking process.
-            Be thorough but concise in your reasoning."""),
-            ("human", """Please answer this question using step-by-step reasoning:
-
-Question: {question}
-
-Let me think through this step by step:
-
-1) First, I need to understand what's being asked
-2) Then, I'll identify what information I need
-3) I'll gather the necessary information
-4) Finally, I'll provide a reasoned answer
-
-Please provide your step-by-step reasoning and final answer:""")
+            When given a question, break down your thinking into clear, numbered steps.
+            Separate your thought process from your final answer.
+            Format your response as follows:
+            
+            THINKING:
+            1) First step...
+            2) Second step...
+            3) Final step...
+            
+            ANSWER:
+            [Your final, concise answer here]"""),
+            ("human", "{question}")
         ])
         
         # Use the newer RunnableSequence approach
         self.chain = self.reasoning_prompt | self.llm
-    
+
     def execute_reasoning(self, question: str) -> ReasoningResult:
         """Execute chain-of-thought reasoning"""
         try:
             response = self.chain.invoke({"question": question})
+            content = response.content if hasattr(response, 'content') else str(response)
             
-            # Extract content from the response
-            if hasattr(response, 'content'):
-                content = response.content
-            else:
-                content = str(response)
+            # Split thinking and answer
+            parts = content.split("ANSWER:")
+            thinking = parts[0].replace("THINKING:", "").strip()
+            answer = parts[1].strip() if len(parts) > 1 else content
             
-            # Parse the response to extract reasoning steps
-            reasoning_steps = self._extract_reasoning_steps(content)
+            # Extract reasoning steps
+            steps = [step.strip() for step in thinking.split("\n") if step.strip()]
             
             return ReasoningResult(
-                content=content,
-                reasoning_steps=reasoning_steps,
-                confidence=0.7,
-                sources=["chain_of_thought"]
+                content=answer,
+                reasoning_steps=steps,
+                confidence=0.9,
+                sources=["chain_of_thought"],
+                intermediate_thoughts=steps
             )
         except Exception as e:
             return ReasoningResult(
@@ -182,18 +211,6 @@ Please provide your step-by-step reasoning and final answer:""")
                 success=False,
                 error=str(e)
             )
-    
-    def _extract_reasoning_steps(self, response: str) -> List[str]:
-        """Extract reasoning steps from response"""
-        steps = []
-        lines = response.split('\n')
-        for line in lines:
-            line = line.strip()
-            if line.startswith(('1)', '2)', '3)', '4)', '5)', '6)', '7)', '8)', '9)', '10)', '-', '•')):
-                steps.append(line)
-            elif line.startswith(('Step', 'STEP')):
-                steps.append(line)
-        return steps if steps else ["Chain-of-thought reasoning applied"]
 
 class MultiStepReasoning:
     """Multi-step reasoning with document context"""
@@ -202,33 +219,40 @@ class MultiStepReasoning:
         self.doc_processor = doc_processor
         self.llm = ChatOllama(
             model=model_name,
-            base_url=OLLAMA_API_URL.replace("/api", "")
+            base_url=OLLAMA_API_URL.replace("/api", ""),
+            streaming=True
         )
         
         self.analysis_prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are an AI assistant that analyzes questions and breaks them down into steps."),
-            ("human", """Analyze this query and break it down into steps:
-Query: {query}
-
-What are the key components and what information do I need?
-List the steps needed to answer this question:""")
+            ("system", """You are an AI assistant that analyzes questions and breaks them down into clear steps.
+            Format your response as follows:
+            
+            ANALYSIS:
+            1) Question type...
+            2) Key components...
+            3) Required information...
+            
+            STEPS:
+            1) First step to solve...
+            2) Second step...
+            3) Final step..."""),
+            ("human", "{query}")
         ])
         
         self.reasoning_prompt = ChatPromptTemplate.from_messages([
-            ("system", "You are an AI assistant that provides step-by-step reasoning based on analysis and context."),
-            ("human", """Based on the analysis and context, let me reason through this:
-
-Analysis: {analysis}
-Context: {context}
-Original Query: {query}
-
-Let me think step by step:
-1) What does the query ask for?
-2) What relevant information do I have?
-3) How do I connect the information to answer the query?
-4) What is my final reasoned answer?
-
-Step-by-step reasoning:""")
+            ("system", """Based on the analysis and context, provide a structured solution.
+            Format your response as follows:
+            
+            PROCESS:
+            1) Understanding...
+            2) Applying context...
+            3) Reasoning...
+            
+            ANSWER:
+            [Your final, concise answer here]"""),
+            ("human", """Analysis: {analysis}
+            Context: {context}
+            Query: {query}""")
         ])
         
         # Create chains using RunnableSequence
@@ -242,6 +266,9 @@ Step-by-step reasoning:""")
             analysis_response = self.analysis_chain.invoke({"query": query})
             analysis = analysis_response.content if hasattr(analysis_response, 'content') else str(analysis_response)
             
+            # Extract analysis steps
+            analysis_steps = [step.strip() for step in analysis.split("\n") if step.strip() and not step.startswith("STEPS:")]
+            
             # Step 2: Gather relevant context
             context = self.doc_processor.get_relevant_context(query) if self.doc_processor else ""
             
@@ -253,18 +280,23 @@ Step-by-step reasoning:""")
             })
             reasoning = reasoning_response.content if hasattr(reasoning_response, 'content') else str(reasoning_response)
             
-            # Combine analysis and reasoning
-            full_response = f"Analysis:\n{analysis}\n\nReasoning:\n{reasoning}"
+            # Split process and answer
+            parts = reasoning.split("ANSWER:")
+            process = parts[0].replace("PROCESS:", "").strip()
+            answer = parts[1].strip() if len(parts) > 1 else reasoning
+            
+            # Extract reasoning steps
+            reasoning_steps = [step.strip() for step in process.split("\n") if step.strip()]
+            
+            # Combine all steps for the thought process
+            all_steps = analysis_steps + ["---"] + reasoning_steps
             
             return ReasoningResult(
-                content=full_response,
-                reasoning_steps=[
-                    "Query analysis completed",
-                    "Context gathered",
-                    "Multi-step reasoning applied"
-                ],
+                content=answer,
+                reasoning_steps=all_steps,
                 confidence=0.9,
-                sources=["multi_step_reasoning", "document_context"] if context else ["multi_step_reasoning"]
+                sources=["multi_step_reasoning", "document_context"] if context else ["multi_step_reasoning"],
+                intermediate_thoughts=all_steps
             )
         except Exception as e:
             return ReasoningResult(
