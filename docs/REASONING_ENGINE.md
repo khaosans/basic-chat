@@ -7,35 +7,53 @@
 ## Overview
 The BasicChat reasoning engine implements advanced AI capabilities including Chain-of-Thought reasoning, multi-step analysis, and agent-based tool integration. This implementation is based on research by Wei et al. (2022) demonstrating that explicit step-by-step reasoning significantly improves large language model performance on complex tasks.
 
+The engine is implemented in [`reasoning_engine.py`](../reasoning_engine.py) and provides three distinct reasoning modes, each with specific use cases and capabilities.
+
 ## 🧠 Core Reasoning Modes
 
 ### Chain-of-Thought (CoT) Reasoning
 **Implementation Status**: ✅ Fully Implemented
 **Research Basis**: Wei et al. (2022) Chain-of-Thought prompting
+**Code Location**: [`reasoning_engine.py:277-337`](../reasoning_engine.py#L277-L337)
 
 The CoT implementation enables AI systems to break down complex problems into manageable steps, achieving up to 40% accuracy improvements on mathematical reasoning benchmarks (Wei et al. 2201.11903).
 
 **Key Features**:
-- **Step-by-step analysis** with visible thought process
+- **Step-by-step analysis** with visible thought process using structured prompts
 - **Streaming output** with real-time step visualization
 - **Confidence scoring** for transparency in AI decisions
 - **Async processing** with caching support
 
 **Technical Implementation**:
 ```python
-from reasoning_engine import ReasoningChain
-
-chain = ReasoningChain("mistral")
-result = chain.execute_reasoning("What is the capital of France?")
-
-# Output:
-# THINKING:
-# 1) Analyzing the question about France's capital
-# 2) Recalling geographical knowledge
-# 3) Verifying information
-# 
-# ANSWER:
-# The capital of France is Paris.
+# From reasoning_engine.py:277-337
+class ReasoningChain:
+    def __init__(self, model_name: str = OLLAMA_MODEL):
+        self.llm = ChatOllama(
+            model=model_name,
+            base_url=OLLAMA_API_URL.replace("/api", ""),
+            streaming=True  # Enable streaming
+        )
+        
+        # Use ChatPromptTemplate for better chat model compatibility
+        self.reasoning_prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are an AI assistant that excels at step-by-step reasoning. 
+            When given a question, break down your thinking into clear, numbered steps.
+            Separate your thought process from your final answer.
+            Format your response as follows:
+            
+            THINKING:
+            1) First step...
+            2) Second step...
+            3) Final step...
+            
+            ANSWER:
+            [Your final, concise answer here]"""),
+            ("human", "{question}")
+        ])
+        
+        # Use the newer RunnableSequence approach
+        self.chain = self.reasoning_prompt | self.llm
 ```
 
 **Performance Metrics**:
@@ -46,6 +64,7 @@ result = chain.execute_reasoning("What is the capital of France?")
 ### Multi-Step Reasoning
 **Implementation Status**: ✅ Fully Implemented
 **Research Basis**: Zhou et al. (2022) structured reasoning chains
+**Code Location**: [`reasoning_engine.py:338-433`](../reasoning_engine.py#L338-L433)
 
 Multi-step reasoning extends CoT with systematic problem decomposition and context-aware processing, particularly effective for complex, multi-faceted problems.
 
@@ -57,21 +76,31 @@ Multi-step reasoning extends CoT with systematic problem decomposition and conte
 
 **Technical Implementation**:
 ```python
-from reasoning_engine import MultiStepReasoning
-
-multi_step = MultiStepReasoning(doc_processor=None, model_name="mistral")
-result = multi_step.step_by_step_reasoning("Explain how photosynthesis works")
-
-# Output:
-# ANALYSIS:
-# 1) Process identification
-# 2) Component breakdown
-# 3) Sequential steps
-#
-# STEPS:
-# 1) Light absorption
-# 2) Water uptake
-# 3) CO2 conversion
+# From reasoning_engine.py:338-433
+class MultiStepReasoning:
+    def __init__(self, doc_processor, model_name: str = OLLAMA_MODEL):
+        self.doc_processor = doc_processor
+        self.llm = ChatOllama(
+            model=model_name,
+            base_url=OLLAMA_API_URL.replace("/api", ""),
+            streaming=True
+        )
+        
+        self.analysis_prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are an AI assistant that analyzes questions and breaks them down into clear steps.
+            Format your response as follows:
+            
+            ANALYSIS:
+            1) Question type...
+            2) Key components...
+            3) Required information...
+            
+            STEPS:
+            1) First step to solve...
+            2) Second step...
+            3) Final step..."""),
+            ("human", "{query}")
+        ])
 ```
 
 **Performance Metrics**:
@@ -82,6 +111,7 @@ result = multi_step.step_by_step_reasoning("Explain how photosynthesis works")
 ### Agent-Based Reasoning
 **Implementation Status**: ✅ Fully Implemented
 **Research Basis**: Schick et al. (2023) Toolformer architecture
+**Code Location**: [`reasoning_engine.py:40-276`](../reasoning_engine.py#L40-L276)
 
 Agent-based reasoning represents the most sophisticated approach, combining multiple specialized tools with dynamic selection capabilities.
 
@@ -93,17 +123,36 @@ Agent-based reasoning represents the most sophisticated approach, combining mult
 
 **Technical Implementation**:
 ```python
-from reasoning_engine import ReasoningAgent
-
-agent = ReasoningAgent("mistral")
-result = agent.run("What is the current Bitcoin price and calculate 15% of it?")
-
-# Output:
-# 🤔 Thought: I should search for current Bitcoin price and then calculate 15%
-# 🔍 Action: Using web_search
-# 📝 Result: [Current price information]
-# 🧮 Action: Using enhanced_calculator
-# 📝 Result: 15% of [price] = [calculated amount]
+# From reasoning_engine.py:40-276
+class ReasoningAgent:
+    def __init__(self, model_name: str = OLLAMA_MODEL):
+        self.llm = ChatOllama(
+            model=model_name,
+            base_url=OLLAMA_API_URL.replace("/api", "")
+        )
+        self.memory = ConversationBufferMemory(
+            memory_key="chat_history",
+            return_messages=True
+        )
+        
+        # Initialize enhanced tools
+        self.calculator = EnhancedCalculator()
+        self.time_tools = EnhancedTimeTools()
+        
+        # Initialize tools
+        self.tools = self._create_tools()
+        
+        # Initialize agent with better configuration
+        self.agent = initialize_agent(
+            tools=self.tools,
+            llm=self.llm,
+            agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION,
+            memory=self.memory,
+            verbose=True,
+            handle_parsing_errors=True,
+            max_iterations=3,
+            early_stopping_method="generate"
+        )
 ```
 
 **Performance Metrics**:
@@ -116,6 +165,7 @@ result = agent.run("What is the current Bitcoin price and calculate 15% of it?")
 ### Smart Calculator
 **Implementation Status**: ✅ Fully Implemented
 **Security Basis**: Stubblebine and Wright (2003) safe expression evaluation
+**Code Location**: [`utils/enhanced_tools.py:25-235`](../utils/enhanced_tools.py#L25-L235)
 
 The calculator prioritizes both functionality and security, incorporating research on safe mathematical expression evaluation.
 
@@ -127,24 +177,80 @@ The calculator prioritizes both functionality and security, incorporating resear
 
 **Technical Implementation**:
 ```python
-from utils.enhanced_tools import EnhancedCalculator
-
-calc = EnhancedCalculator()
-result = calc.calculate("sin(45) * cos(30) + sqrt(16)")
-
-# Returns:
-# CalculationResult(
-#     result="4.707106781186548",
-#     expression="sin(45) * cos(30) + sqrt(16)",
-#     steps=[
-#         "1) Calculate sin(45) = 0.7071067811865476",
-#         "2) Calculate cos(30) = 0.8660254037844387",
-#         "3) Calculate sqrt(16) = 4.0",
-#         "4) Multiply sin(45) * cos(30) = 0.6123724356957945",
-#         "5) Add sqrt(16) = 4.6123724356957945"
-#     ],
-#     success=True
-# )
+# From utils/enhanced_tools.py:25-235
+class EnhancedCalculator:
+    def __init__(self):
+        # Define safe mathematical functions
+        self.safe_functions = {
+            'abs': abs, 'round': round, 'min': min, 'max': max,
+            'pow': pow, 'sqrt': math.sqrt, 'sin': math.sin,
+            'cos': math.cos, 'tan': math.tan, 'log': math.log,
+            'log10': math.log10, 'exp': math.exp, 'floor': math.floor,
+            'ceil': math.ceil, 'pi': math.pi, 'e': math.e,
+            'degrees': math.degrees, 'radians': math.radians,
+            'factorial': math.factorial, 'gcd': math.gcd,
+            'lcm': lambda a, b: abs(a * b) // math.gcd(a, b) if a and b else 0
+        }
+        
+        # Define safe constants
+        self.safe_constants = {
+            'pi': math.pi, 'e': math.e, 'inf': float('inf'), 'nan': float('nan')
+        }
+    
+    def calculate(self, expression: str) -> CalculationResult:
+        """Perform safe mathematical calculation"""
+        try:
+            # Clean and validate expression
+            clean_expression = self._clean_expression(expression)
+            
+            # Validate for dangerous operations
+            if not self._is_safe_expression(clean_expression):
+                return CalculationResult(
+                    result="", expression=expression,
+                    steps=["❌ Expression contains unsafe operations"],
+                    success=False, error="Unsafe mathematical expression detected"
+                )
+            
+            # Create safe namespace
+            safe_namespace = {
+                '__builtins__': {},
+                **self.safe_functions,
+                **self.safe_constants
+            }
+            
+            # Compile and execute
+            code = compile(clean_expression, '<string>', 'eval')
+            
+            # Validate compiled code
+            if not self._validate_compiled_code(code):
+                return CalculationResult(
+                    result="", expression=expression,
+                    steps=["❌ Compiled code contains unsafe operations"],
+                    success=False, error="Unsafe compiled code detected"
+                )
+            
+            # Execute calculation
+            result = eval(code, safe_namespace)
+            
+            # Format result
+            formatted_result = self._format_result(result)
+            
+            # Generate calculation steps
+            steps = self._generate_calculation_steps(expression, result)
+            
+            return CalculationResult(
+                result=formatted_result,
+                expression=expression,
+                steps=steps,
+                success=True
+            )
+            
+        except Exception as e:
+            return CalculationResult(
+                result="", expression=expression,
+                steps=[f"❌ Calculation error: {str(e)}"],
+                success=False, error=str(e)
+            )
 ```
 
 **Security Features**:
@@ -156,6 +262,7 @@ result = calc.calculate("sin(45) * cos(30) + sqrt(16)")
 ### Advanced Time Tools
 **Implementation Status**: ✅ Fully Implemented
 **Standards Basis**: IANA Time Zone Database
+**Code Location**: [`utils/enhanced_tools.py:236-436`](../utils/enhanced_tools.py#L236-L436)
 
 The time tools provide comprehensive timezone handling and precise calculations, essential for applications requiring temporal reasoning.
 
@@ -167,24 +274,37 @@ The time tools provide comprehensive timezone handling and precise calculations,
 
 **Technical Implementation**:
 ```python
-from utils.enhanced_tools import EnhancedTimeTools
-
-time_tools = EnhancedTimeTools()
-result = time_tools.get_time_in_timezone("Asia/Tokyo")
-
-# Returns:
-# TimeResult(
-#     current_time="2024-01-15 14:30:00+09:00",
-#     timezone="Asia/Tokyo",
-#     formatted_time="2:30 PM JST",
-#     unix_timestamp=1705305000.0,
-#     success=True
-# )
+# From utils/enhanced_tools.py:236-436
+class EnhancedTimeTools:
+    def __init__(self):
+        self.default_timezone = "UTC"
+        self.supported_timezones = pytz.all_timezones
+    
+    def get_current_time(self, timezone: str = "UTC") -> TimeResult:
+        """Get current time in specified timezone"""
+        try:
+            tz = pytz.timezone(timezone)
+            now = datetime.datetime.now(pytz.utc).astimezone(tz)
+            
+            return TimeResult(
+                current_time=now.strftime("%Y-%m-%d %H:%M:%S %Z%z"),
+                timezone=timezone,
+                formatted_time=now.strftime("%I:%M %p %Z"),
+                unix_timestamp=now.timestamp(),
+                success=True
+            )
+        except Exception as e:
+            return TimeResult(
+                current_time="", timezone=timezone,
+                formatted_time="", unix_timestamp=0,
+                success=False, error=str(e)
+            )
 ```
 
 ### Web Search Integration
 **Implementation Status**: ✅ Fully Implemented
 **Provider**: DuckDuckGo (no API key required)
+**Code Location**: [`web_search.py:1-148`](../web_search.py#L1-L148)
 
 Web search provides real-time access to current information with intelligent caching and retry mechanisms.
 
@@ -196,11 +316,74 @@ Web search provides real-time access to current information with intelligent cac
 
 **Technical Implementation**:
 ```python
-from web_search import search_web
-
-results = search_web("latest AI developments 2024", max_results=3)
-
-# Returns formatted results with clickable links and snippets
+# From web_search.py:1-148
+class WebSearch:
+    def __init__(self):
+        """Initialize the web search with DuckDuckGo"""
+        self.ddgs = DDGS()
+        self.max_results = 5
+        self.region = 'wt-wt'  # Worldwide results
+        self.retry_attempts = 3
+        self.retry_delay = 2  # seconds
+        self.cache = {}
+        self.cache_duration = timedelta(minutes=5)  # Cache for 5 minutes
+    
+    def search(self, query: str, max_results: int = 5) -> List[SearchResult]:
+        """Perform a web search using DuckDuckGo with retry logic and caching"""
+        if not query.strip():
+            return []
+        
+        # Check cache first
+        cache_key = f"{query}_{max_results}"
+        if cache_key in self.cache:
+            cached_time, cached_results = self.cache[cache_key]
+            if datetime.now() - cached_time < self.cache_duration:
+                print(f"Returning cached results for: {query}")
+                return cached_results
+            else:
+                # Remove expired cache entry
+                del self.cache[cache_key]
+        
+        for attempt in range(self.retry_attempts):
+            try:
+                results = []
+                search_results = self.ddgs.text(
+                    query, region=self.region, max_results=max_results
+                )
+                
+                # Convert generator to list to handle potential errors
+                search_results = list(search_results)
+                
+                for r in search_results:
+                    results.append(SearchResult(
+                        title=r.get('title', 'No title'),
+                        link=r.get('link', ''),
+                        snippet=r.get('body', 'No description available')
+                    ))
+                    
+                if results:
+                    # Cache successful results
+                    self.cache[cache_key] = (datetime.now(), results)
+                    return results
+                    
+            except Exception as e:
+                error_msg = str(e)
+                print(f"Search attempt {attempt + 1} failed: {error_msg}")
+                
+                # If it's a rate limit, wait longer
+                if "rate" in error_msg.lower() or "429" in error_msg or "202" in error_msg:
+                    wait_time = self.retry_delay * (attempt + 1) + random.uniform(0, 1)
+                    print(f"Rate limited, waiting {wait_time:.1f} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    # For other errors, wait a bit and retry
+                    time.sleep(1)
+        
+        # If all attempts failed, return fallback results
+        fallback_results = self._get_fallback_results(query)
+        # Cache fallback results for a shorter time
+        self.cache[cache_key] = (datetime.now(), fallback_results)
+        return fallback_results
 ```
 
 **Performance Features**:
@@ -213,6 +396,7 @@ results = search_web("latest AI developments 2024", max_results=3)
 ### Async Processing
 **Implementation Status**: ✅ Fully Implemented
 **Research Basis**: PEP 492 async/await patterns
+**Code Location**: [`utils/async_ollama.py:1-275`](../utils/async_ollama.py#L1-L275)
 
 The async architecture enables high-performance, non-blocking operations through modern concurrency patterns.
 
@@ -222,6 +406,42 @@ The async architecture enables high-performance, non-blocking operations through
 - **Retry logic** with exponential backoff (3 attempts)
 - **Health monitoring** with real-time availability checks
 
+**Technical Implementation**:
+```python
+# From utils/async_ollama.py:1-275
+class AsyncOllamaClient:
+    def __init__(self, model_name: str = None):
+        self.model_name = model_name or config.ollama_model
+        self.api_url = f"{config.ollama_url}/generate"
+        self.base_url = config.get_ollama_base_url()
+        
+        # Lazy initialization of async resources
+        self.connector = None
+        self.throttler = None
+        self._session = None
+        self._session_lock = None
+    
+    def _ensure_async_resources(self):
+        """Initialize async resources if not already done"""
+        if self.connector is None:
+            # Connection pooling
+            self.connector = aiohttp.TCPConnector(
+                limit=100,  # Total connection pool size
+                limit_per_host=30,  # Connections per host
+                ttl_dns_cache=300,  # DNS cache TTL
+                use_dns_cache=True,
+                keepalive_timeout=30,
+                enable_cleanup_closed=True
+            )
+        
+        if self.throttler is None:
+            # Rate limiting
+            self.throttler = Throttler(
+                rate_limit=config.rate_limit,
+                period=config.rate_limit_period
+            )
+```
+
 **Performance Metrics**:
 - **Response Time**: 50-80% faster with caching enabled
 - **Throughput**: 10x improvement with connection pooling
@@ -230,6 +450,7 @@ The async architecture enables high-performance, non-blocking operations through
 ### Multi-layer Caching
 **Implementation Status**: ✅ Fully Implemented
 **Research Basis**: Aggarwal et al. (1999) hierarchical caching systems
+**Code Location**: [`utils/caching.py:1-270`](../utils/caching.py#L1-L270)
 
 The caching strategy implements a sophisticated multi-layer approach to optimize response times and reduce computational overhead.
 
@@ -239,6 +460,54 @@ The caching strategy implements a sophisticated multi-layer approach to optimize
 - **Smart key generation** with MD5 hashing
 - **Automatic failover** with health checking
 
+**Technical Implementation**:
+```python
+# From utils/caching.py:1-270
+class ResponseCache:
+    """Main cache manager with fallback support"""
+    
+    def __init__(self):
+        self.primary_cache: Optional[CacheInterface] = None
+        self.fallback_cache: Optional[CacheInterface] = None
+        self._initialize_caches()
+    
+    def _initialize_caches(self):
+        """Initialize primary and fallback caches"""
+        # Try Redis first if enabled
+        if config.redis_enabled and config.redis_url:
+            try:
+                self.primary_cache = RedisCache(config.redis_url)
+                if self.primary_cache.connected:
+                    logger.info("Using Redis as primary cache")
+                else:
+                    self.primary_cache = None
+            except Exception as e:
+                logger.warning(f"Failed to initialize Redis cache: {e}")
+                self.primary_cache = None
+        
+        # Always initialize memory cache as fallback
+        self.fallback_cache = MemoryCache(
+            ttl=config.cache_ttl,
+            maxsize=config.cache_maxsize
+        )
+        
+        # If no primary cache, use memory cache as primary
+        if not self.primary_cache:
+            self.primary_cache = self.fallback_cache
+            logger.info("Using memory cache as primary cache")
+    
+    def get_cache_key(self, query: str, model: str, **kwargs) -> str:
+        """Generate cache key from query and parameters"""
+        # Create a hash of the query and parameters
+        key_data = {
+            "query": query,
+            "model": model,
+            **kwargs
+        }
+        key_string = json.dumps(key_data, sort_keys=True)
+        return hashlib.md5(key_string.encode()).hexdigest()
+```
+
 **Performance Metrics**:
 - **Hit Rate**: 70-85% for repeated queries
 - **Speed Improvement**: 50-80% faster response times
@@ -247,6 +516,8 @@ The caching strategy implements a sophisticated multi-layer approach to optimize
 ## ⚙️ Configuration
 
 ### Environment Variables
+**Code Location**: [`config.py:1-85`](../config.py#L1-L85)
+
 ```bash
 # Reasoning Engine Configuration
 OLLAMA_MODEL=mistral
@@ -267,6 +538,35 @@ ENABLE_TIME_TOOLS=true
 WEB_SEARCH_MAX_RESULTS=5
 ```
 
+**Configuration Implementation**:
+```python
+# From config.py:1-85
+@dataclass
+class AppConfig:
+    """Application configuration with environment variable support"""
+    
+    # Ollama Configuration
+    ollama_url: str = os.getenv("OLLAMA_API_URL", "http://localhost:11434/api")
+    ollama_model: str = os.getenv("OLLAMA_MODEL", "mistral")
+    
+    # LLM Parameters
+    max_tokens: int = int(os.getenv("MAX_TOKENS", "2048"))
+    temperature: float = float(os.getenv("TEMPERATURE", "0.7"))
+    
+    # Caching Configuration
+    cache_ttl: int = int(os.getenv("CACHE_TTL", "3600"))
+    cache_maxsize: int = int(os.getenv("CACHE_MAXSIZE", "1000"))
+    enable_caching: bool = os.getenv("ENABLE_CACHING", "true").lower() == "true"
+    
+    # Performance Configuration
+    enable_streaming: bool = os.getenv("ENABLE_STREAMING", "true").lower() == "true"
+    request_timeout: int = int(os.getenv("REQUEST_TIMEOUT", "30"))
+    connect_timeout: int = int(os.getenv("CONNECT_TIMEOUT", "5"))
+    max_retries: int = int(os.getenv("MAX_RETRIES", "3"))
+    rate_limit: int = int(os.getenv("RATE_LIMIT", "10"))
+    rate_limit_period: int = int(os.getenv("RATE_LIMIT_PERIOD", "1"))
+```
+
 ### Model Selection
 The reasoning engine supports multiple Ollama models:
 - **Mistral**: Primary model for general reasoning
@@ -278,6 +578,7 @@ The reasoning engine supports multiple Ollama models:
 ### Test Coverage
 **Implementation Status**: ✅ Comprehensive Testing
 **Coverage**: 80%+ with 46+ tests
+**Test Files**: [`tests/test_reasoning.py`](../tests/test_reasoning.py), [`tests/test_enhanced_tools.py`](../tests/test_enhanced_tools.py)
 
 ```bash
 # Run reasoning engine tests
