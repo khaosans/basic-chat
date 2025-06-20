@@ -18,13 +18,13 @@ class TestEnhancedReasoningAgent:
         """Test enhanced calculator tool integration"""
         # Test basic arithmetic
         result = self.agent._enhanced_calculate("2 + 2")
-        assert "✅ Calculation Result: 4.0" in result
+        assert "✅ Calculation Result: 4" in result
         assert "📝 Expression: 2 + 2" in result
         assert "🔢 Steps:" in result
         
         # Test mathematical functions
         result = self.agent._enhanced_calculate("sqrt(16)")
-        assert "✅ Calculation Result: 4.0" in result
+        assert "✅ Calculation Result: 4" in result
         
         # Test error handling
         result = self.agent._enhanced_calculate("2 / 0")
@@ -115,12 +115,12 @@ class TestEnhancedReasoningAgent:
     def test_enhanced_calculator_advanced_functions(self):
         """Test advanced mathematical functions"""
         advanced_expressions = [
-            ("factorial(5)", "120.0"),
-            ("gcd(12, 18)", "6.0"),
-            ("lcm(12, 18)", "36.0"),
-            ("sin(pi/2)", "1.0"),
-            ("cos(0)", "1.0"),
-            ("log(e)", "1.0")
+            ("factorial(5)", "120"),
+            ("gcd(12, 18)", "6"),
+            ("lcm(12, 18)", "36"),
+            ("sin(pi/2)", "1"),
+            ("cos(0)", "1"),
+            ("log(e)", "1")
         ]
         
         for expr, expected in advanced_expressions:

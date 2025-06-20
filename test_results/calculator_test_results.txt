@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.9, pytest-8.4.1, pluggy-1.6.0 -- /Users/Sour/.pyenv/versions/3.11.9/bin/python3.11
+cachedir: .pytest_cache
+rootdir: /Users/Sour/github/basic-chat-template
+configfile: pytest.ini
+plugins: anyio-4.9.0, cov-6.2.1, langsmith-0.3.45, asyncio-1.0.0
+asyncio: mode=Mode.STRICT, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 10 items
+
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_basic_arithmetic PASSED [ 10%]
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_mathematical_functions PASSED [ 20%]
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_trigonometric_functions PASSED [ 30%]
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_logarithmic_functions PASSED [ 40%]
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_constants PASSED [ 50%]
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_complex_expressions PASSED [ 60%]
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_expression_cleaning PASSED [ 70%]
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_error_handling PASSED [ 80%]
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_safety_validation PASSED [ 90%]
+tests/test_enhanced_tools.py::TestEnhancedCalculator::test_result_formatting PASSED [100%]
+
+- generated xml file: /Users/Sour/github/basic-chat-template/test_results.xml --
+============================== 10 passed in 0.08s ==============================

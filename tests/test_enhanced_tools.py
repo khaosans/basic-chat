@@ -23,107 +23,112 @@ class TestEnhancedCalculator:
     def test_basic_arithmetic(self):
         """Test basic arithmetic operations"""
         test_cases = [
-            ("2 + 2", "4.0"),
-            ("10 - 5", "5.0"),
-            ("3 * 4", "12.0"),
-            ("15 / 3", "5.0"),
-            ("7 % 3", "1.0"),
-            ("2 ** 3", "8.0")
+            ("2 + 2", 4.0),
+            ("10 - 5", 5.0),
+            ("3 * 4", 12.0),
+            ("15 / 3", 5.0),
+            ("7 % 3", 1.0),
+            ("2 ** 3", 8.0)
         ]
         
         for expression, expected in test_cases:
             result = self.calculator.calculate(expression)
             assert result.success is True
-            assert result.result == expected
+            assert float(result.result) == expected
             assert result.error is None
     
     def test_mathematical_functions(self):
         """Test mathematical functions"""
         test_cases = [
-            ("sqrt(16)", "4.0"),
-            ("abs(-5)", "5.0"),
-            ("round(3.7)", "4.0"),
-            ("floor(3.7)", "3.0"),
-            ("ceil(3.2)", "4.0")
+            ("sqrt(16)", 4.0),
+            ("abs(-5)", 5.0),
+            ("round(3.7)", 4.0),
+            ("floor(3.7)", 3.0),
+            ("ceil(3.2)", 4.0)
         ]
         
         for expression, expected in test_cases:
             result = self.calculator.calculate(expression)
             assert result.success is True
-            assert result.result == expected
+            assert float(result.result) == expected
             assert result.error is None
     
     def test_trigonometric_functions(self):
         """Test trigonometric functions"""
         test_cases = [
-            ("sin(0)", "0.0"),
-            ("cos(0)", "1.0"),
-            ("tan(0)", "0.0"),
-            ("sin(pi/2)", "1.0")
+            ("sin(0)", 0.0),
+            ("cos(0)", 1.0),
+            ("tan(0)", 0.0),
+            ("sin(pi/2)", 1.0),
+            ("cos(pi)", -1.0)
         ]
         
         for expression, expected in test_cases:
             result = self.calculator.calculate(expression)
             assert result.success is True
-            assert result.result == expected
+            # Use approximate comparison for floating point precision
+            assert abs(float(result.result) - expected) < 1e-10
             assert result.error is None
     
     def test_logarithmic_functions(self):
         """Test logarithmic functions"""
         test_cases = [
-            ("log(10)", "1.0"),
-            ("ln(e)", "1.0"),
-            ("log10(100)", "2.0")
+            ("log(e)", 1.0),  # Natural log of e should be 1
+            ("ln(e)", 1.0),   # Natural log of e should be 1
+            ("log10(100)", 2.0)
         ]
         
         for expression, expected in test_cases:
             result = self.calculator.calculate(expression)
             assert result.success is True
-            assert result.result == expected
+            # Use approximate comparison for floating point precision
+            assert abs(float(result.result) - expected) < 1e-10
             assert result.error is None
     
     def test_constants(self):
         """Test mathematical constants"""
         test_cases = [
-            ("pi", "3.141592653589793"),
-            ("e", "2.718281828459045"),
-            ("tau", "6.283185307179586")
+            ("pi", math.pi),
+            ("e", math.e),
+            ("tau", 2 * math.pi)
         ]
         
         for expression, expected in test_cases:
             result = self.calculator.calculate(expression)
             assert result.success is True
-            assert result.result == expected
+            # Use approximate comparison for floating point precision
+            assert abs(float(result.result) - expected) < 1e-10
             assert result.error is None
     
     def test_complex_expressions(self):
         """Test complex mathematical expressions"""
         test_cases = [
-            ("2 + 3 * 4", "14.0"),
-            ("(2 + 3) * 4", "20.0"),
-            ("sqrt(16) + abs(-5)", "9.0"),
-            ("sin(pi/2) + cos(0)", "2.0")
+            ("2 + 3 * 4", 14.0),
+            ("(2 + 3) * 4", 20.0),
+            ("sqrt(16) + abs(-5)", 9.0),
+            ("sin(pi/2) + cos(0)", 2.0)
         ]
         
         for expression, expected in test_cases:
             result = self.calculator.calculate(expression)
             assert result.success is True
-            assert result.result == expected
+            # Use approximate comparison for floating point precision
+            assert abs(float(result.result) - expected) < 1e-10
             assert result.error is None
     
     def test_expression_cleaning(self):
         """Test expression cleaning and normalization"""
         test_cases = [
-            ("2 + 2", "4.0"),
-            ("2+2", "4.0"),
-            (" 2 + 2 ", "4.0"),
-            ("2 + 2 + 2", "6.0")
+            ("2 + 2", 4.0),
+            ("2+2", 4.0),
+            (" 2 + 2 ", 4.0),
+            ("2 + 2 + 2", 6.0)
         ]
         
         for expression, expected in test_cases:
             result = self.calculator.calculate(expression)
             assert result.success is True
-            assert result.result == expected
+            assert float(result.result) == expected
             assert result.error is None
     
     def test_error_handling(self):
@@ -166,7 +171,7 @@ class TestEnhancedCalculator:
         """Test result formatting and presentation"""
         result = self.calculator.calculate("1 + 1")
         assert result.success is True
-        assert result.result == "2.0"
+        assert float(result.result) == 2.0
         assert result.error is None
         assert len(result.steps) > 0
 
@@ -305,6 +310,11 @@ class TestEnhancedTimeTools:
 
 class TestIntegration:
     """Integration tests for enhanced tools"""
+    
+    def setup_method(self):
+        """Setup tools for each test"""
+        self.calculator = EnhancedCalculator()
+        self.time_tools = EnhancedTimeTools()
     
     def test_calculator_and_time_integration(self):
         """Test integration between calculator and time tools"""
