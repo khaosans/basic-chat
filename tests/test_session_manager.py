@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
 
 from session_manager import SessionManager, ChatSession, SessionMetadata
+from database_migrations import run_migrations
 
 
 @pytest.fixture
@@ -25,8 +26,10 @@ def temp_db_path():
 
 @pytest.fixture
 def session_manager(temp_db_path):
-    """Create a session manager instance for testing"""
-    return SessionManager(db_path=temp_db_path)
+    """Create a session manager with temporary database"""
+    # Run migrations to create the schema
+    run_migrations(temp_db_path)
+    return SessionManager(temp_db_path)
 
 
 @pytest.fixture

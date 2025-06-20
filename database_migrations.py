@@ -351,15 +351,15 @@ class MigrationManager:
             logger.error(f"Failed to create migration file: {e}")
             return False
 
-# Global migration manager instance
-migration_manager = None
+# Global migration manager instances by database path
+migration_managers = {}
 
 def initialize_migrations(db_path: str) -> MigrationManager:
     """Initialize the migration system"""
-    global migration_manager
-    if migration_manager is None:
-        migration_manager = MigrationManager(db_path)
-    return migration_manager
+    global migration_managers
+    if db_path not in migration_managers:
+        migration_managers[db_path] = MigrationManager(db_path)
+    return migration_managers[db_path]
 
 def run_migrations(db_path: str) -> bool:
     """Run database migrations"""

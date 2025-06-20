@@ -113,6 +113,58 @@ Vector database integration provides efficient similarity search capabilities, e
 
 The vector similarity search implementation follows research on approximate nearest neighbor algorithms (Johnson et al. 1908.10396). The embedding model selection is based on research showing that domain-specific embeddings can significantly improve retrieval accuracy (Reimers and Gurevych 2019).
 
+## 💾 Session Management
+
+### Persistent Session Storage
+The session management system provides comprehensive conversation persistence, enabling users to save, load, and organize their chat history with advanced database capabilities.
+
+- **SQLite-based storage** with automatic schema migrations
+- **Flyway-like migration system** for seamless database versioning
+- **Comprehensive CRUD operations** for session management
+- **Automatic backup and recovery** with data integrity checks
+
+The SQLite implementation follows research on embedded database systems and their suitability for local applications (Owens 2010). The migration system incorporates research on database schema evolution and version control (Kleppmann 2017), ensuring seamless updates across application versions.
+
+### Smart Search & Organization
+Advanced search capabilities enable users to quickly find and organize their conversations, with full-text search across session content and metadata.
+
+- **Full-text search** across session titles and message content
+- **Tag-based organization** for easy categorization
+- **Metadata filtering** by model, reasoning mode, and date
+- **Archive functionality** for decluttering active sessions
+
+The search implementation follows research on full-text search algorithms and information retrieval (Manning et al. 2008). The tagging system incorporates research on information organization and user behavior patterns (Golder and Huberman 2006).
+
+### Export & Import Capabilities
+Data portability features enable users to backup, share, and migrate their conversations across different instances and platforms.
+
+- **JSON export/import** for complete data portability
+- **Markdown export** for human-readable conversation records
+- **Bulk operations** for multiple session management
+- **Version compatibility** across different application versions
+
+The export/import functionality follows research on data portability and interoperability standards (W3C 2017). The Markdown export incorporates research on document formatting and readability (Gruber 2004).
+
+### Auto-save & Recovery
+Intelligent auto-save functionality prevents data loss and ensures conversation continuity, with configurable intervals and recovery mechanisms.
+
+- **Configurable auto-save** with user-defined intervals
+- **Incremental saving** to minimize performance impact
+- **Recovery mechanisms** for interrupted sessions
+- **Session statistics** and metadata tracking
+
+The auto-save implementation follows research on user experience design and data persistence patterns (Norman 2013). The recovery mechanisms incorporate research on fault-tolerant systems and data integrity (Lampson 1973).
+
+### Session Analytics
+Comprehensive session analytics provide insights into conversation patterns, model usage, and reasoning effectiveness.
+
+- **Message count tracking** with user/assistant breakdown
+- **Model usage statistics** for optimization insights
+- **Reasoning mode effectiveness** analysis
+- **Session duration** and activity metrics
+
+The analytics implementation follows research on user behavior analysis and system optimization (Jameson 2003). The metrics collection incorporates research on privacy-preserving analytics and user data protection (Dwork 2006).
+
 ## 🚀 Performance Features
 
 ### Async Architecture

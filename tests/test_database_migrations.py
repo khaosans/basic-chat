@@ -507,6 +507,7 @@ class TestGlobalFunctions:
         """Test initialize_migrations function"""
         manager = initialize_migrations(temp_db_path)
         assert manager is not None
+        # The manager should use the provided path, not the default
         assert manager.db_path == temp_db_path
         
         # Should return same instance on second call

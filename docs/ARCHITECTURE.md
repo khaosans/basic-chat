@@ -18,35 +18,43 @@ graph TD
     classDef model fill:#ea4335,stroke:#b92d22,color:white
     classDef storage fill:#fbbc05,stroke:#cc9a04,color:black
     classDef cache fill:#9c27b0,stroke:#6a1b9a,color:white
+    classDef session fill:#ff6b35,stroke:#cc4a1a,color:white
 
     A["Streamlit UI"]:::ui
     B["App Logic"]:::logic
     C["Async Ollama Client"]:::logic
     D["Reasoning Engine"]:::logic
     E["Document Processor"]:::logic
-    F["Ollama API"]:::model
-    G["Web Search"]:::model
-    H["Vector Store"]:::storage
-    I["Response Cache"]:::cache
-    J["Config Manager"]:::logic
+    F["Session Manager"]:::session
+    G["Database Migrations"]:::session
+    H["Ollama API"]:::model
+    I["Web Search"]:::model
+    J["Vector Store"]:::storage
+    K["Response Cache"]:::cache
+    L["Session Database"]:::storage
+    M["Config Manager"]:::logic
 
     A -->|User Input| B
     B -->|Async Request| C
     B -->|Reasoning Request| D
     B -->|Document Upload| E
-    C -->|LLM Query| F
-    D -->|Tool Request| G
-    E -->|Embeddings| H
-    C -->|Cache Check| I
-    B -->|Config| J
-    F -->|Response| C
-    G -->|Results| D
-    H -->|Context| D
+    B -->|Session Operations| F
+    F -->|Schema Management| G
+    C -->|LLM Query| H
+    D -->|Tool Request| I
+    E -->|Embeddings| J
+    F -->|CRUD Operations| L
+    C -->|Cache Check| K
+    B -->|Config| M
+    H -->|Response| C
+    I -->|Results| D
+    J -->|Context| D
     C -->|Cached/New| B
     B -->|Display| A
+    F -->|Session Data| B
 ```
 
-The architecture diagram illustrates the layered approach to system design, following the principle of separation of concerns. Each layer has distinct responsibilities and communicates through well-defined interfaces, enabling modular development and testing (Bass et al. 2012).
+The architecture diagram illustrates the layered approach to system design, following the principle of separation of concerns. Each layer has distinct responsibilities and communicates through well-defined interfaces, enabling modular development and testing (Bass et al. 2012). The new session management layer provides persistent storage and conversation history management.
 
 ## Key Components
 
@@ -65,8 +73,10 @@ The application layer orchestrates the system's core functionality, managing req
 - **App Logic**: Request routing and response handling with intelligent request classification
 - **Config Manager**: Environment-based configuration with validation using Pydantic
 - **Session Management**: User state and conversation history with persistent storage
+- **Session Manager**: SQLite-based session storage with automatic migrations and CRUD operations
+- **Database Migrations**: Flyway-like migration system for seamless schema versioning and updates
 
-The application layer design follows the Model-View-Controller (MVC) pattern and incorporates research on web application architecture (Krasner and Pope 1988). The configuration management approach is based on research on software configuration and deployment automation (Humble and Farley 2010).
+The application layer design follows the Model-View-Controller (MVC) pattern and incorporates research on web application architecture (Krasner and Pope 1988). The configuration management approach is based on research on software configuration and deployment automation (Humble and Farley 2010). The session management implementation follows research on persistent storage systems and database migration strategies (Fowler 2014).
 
 ### AI Processing Layer
 The AI processing layer represents the core intelligence of the system, implementing advanced reasoning capabilities and document processing.
@@ -76,6 +86,17 @@ The AI processing layer represents the core intelligence of the system, implemen
 - **Document Processor**: RAG implementation with vector search and semantic understanding
 
 The reasoning engine implementation is based on research by Wei et al. on Chain-of-Thought reasoning (Wei et al. 2201.11903) and Lewis et al. on Retrieval-Augmented Generation (Lewis et al. 2005.11401). The async client design follows research on high-performance HTTP clients and connection management (Fielding and Reschke 2014).
+
+### Session Management Layer
+The session management layer provides persistent storage and conversation history management, enabling users to save, load, and organize their chat sessions.
+
+- **Session Manager**: SQLite-based session storage with comprehensive CRUD operations
+- **Database Migrations**: Automatic schema versioning with Flyway-like migration system
+- **Session Search**: Full-text search capabilities across session titles and content
+- **Export/Import**: JSON and Markdown export/import for data portability
+- **Auto-save**: Configurable automatic session saving to prevent data loss
+
+The session management implementation follows research on persistent storage systems and database design patterns (Fowler 2014). The migration system incorporates research on database schema evolution and version control (Kleppmann 2017). The search functionality follows research on full-text search algorithms and information retrieval (Manning et al. 2008).
 
 ### External Services
 External services provide additional capabilities and data sources, enhancing the system's functionality.
@@ -146,6 +167,37 @@ graph LR
 
 The document processing pipeline implements a multi-stage approach to document understanding and knowledge extraction. This pipeline follows research on document processing and information extraction (Smith 2007) and incorporates best practices for text chunking and embedding generation (Zhang et al. 2020).
 
+### Session Management Flow
+```mermaid
+graph TD
+    classDef user fill:#4285f4,stroke:#2956a3,color:white
+    classDef ui fill:#34a853,stroke:#1e7e34,color:white
+    classDef session fill:#ff6b35,stroke:#cc4a1a,color:white
+    classDef storage fill:#fbbc05,stroke:#cc9a04,color:black
+    classDef migration fill:#9c27b0,stroke:#6a1b9a,color:white
+
+    U["User"]:::user --> UI["Streamlit UI"]:::ui
+    UI -->|Create Session| SM["Session Manager"]:::session
+    UI -->|Load Session| SM
+    UI -->|Save Session| SM
+    UI -->|Search Sessions| SM
+    UI -->|Export/Import| SM
+    
+    SM -->|Schema Check| DM["Database Migrations"]:::migration
+    DM -->|Apply Migrations| DB["SQLite Database"]:::storage
+    SM -->|CRUD Operations| DB
+    
+    DB -->|Session Data| SM
+    SM -->|Session Info| UI
+    UI -->|Display| U
+    
+    SM -->|Auto-save| DB
+    SM -->|Search Results| UI
+    SM -->|Export Data| UI
+```
+
+The session management flow demonstrates the complete lifecycle of session operations, from creation to persistence and retrieval. The migration system ensures database schema compatibility across application versions, while the session manager provides a clean interface for all session-related operations.
+
 ## Performance Architecture
 
 ### Async Processing
@@ -173,10 +225,11 @@ Memory management ensures efficient resource utilization and prevents memory lea
 
 - **Session State**: Streamlit session management with automatic cleanup
 - **Vector Store**: ChromaDB with configurable persistence and memory limits
+- **Session Database**: SQLite with optimized queries and connection pooling
 - **Cache Limits**: Configurable TTL and size limits with automatic eviction
 - **Resource Cleanup**: Automatic cleanup and garbage collection for optimal performance
 
-The memory management approach follows research on garbage collection and memory optimization (Jones and Lins 1996). The session state management incorporates research on web application state management and user session handling (Fielding and Reschke 2014).
+The memory management approach follows research on garbage collection and memory optimization (Jones and Lins 1996). The session state management incorporates research on web application state management and user session handling (Fielding and Reschke 2014). The SQLite implementation follows research on embedded database systems and performance optimization (Owens 2010).
 
 ## Security Architecture
 
@@ -231,8 +284,9 @@ The technology stack is carefully selected to provide optimal performance, relia
 - **Streamlit**: Web application framework for rapid UI development
 - **Ollama**: Local LLM server for privacy-preserving AI inference
 - **ChromaDB**: Vector database for semantic search and similarity matching
+- **SQLite**: Embedded database for session storage and persistence
 
-The technology selection is based on research on modern web application frameworks and AI system architectures (Newman 2015). The Python choice incorporates research on programming language productivity and ecosystem maturity (Prechelt 2000).
+The technology selection is based on research on modern web application frameworks and AI system architectures (Newman 2015). The Python choice incorporates research on programming language productivity and ecosystem maturity (Prechelt 2000). The SQLite choice follows research on embedded database systems and their suitability for local applications (Owens 2010).
 
 ### Key Libraries
 The system leverages established libraries and frameworks to ensure reliability and maintainability.
@@ -330,6 +384,12 @@ Decan, Alexandre, et al. "An Empirical Comparison of Dependency Network Evolutio
 Myers, Glenford J., et al. *The Art of Software Testing*. 3rd ed., John Wiley & Sons, 2011.
 
 Dwork, Cynthia. "Differential Privacy." *Automata, Languages and Programming*, edited by Michele Bugliesi, et al., Springer, 2006, pp. 1-12.
+
+Kleppmann, Martin. *Designing Data-Intensive Applications: The Big Ideas Behind Reliable, Scalable, and Maintainable Systems*. O'Reilly Media, 2017.
+
+Manning, Christopher D., et al. *Introduction to Information Retrieval*. Cambridge University Press, 2008.
+
+Owens, Michael. *The Definitive Guide to SQLite*. 2nd ed., Apress, 2010.
 
 Microsoft. "Asynchronous Programming Patterns." *Microsoft Documentation*, 2023, docs.microsoft.com/en-us/dotnet/standard/asynchronous-programming-patterns.
 
