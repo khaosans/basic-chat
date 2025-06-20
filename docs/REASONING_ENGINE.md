@@ -16,26 +16,12 @@ The BasicChat reasoning engine implements advanced AI capabilities including Cha
 The CoT implementation enables AI systems to break down complex problems into manageable steps, achieving up to 40% accuracy improvements on mathematical reasoning benchmarks (Wei et al. 2201.11903).
 
 **Key Features**:
-- **Step-by-step analysis** with visible thought process
 - **Streaming output** with real-time step visualization
 - **Confidence scoring** for transparency in AI decisions
 - **Async processing** with caching support
 
 **Technical Implementation**:
 ```python
-from reasoning_engine import ReasoningChain
-
-chain = ReasoningChain("mistral")
-result = chain.execute_reasoning("What is the capital of France?")
-
-# Output:
-# THINKING:
-# 1) Analyzing the question about France's capital
-# 2) Recalling geographical knowledge
-# 3) Verifying information
-# 
-# ANSWER:
-# The capital of France is Paris.
 ```
 
 **Performance Metrics**:
@@ -57,21 +43,6 @@ Multi-step reasoning extends CoT with systematic problem decomposition and conte
 
 **Technical Implementation**:
 ```python
-from reasoning_engine import MultiStepReasoning
-
-multi_step = MultiStepReasoning(doc_processor=None, model_name="mistral")
-result = multi_step.step_by_step_reasoning("Explain how photosynthesis works")
-
-# Output:
-# ANALYSIS:
-# 1) Process identification
-# 2) Component breakdown
-# 3) Sequential steps
-#
-# STEPS:
-# 1) Light absorption
-# 2) Water uptake
-# 3) CO2 conversion
 ```
 
 **Performance Metrics**:
@@ -93,17 +64,6 @@ Agent-based reasoning represents the most sophisticated approach, combining mult
 
 **Technical Implementation**:
 ```python
-from reasoning_engine import ReasoningAgent
-
-agent = ReasoningAgent("mistral")
-result = agent.run("What is the current Bitcoin price and calculate 15% of it?")
-
-# Output:
-# 🤔 Thought: I should search for current Bitcoin price and then calculate 15%
-# 🔍 Action: Using web_search
-# 📝 Result: [Current price information]
-# 🧮 Action: Using enhanced_calculator
-# 📝 Result: 15% of [price] = [calculated amount]
 ```
 
 **Performance Metrics**:
@@ -127,24 +87,6 @@ The calculator prioritizes both functionality and security, incorporating resear
 
 **Technical Implementation**:
 ```python
-from utils.enhanced_tools import EnhancedCalculator
-
-calc = EnhancedCalculator()
-result = calc.calculate("sin(45) * cos(30) + sqrt(16)")
-
-# Returns:
-# CalculationResult(
-#     result="4.707106781186548",
-#     expression="sin(45) * cos(30) + sqrt(16)",
-#     steps=[
-#         "1) Calculate sin(45) = 0.7071067811865476",
-#         "2) Calculate cos(30) = 0.8660254037844387",
-#         "3) Calculate sqrt(16) = 4.0",
-#         "4) Multiply sin(45) * cos(30) = 0.6123724356957945",
-#         "5) Add sqrt(16) = 4.6123724356957945"
-#     ],
-#     success=True
-# )
 ```
 
 **Security Features**:
@@ -167,19 +109,6 @@ The time tools provide comprehensive timezone handling and precise calculations,
 
 **Technical Implementation**:
 ```python
-from utils.enhanced_tools import EnhancedTimeTools
-
-time_tools = EnhancedTimeTools()
-result = time_tools.get_time_in_timezone("Asia/Tokyo")
-
-# Returns:
-# TimeResult(
-#     current_time="2024-01-15 14:30:00+09:00",
-#     timezone="Asia/Tokyo",
-#     formatted_time="2:30 PM JST",
-#     unix_timestamp=1705305000.0,
-#     success=True
-# )
 ```
 
 ### Web Search Integration
@@ -196,11 +125,6 @@ Web search provides real-time access to current information with intelligent cac
 
 **Technical Implementation**:
 ```python
-from web_search import search_web
-
-results = search_web("latest AI developments 2024", max_results=3)
-
-# Returns formatted results with clickable links and snippets
 ```
 
 **Performance Features**:
