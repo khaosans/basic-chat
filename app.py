@@ -369,18 +369,49 @@ def text_to_speech(text):
         audio_file = f"temp_{text_hash}.mp3"
         
         # Check if file already exists
-        if os.path.exists(audio_file):
-            return audio_file
-        
-        # Generate new audio file
-        tts = gTTS(text=text, lang='en')
-        tts.save(audio_file)
-        
-        # Verify the file was created successfully
         if os.path.exists(audio_file) and os.path.getsize(audio_file) > 0:
             return audio_file
+        
+        # Generate new audio file with timeout and error handling
+        import threading
+        import time
+        
+        # Flag to track if generation completed
+        generation_completed = threading.Event()
+        generation_error = None
+        result_file = None
+        
+        def generate_audio():
+            nonlocal generation_error, result_file
+            try:
+                # Set a shorter timeout for gTTS
+                tts = gTTS(text=text, lang='en', slow=False)
+                tts.save(audio_file)
+                
+                # Verify the file was created successfully
+                if os.path.exists(audio_file) and os.path.getsize(audio_file) > 0:
+                    result_file = audio_file
+                else:
+                    generation_error = Exception("Audio file was not created successfully")
+                    
+            except Exception as e:
+                generation_error = e
+            finally:
+                generation_completed.set()
+        
+        # Start audio generation in a separate thread
+        audio_thread = threading.Thread(target=generate_audio)
+        audio_thread.daemon = True
+        audio_thread.start()
+        
+        # Wait for completion with timeout (15 seconds)
+        if generation_completed.wait(timeout=15):
+            if generation_error:
+                raise generation_error
+            return result_file
         else:
-            raise Exception("Audio file was not created successfully")
+            # Timeout occurred
+            raise Exception("Audio generation timed out after 15 seconds")
             
     except Exception as e:
         # Clean up any partial files
@@ -501,30 +532,30 @@ def create_enhanced_audio_button(content: str, message_key: str):
                     help="Convert this message to speech",
                     use_container_width=True
                 ):
-                    # Set loading state first, then generate audio
+                    # Set loading state first
                     audio_state["status"] = "loading"
                     audio_state["error_message"] = None
-                    
-                    # Generate audio
-                    try:
-                        audio_file = text_to_speech(content)
-                        if audio_file:
-                            audio_state["audio_file"] = audio_file
-                            audio_state["status"] = "ready"
-                            audio_state["had_error"] = False  # Clear error flag on success
-                        else:
-                            audio_state["status"] = "error"
-                            audio_state["error_message"] = "No content available for voice generation"
-                            audio_state["had_error"] = True  # Set error flag
-                    except Exception as e:
-                        audio_state["status"] = "error"
-                        audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
-                        audio_state["had_error"] = True  # Set error flag
-                    
                     st.rerun()
         
         elif audio_state["status"] == "loading":
-            # Show loading state with a timeout mechanism
+            # Generate audio in loading state to prevent UI blocking
+            try:
+                with st.spinner("Generating audio..."):
+                    audio_file = text_to_speech(content)
+                    if audio_file:
+                        audio_state["audio_file"] = audio_file
+                        audio_state["status"] = "ready"
+                        audio_state["had_error"] = False  # Clear error flag on success
+                    else:
+                        audio_state["status"] = "error"
+                        audio_state["error_message"] = "No content available for voice generation"
+                        audio_state["had_error"] = True  # Set error flag
+            except Exception as e:
+                audio_state["status"] = "error"
+                audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
+                audio_state["had_error"] = True  # Set error flag
+            
+            # Show loading state
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
                 st.markdown(
