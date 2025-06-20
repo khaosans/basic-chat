@@ -125,6 +125,10 @@ The session management system provides comprehensive conversation persistence, e
 
 The SQLite implementation follows research on embedded database systems and their suitability for local applications (Owens 2010). The migration system incorporates research on database schema evolution and version control (Kleppmann 2017), ensuring seamless updates across application versions.
 
+**Database Design Principles**: The schema design follows normalization principles to ensure data integrity while maintaining query performance. The implementation provides ACID compliance with minimal resource overhead, following embedded database design patterns (Gray and Reuter 1993).
+
+**Migration Strategy**: The Flyway-like migration system ensures database schema compatibility across application versions, following the principle of immutable migrations and version control for database changes. This approach prevents data loss and ensures consistent schema evolution (Kleppmann 2017).
+
 ### Smart Search & Organization
 Advanced search capabilities enable users to quickly find and organize their conversations, with full-text search across session content and metadata.
 
@@ -134,6 +138,8 @@ Advanced search capabilities enable users to quickly find and organize their con
 - **Archive functionality** for decluttering active sessions
 
 The search implementation follows research on full-text search algorithms and information retrieval (Manning et al. 2008). The tagging system incorporates research on information organization and user behavior patterns (Golder and Huberman 2006).
+
+**Search Algorithm**: The system uses SQLite's built-in FTS5 extension for efficient full-text search, providing fast query performance even with large datasets. This follows research on information retrieval systems and search optimization (Manning et al. 2008).
 
 ### Export & Import Capabilities
 Data portability features enable users to backup, share, and migrate their conversations across different instances and platforms.
@@ -145,6 +151,8 @@ Data portability features enable users to backup, share, and migrate their conve
 
 The export/import functionality follows research on data portability and interoperability standards (W3C 2017). The Markdown export incorporates research on document formatting and readability (Gruber 2004).
 
+**Data Portability**: The JSON format ensures complete data preservation while maintaining human readability. The import process includes validation and conflict resolution mechanisms to prevent data corruption.
+
 ### Auto-save & Recovery
 Intelligent auto-save functionality prevents data loss and ensures conversation continuity, with configurable intervals and recovery mechanisms.
 
@@ -155,6 +163,8 @@ Intelligent auto-save functionality prevents data loss and ensures conversation 
 
 The auto-save implementation follows research on user experience design and data persistence patterns (Norman 2013). The recovery mechanisms incorporate research on fault-tolerant systems and data integrity (Lampson 1973).
 
+**Performance Optimization**: The incremental saving approach minimizes I/O operations while ensuring data persistence. The system uses database transactions to maintain ACID compliance during save operations.
+
 ### Session Analytics
 Comprehensive session analytics provide insights into conversation patterns, model usage, and reasoning effectiveness.
 
@@ -164,6 +174,8 @@ Comprehensive session analytics provide insights into conversation patterns, mod
 - **Session duration** and activity metrics
 
 The analytics implementation follows research on user behavior analysis and system optimization (Jameson 2003). The metrics collection incorporates research on privacy-preserving analytics and user data protection (Dwork 2006).
+
+**Privacy Considerations**: All analytics are computed locally and no data is transmitted to external services. The system follows privacy-by-design principles to ensure user data protection.
 
 ## 🚀 Performance Features
 
@@ -335,100 +347,44 @@ The reliability targets follow research on high-availability systems and fault t
 
 ## 📚 References
 
-### Research Papers
-- **Chain-of-Thought Reasoning**: Wei et al. demonstrate that step-by-step reasoning significantly improves AI performance on complex tasks, achieving up to 40% accuracy improvements on mathematical reasoning benchmarks (Wei et al. 2201.11903).
-- **Retrieval-Augmented Generation**: Lewis et al. introduce RAG as a method to enhance language models with external knowledge, showing substantial improvements in factual accuracy and reducing hallucination rates by up to 60% (Lewis et al. 2005.11401).
-- **Speculative Decoding**: Chen et al. present techniques for accelerating large language model inference through parallel token prediction, achieving 2-3x speedup without quality degradation (Chen et al. 2302.01318).
-- **Toolformer**: Schick et al. demonstrate how language models can effectively use external tools through specialized training approaches (Schick et al. 2302.04761).
-- **Vector Similarity Search**: Johnson et al. provide comprehensive analysis of approximate nearest neighbor search methods, essential for efficient RAG implementations (Johnson et al. 1908.10396).
+### Core Research Papers
+- **Chain-of-Thought Reasoning**: Wei et al. demonstrate that step-by-step reasoning significantly improves AI performance on complex tasks (Wei et al. 2022).
+- **Retrieval-Augmented Generation**: Lewis et al. introduce RAG as a method to enhance language models with external knowledge (Lewis et al. 2020).
+- **Vector Similarity Search**: Johnson et al. provide comprehensive analysis of approximate nearest neighbor search methods (Johnson et al. 2019).
 
-### Academic References
-- **Async Programming**: The async/await pattern implementation follows best practices outlined in the Python asyncio documentation and research on concurrent programming patterns (PEP 492).
-- **Caching Strategies**: Multi-layer caching approach based on research by Megiddo and Modha, showing optimal performance with hierarchical cache structures (Megiddo and Modha 2003).
-- **Rate Limiting**: Token bucket algorithm implementation following research by Guérin and Pla on fair resource allocation in distributed systems (Guérin and Pla 1997).
-- **Document Processing**: Text extraction and OCR techniques based on research by Smith on document understanding systems (Smith 2007).
-- **Security Best Practices**: Input validation and sanitization approaches following OWASP guidelines and research on web application security (OWASP 2021).
+### Database and Persistence
+- **Database Design**: Gray and Reuter provide comprehensive coverage of transaction processing and database design (Gray and Reuter 1993).
+- **Schema Evolution**: Kleppmann presents patterns for managing database schema changes in distributed systems (Kleppmann 2017).
+- **Embedded Databases**: Owens provides definitive guide to SQLite and embedded database systems (Owens 2010).
 
-### Core Technologies
-- **Ollama**: [https://ollama.ai](https://ollama.ai) - Local large language model server
-- **Streamlit**: [https://streamlit.io](https://streamlit.io) - Web application framework
-- **LangChain**: [https://langchain.com](https://langchain.com) - LLM application framework
-- **ChromaDB**: [https://chromadb.ai](https://chromadb.ai) - Vector database
+### Information Retrieval and Search
+- **Information Retrieval**: Manning et al. provide comprehensive coverage of search algorithms and text processing (Manning et al. 2008).
+- **User Behavior**: Golder and Huberman present research on tagging systems and information organization (Golder and Huberman 2006).
+
+### User Experience and Design
+- **User Experience**: Norman presents principles of human-computer interaction and user-centered design (Norman 2013).
+- **Privacy**: Dwork establishes foundations of differential privacy and data protection (Dwork 2006).
 
 ### Works Cited
 Wei, Jason, et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
 
 Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
 
-Chen, Charlie, et al. "Accelerating Large Language Model Decoding with Speculative Sampling." *arXiv preprint arXiv:2302.01318*, 2023.
-
-Schick, Timo, et al. "Toolformer: Language Models Can Teach Themselves to Use Tools." *arXiv preprint arXiv:2302.04761*, 2023.
-
 Johnson, Jeff, et al. "Billion-Scale Similarity Search with GPUs." *arXiv preprint arXiv:1908.10396*, 2019.
 
-Kojima, Takeshi, et al. "Large Language Models are Zero-Shot Reasoners." *Advances in Neural Information Processing Systems*, vol. 35, 2022, pp. 22199-22213.
+Gray, Jim, and Andreas Reuter. *Transaction Processing: Concepts and Techniques*. Morgan Kaufmann, 1993.
 
-Zhou, Denny, et al. "Large Language Models are Human-Level Prompt Engineers." *arXiv preprint arXiv:2211.01910*, 2022.
+Kleppmann, Martin. *Designing Data-Intensive Applications: The Big Ideas Behind Reliable, Scalable, and Maintainable Systems*. O'Reilly Media, 2017.
 
-Andreas, Jacob, et al. "Neural Module Networks." *Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition*, 2016, pp. 39-48.
+Owens, Michael. *The Definitive Guide to SQLite*. 2nd ed., Apress, 2010.
 
-Stubblebine, Tony, and John Wright. "Safe Expression Evaluation in Web Applications." *Proceedings of the 12th USENIX Security Symposium*, 2003, pp. 1-15.
+Manning, Christopher D., et al. *Introduction to Information Retrieval*. Cambridge University Press, 2008.
 
-Sweller, John, et al. "Cognitive Architecture and Instructional Design." *Educational Psychology Review*, vol. 10, no. 3, 1998, pp. 251-296.
+Golder, Scott A., and Bernardo A. Huberman. "Usage Patterns of Collaborative Tagging Systems." *Journal of Information Science*, vol. 32, no. 2, 2006, pp. 198-208.
 
-Eggert, Paul, and Arthur David Olson. "Sources for Time Zone and Daylight Saving Time Data." *Internet Engineering Task Force*, RFC 8536, 2018.
-
-Dahlin, Mike, et al. "A Quantitative Analysis of Cache Policies for Scalable Network File Systems." *ACM SIGMETRICS Performance Evaluation Review*, vol. 22, no. 1, 1994, pp. 150-164.
-
-Aggarwal, Charu C., et al. "Caching on the World Wide Web." *IEEE Transactions on Knowledge and Data Engineering*, vol. 11, no. 1, 1999, pp. 95-107.
-
-Rivest, Ronald L. "The MD5 Message-Digest Algorithm." *Internet Engineering Task Force*, RFC 1321, 1992.
-
-Smith, Ray. "An Overview of the Tesseract OCR Engine." *Proceedings of the Ninth International Conference on Document Analysis and Recognition*, vol. 2, 2007, pp. 629-633.
-
-Zhang, Tianyi, et al. "A Survey of Neural Network Compression." *arXiv preprint arXiv:2003.03369*, 2020.
-
-Reimers, Nils, and Iryna Gurevych. "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks." *arXiv preprint arXiv:1908.10084*, 2019.
-
-Norman, Don. *The Design of Everyday Things*. Basic Books, 2013.
-
-Shneiderman, Ben. *Designing the User Interface: Strategies for Effective Human-Computer Interaction*. 5th ed., Pearson, 2010.
-
-Jameson, Anthony. "Adaptive Interfaces and Agents." *The Human-Computer Interaction Handbook*, edited by Julie A. Jacko and Andrew Sears, Lawrence Erlbaum Associates, 2003, pp. 305-330.
-
-Mitchell, Margaret, et al. "Model Cards for Model Reporting." *Proceedings of the Conference on Fairness, Accountability, and Transparency*, 2019, pp. 220-229.
-
-Sweller, John. "Cognitive Load During Problem Solving: Effects on Learning." *Cognitive Science*, vol. 12, no. 2, 1988, pp. 257-285.
-
-Doshi-Velez, Finale, and Been Kim. "Towards A Rigorous Science of Interpretable Machine Learning." *arXiv preprint arXiv:1702.08608*, 2017.
-
-Humble, Jez, and David Farley. *Continuous Delivery: Reliable Software Releases through Build, Test, and Deployment Automation*. Addison-Wesley, 2010.
-
-Cardelli, Luca. "Type Systems." *ACM Computing Surveys*, vol. 28, no. 1, 1997, pp. 263-264.
-
-Myers, Glenford J., et al. *The Art of Software Testing*. 3rd ed., John Wiley & Sons, 2011.
-
-NIST. "The Economic Impacts of Inadequate Infrastructure for Software Testing." *National Institute of Standards and Technology*, 2002.
-
-Martin, Robert C. *Clean Code: A Handbook of Agile Software Craftsmanship*. Prentice Hall, 2008.
-
-OWASP Foundation. "OWASP Top Ten 2021." *OWASP Foundation*, 2021, owasp.org/Top10/.
+Norman, Donald A. *The Design of Everyday Things*. Revised and expanded ed., Basic Books, 2013.
 
 Dwork, Cynthia. "Differential Privacy." *Automata, Languages and Programming*, edited by Michele Bugliesi, et al., Springer, 2006, pp. 1-12.
-
-Lampson, Butler W. "A Note on the Confinement Problem." *Communications of the ACM*, vol. 16, no. 10, 1973, pp. 613-615.
-
-Provos, Niels. "Improving Host Security with System Call Policies." *Proceedings of the 12th USENIX Security Symposium*, 2003, pp. 257-272.
-
-Viega, John, and Gary McGraw. *Building Secure Software: How to Avoid Security Problems the Right Way*. Addison-Wesley, 2001.
-
-Nielsen, Jakob. *Usability Engineering*. Morgan Kaufmann, 1993.
-
-Fielding, Roy T., and Julian F. Reschke. "Hypertext Transfer Protocol (HTTP/1.1): Authentication." *Internet Engineering Task Force*, RFC 7235, 2014.
-
-Gray, Jim. "Why Do Computers Stop and What Can Be Done About It?" *Proceedings of the 5th Symposium on Reliability in Distributed Software and Database Systems*, 1985, pp. 3-12.
-
-Lamport, Leslie. "The Part-Time Parliament." *ACM Transactions on Computer Systems*, vol. 16, no. 2, 1998, pp. 133-169.
 
 ---
 
