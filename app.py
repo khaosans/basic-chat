@@ -364,12 +364,32 @@ def text_to_speech(text):
     if not text or text.strip() == "":
         return None
     
-    text_hash = hashlib.md5(text.encode()).hexdigest()
-    audio_file = f"temp_{text_hash}.mp3"
-    if not os.path.exists(audio_file):
+    try:
+        text_hash = hashlib.md5(text.encode()).hexdigest()
+        audio_file = f"temp_{text_hash}.mp3"
+        
+        # Check if file already exists
+        if os.path.exists(audio_file):
+            return audio_file
+        
+        # Generate new audio file
         tts = gTTS(text=text, lang='en')
         tts.save(audio_file)
-    return audio_file
+        
+        # Verify the file was created successfully
+        if os.path.exists(audio_file) and os.path.getsize(audio_file) > 0:
+            return audio_file
+        else:
+            raise Exception("Audio file was not created successfully")
+            
+    except Exception as e:
+        # Clean up any partial files
+        try:
+            if 'audio_file' in locals() and os.path.exists(audio_file):
+                os.remove(audio_file)
+        except:
+            pass
+        raise Exception(f"Failed to generate audio: {str(e)}")
 
 def get_professional_audio_html(file_path: str) -> str:
     """
@@ -438,7 +458,8 @@ def create_enhanced_audio_button(content: str, message_key: str):
         st.session_state[audio_state_key] = {
             "status": "idle",  # idle, loading, ready, error
             "audio_file": None,
-            "error_message": None
+            "error_message": None,
+            "had_error": False  # Track if there was a previous error
         }
     
     audio_state = st.session_state[audio_state_key]
@@ -480,6 +501,7 @@ def create_enhanced_audio_button(content: str, message_key: str):
                     help="Convert this message to speech",
                     use_container_width=True
                 ):
+                    # Set loading state first, then generate audio
                     audio_state["status"] = "loading"
                     audio_state["error_message"] = None
                     
@@ -489,17 +511,20 @@ def create_enhanced_audio_button(content: str, message_key: str):
                         if audio_file:
                             audio_state["audio_file"] = audio_file
                             audio_state["status"] = "ready"
+                            audio_state["had_error"] = False  # Clear error flag on success
                         else:
                             audio_state["status"] = "error"
                             audio_state["error_message"] = "No content available for voice generation"
+                            audio_state["had_error"] = True  # Set error flag
                     except Exception as e:
                         audio_state["status"] = "error"
                         audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
+                        audio_state["had_error"] = True  # Set error flag
                     
                     st.rerun()
         
         elif audio_state["status"] == "loading":
-            # Minimal loading state
+            # Show loading state with a timeout mechanism
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
                 st.markdown(
@@ -530,30 +555,46 @@ def create_enhanced_audio_button(content: str, message_key: str):
                     """,
                     unsafe_allow_html=True
                 )
+                
+                # Add a progress bar to show activity
+                st.progress(0, text="Processing text-to-speech...")
+                
+                # Add a timeout button in case it gets stuck
+                if st.button(
+                    "Cancel",
+                    key=f"cancel_{message_key}",
+                    help="Cancel audio generation",
+                    use_container_width=True
+                ):
+                    audio_state["status"] = "idle"
+                    audio_state["error_message"] = None
+                    st.rerun()
         
         elif audio_state["status"] == "ready":
             # Clean audio player with minimal controls
             audio_html = get_professional_audio_html(audio_state["audio_file"])
             st.markdown(audio_html, unsafe_allow_html=True)
             
-            # Subtle regenerate option
-            col1, col2, col3 = st.columns([2, 1, 2])
-            with col2:
-                if st.button(
-                    "Regenerate",
-                    key=f"regenerate_{message_key}",
-                    help="Generate new audio",
-                    use_container_width=True
-                ):
-                    audio_state["status"] = "idle"
-                    audio_state["audio_file"] = None
-                    # Clean up old file
-                    try:
-                        if audio_state["audio_file"] and os.path.exists(audio_state["audio_file"]):
-                            os.remove(audio_state["audio_file"])
-                    except:
-                        pass
-                    st.rerun()
+            # Only show regenerate if there was a previous error
+            if hasattr(audio_state, "had_error") and audio_state.get("had_error", False):
+                col1, col2, col3 = st.columns([2, 1, 2])
+                with col2:
+                    if st.button(
+                        "Regenerate",
+                        key=f"regenerate_{message_key}",
+                        help="Generate new audio",
+                        use_container_width=True
+                    ):
+                        audio_state["status"] = "idle"
+                        audio_state["audio_file"] = None
+                        audio_state["had_error"] = False
+                        # Clean up old file
+                        try:
+                            if audio_state["audio_file"] and os.path.exists(audio_state["audio_file"]):
+                                os.remove(audio_state["audio_file"])
+                        except:
+                            pass
+                        st.rerun()
         
         elif audio_state["status"] == "error":
             # Clean error state
@@ -585,6 +626,7 @@ def create_enhanced_audio_button(content: str, message_key: str):
                 ):
                     audio_state["status"] = "idle"
                     audio_state["error_message"] = None
+                    audio_state["had_error"] = False  # Clear error flag on retry
                     st.rerun()
 
 def cleanup_audio_files():
