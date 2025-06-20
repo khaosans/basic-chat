@@ -524,10 +524,6 @@ class TestGlobalFunctions:
         # Mock the migrations directory for the global function
         import database_migrations
         original_init = database_migrations.MigrationManager.__init__
-        original_manager = database_migrations.migration_manager
-        
-        # Reset global manager
-        database_migrations.migration_manager = None
         
         def mock_init(self, db_path):
             self.db_path = db_path
@@ -541,9 +537,8 @@ class TestGlobalFunctions:
             success = run_migrations(temp_db_path)
             assert success is True
         finally:
-            # Restore original method and manager
+            # Restore original method
             database_migrations.MigrationManager.__init__ = original_init
-            database_migrations.migration_manager = original_manager
     
     def test_get_migration_status(self, temp_db_path):
         """Test get_migration_status function"""

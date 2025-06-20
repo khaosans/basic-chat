@@ -46,11 +46,10 @@ class EnhancedCalculator:
             'tan': math.tan,
             'log': math.log,
             'log10': math.log10,
+            'ln': math.log,  # Alias for natural log
             'exp': math.exp,
             'floor': math.floor,
             'ceil': math.ceil,
-            'pi': math.pi,
-            'e': math.e,
             'degrees': math.degrees,
             'radians': math.radians,
             'factorial': math.factorial,
@@ -62,6 +61,7 @@ class EnhancedCalculator:
         self.safe_constants = {
             'pi': math.pi,
             'e': math.e,
+            'tau': 2 * math.pi,  # Add tau constant
             'inf': float('inf'),
             'nan': float('nan')
         }
@@ -209,8 +209,8 @@ class EnhancedCalculator:
             if isinstance(result, bool):
                 return str(result)
             elif isinstance(result, (int, float)):
-                # Always show decimal point for consistency with test expectations
-                return f"{float(result):.1f}"
+                # Return exact value for mathematical precision
+                return str(result)
             else:
                 return str(result)
         except Exception:
