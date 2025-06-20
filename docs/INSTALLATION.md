@@ -5,7 +5,7 @@
 ---
 
 ## Overview
-This guide provides detailed setup instructions for BasicChat, including prerequisites, installation steps, configuration options, and troubleshooting.
+This guide provides detailed setup instructions for BasicChat, including prerequisites, installation steps, configuration options, and troubleshooting. The installation process follows established best practices for Python application deployment and local AI system setup.
 
 ## Prerequisites
 
@@ -225,6 +225,7 @@ curl http://localhost:11434/api/tags
 - **[Features Overview](FEATURES.md)** - Learn about BasicChat's capabilities
 - **[System Architecture](ARCHITECTURE.md)** - Understand the technical design
 - **[Development Guide](DEVELOPMENT.md)** - Start contributing to the project
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Resolve common issues
 - **[Production Roadmap](ROADMAP.md)** - See future development plans
 
 ---
