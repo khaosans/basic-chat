@@ -7,6 +7,7 @@
   - [Advanced Reasoning Engine](#-advanced-reasoning-engine)
   - [Enhanced Tools & Utilities](#️-enhanced-tools--utilities)
   - [Document & Multi-Modal Processing](#-document--multi-modal-processing)
+  - [💾 Session Management](#-session-management)
   - [Performance & Reliability](#-performance--reliability)
 - [Quick Start](#-quick-start)
   - [Prerequisites](#prerequisites)
@@ -35,6 +36,7 @@
 - **🔒 Privacy First**: Everything runs locally on your machine - no data sent to external servers
 - **🧠 Smart Reasoning**: Advanced AI that thinks step-by-step and explains its reasoning
 - **🛠️ Powerful Tools**: Built-in calculator, time management, web search, and document processing
+- **💾 Persistent Sessions**: Save, load, and manage your chat conversations with advanced session management
 - **⚡ Lightning Fast**: Optimized with caching and async processing for quick responses
 - **📱 Beautiful Interface**: Clean, modern Streamlit interface that's easy to use
 
@@ -51,6 +53,7 @@
 Experience BasicChat's powerful features in action:
 - 🧠 Multiple reasoning modes for different types of problems
 - 💬 Natural conversation with step-by-step explanations
+- 💾 Persistent session management with search and export
 - 🎨 Beautiful dark theme interface
 - 📚 Support for multiple file formats and document types
 - ⚡ Real-time streaming responses
@@ -58,6 +61,7 @@ Experience BasicChat's powerful features in action:
 ### 🎯 Key Features in Action
 - **Intelligent Reasoning**: Watch the AI break down complex problems
 - **Document Processing**: Upload and analyze various file types
+- **Session Management**: Save and organize your conversations
 - **Interactive UI**: Clean, modern design with expandable sections
 - **Real-time Updates**: See the AI's thought process as it happens
 - **Multi-Modal Support**: Handle text, images, and more
@@ -119,6 +123,38 @@ Turn any document into knowledge with advanced processing capabilities:
   - Visual content understanding
   - Image-to-text conversion for accessibility
 
+### 💾 Session Management
+Never lose your conversations with advanced session management:
+
+- **💾 Persistent Storage**: 
+  - SQLite-based session storage with automatic migrations
+  - Save conversations automatically or manually
+  - Never lose important discussions or insights
+
+- **🔍 Smart Search & Organization**:
+  - Search through your chat history by title or content
+  - Tag and categorize sessions for easy organization
+  - Archive old conversations to keep things tidy
+
+- **📤 Export & Import**:
+  - Export sessions as JSON or Markdown for backup
+  - Import sessions from other instances
+  - Perfect for sharing conversations or migrating data
+
+- **🔄 Session Controls**:
+  - Create new sessions with custom titles
+  - Load previous conversations instantly
+  - Auto-save functionality to prevent data loss
+  - Session statistics and metadata tracking
+
+- **🏷️ Advanced Features**:
+  - Session tagging and categorization
+  - Model and reasoning mode tracking
+  - Message count and duration statistics
+  - Bulk operations for session management
+
+**Example**: Start a conversation about a complex project, save it, and return to it later with all context preserved.
+
 ### 🚀 Performance & Reliability
 Built for production with enterprise-grade reliability:
 
@@ -142,6 +178,12 @@ Built for production with enterprise-grade reliability:
   - Configurable limits for different use cases
   - Fair resource distribution
 
+- **🗄️ Database Management**:
+  - Automatic schema migrations with version control
+  - Flyway-like migration system for seamless updates
+  - Database integrity checks and validation
+  - Backup and recovery capabilities
+
 ### 🎨 User Experience
 Designed with users in mind:
 
@@ -150,6 +192,7 @@ Designed with users in mind:
 - **⚡ Real-time Updates**: Live streaming responses with progress indicators
 - **🎨 Beautiful Formatting**: Rich text, emojis, and clear visual hierarchy
 - **🔧 Easy Configuration**: Simple environment variables for customization
+- **💾 Session Sidebar**: Easy access to session management features
 
 ## 🚀 Quick Start
 
@@ -255,6 +298,15 @@ ENABLE_CACHING=true
 CACHE_TTL=3600
 RATE_LIMIT=10
 REQUEST_TIMEOUT=30
+
+# Session Management
+ENABLE_SESSION_MANAGEMENT=true
+SESSION_DATABASE_PATH=./chat_sessions.db
+ENABLE_AUTO_SAVE=true
+AUTO_SAVE_INTERVAL=300
+ENABLE_SESSION_SEARCH=true
+MAX_SESSIONS_PER_USER=1000
+SESSION_CLEANUP_DAYS=30
 
 # Redis Configuration (Optional)
 REDIS_URL=redis://localhost:6379

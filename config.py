@@ -3,12 +3,24 @@ Configuration management for BasicChat application
 """
 
 import os
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Optional, List
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv(".env.local")
+
+@dataclass
+class SessionConfig:
+    """Session management configuration"""
+    auto_save_interval: int = int(os.getenv("SESSION_AUTO_SAVE_INTERVAL", "5"))
+    max_sessions_per_user: int = int(os.getenv("SESSION_MAX_PER_USER", "100"))
+    session_retention_days: int = int(os.getenv("SESSION_RETENTION_DAYS", "365"))
+    enable_auto_save: bool = os.getenv("SESSION_ENABLE_AUTO_SAVE", "true").lower() == "true"
+    enable_session_search: bool = os.getenv("SESSION_ENABLE_SEARCH", "true").lower() == "true"
+    export_formats: List[str] = field(default_factory=lambda: ["json", "markdown"])
+    database_path: str = os.getenv("SESSION_DB_PATH", "./chat_sessions.db")
+    cleanup_interval_hours: int = int(os.getenv("SESSION_CLEANUP_INTERVAL", "24"))
 
 @dataclass
 class AppConfig:
@@ -47,6 +59,9 @@ class AppConfig:
     vectorstore_persist_directory: str = os.getenv("VECTORSTORE_DIR", "./chroma_db")
     embedding_model: str = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
     
+    # Session Management Configuration
+    session: SessionConfig = field(default_factory=SessionConfig)
+
     @classmethod
     def from_env(cls) -> "AppConfig":
         """Create configuration from environment variables"""

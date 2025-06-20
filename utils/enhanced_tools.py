@@ -405,8 +405,17 @@ class EnhancedTimeTools:
                 "error": time_result.error
             }
         
-        # Parse the time for additional info
-        dt = datetime.datetime.strptime(time_result.current_time, "%Y-%m-%d %H:%M:%S %Z")
+        # Parse the time for additional info - handle timezone abbreviations
+        try:
+            # Try parsing with timezone abbreviation first
+            dt = datetime.datetime.strptime(time_result.current_time, "%Y-%m-%d %H:%M:%S %Z")
+        except ValueError:
+            try:
+                # Try parsing without timezone
+                dt = datetime.datetime.strptime(time_result.current_time.split(" ")[0] + " " + time_result.current_time.split(" ")[1], "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                # Fallback to current time
+                dt = datetime.datetime.now()
         
         return {
             "success": True,

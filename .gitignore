@@ -20,6 +20,11 @@ chroma_db/
 logs/
 *.log
 
+# Session Management
+chat_sessions.db
+*.db
+migrations/__pycache__/
+
 # OS specific
 .DS_Store
 Thumbs.db

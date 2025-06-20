@@ -12,7 +12,7 @@ import os
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import text_to_speech, get_audio_html
+from app import text_to_speech, get_professional_audio_html
 
 class TestVoiceFunctionality:
     """Test class for voice functionality"""
@@ -109,7 +109,7 @@ class TestVoiceFunctionality:
         audio_file = text_to_speech(test_text)
         
         # Generate HTML
-        html = get_audio_html(audio_file)
+        html = get_professional_audio_html(audio_file)
         
         # Check that HTML contains expected elements
         assert html is not None
@@ -124,7 +124,7 @@ class TestVoiceFunctionality:
         non_existent_file = "temp_nonexistent_file.mp3"
         
         # Should handle gracefully and return error message
-        html = get_audio_html(non_existent_file)
+        html = get_professional_audio_html(non_existent_file)
         
         # Should return an error message
         assert html is not None
@@ -132,7 +132,7 @@ class TestVoiceFunctionality:
     
     def test_get_audio_html_none_file(self):
         """Test handling of None file path"""
-        html = get_audio_html(None)
+        html = get_professional_audio_html(None)
         
         # Should return a message about no audio available
         assert html is not None
@@ -148,7 +148,7 @@ class TestVoiceFunctionality:
         assert os.path.exists(audio_file)
         
         # Step 2: Generate HTML
-        html = get_audio_html(audio_file)
+        html = get_professional_audio_html(audio_file)
         assert html is not None
         assert '<audio' in html
         
@@ -166,16 +166,33 @@ class TestVoiceFunctionality:
     @patch('app.gTTS')
     def test_text_to_speech_gtts_integration(self, mock_gtts):
         """Test integration with gTTS library"""
-        # Mock gTTS
-        mock_tts = MagicMock()
-        mock_gtts.return_value = mock_tts
+        test_text = "Hello, this is a test."
         
-        test_text = "Test with mocked gTTS"
+        # Mock gTTS instance and save method
+        mock_tts_instance = MagicMock()
+        mock_gtts.return_value = mock_tts_instance
+        
+        # Mock the save method to actually create a file
+        def mock_save(filename):
+            with open(filename, 'w') as f:
+                f.write("mock audio content")
+        
+        mock_tts_instance.save.side_effect = mock_save
+        
+        # Test the function
         audio_file = text_to_speech(test_text)
         
         # Verify gTTS was called correctly
-        mock_gtts.assert_called_once_with(text=test_text, lang='en')
-        mock_tts.save.assert_called_once_with(audio_file)
+        mock_gtts.assert_called_once_with(text=test_text, lang='en', slow=False)
+        mock_tts_instance.save.assert_called_once()
+        
+        # Verify file was created
+        assert audio_file is not None
+        assert os.path.exists(audio_file)
+        
+        # Cleanup
+        if audio_file and os.path.exists(audio_file):
+            os.remove(audio_file)
     
     def test_voice_with_special_characters(self):
         """Test voice generation with special characters"""

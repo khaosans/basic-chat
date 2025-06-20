@@ -39,6 +39,9 @@ from config import config
 from utils.async_ollama import AsyncOllamaChat, async_chat
 from utils.caching import response_cache
 
+# Import session management
+from session_manager import session_manager, ChatSession
+
 load_dotenv(".env.local")  # Load environment variables from .env.local
 
 # Use Ollama model instead of Hugging Face
@@ -668,6 +671,205 @@ def display_reasoning_result(result: ReasoningResult):
     with col2:
         st.write("**Sources:**", ", ".join(result.sources))
 
+# Session Management Functions
+def create_new_session(title: str, model: str, reasoning_mode: str) -> ChatSession:
+    """Create a new chat session"""
+    try:
+        session = session_manager.create_session(
+            title=title,
+            model=model,
+            reasoning_mode=reasoning_mode,
+            user_id="default"
+        )
+        
+        # Clear current messages and set new session
+        st.session_state.messages = []
+        st.session_state.current_session = session
+        
+        st.success(f"Created new session: {title}")
+        return session
+        
+    except Exception as e:
+        st.error(f"Failed to create session: {e}")
+        return None
+
+def load_session(session_id: str) -> bool:
+    """Load a chat session"""
+    try:
+        session = session_manager.load_session(session_id)
+        if session:
+            st.session_state.messages = session.messages
+            st.session_state.current_session = session
+            st.success(f"Loaded session: {session.title}")
+            return True
+        else:
+            st.error("Session not found")
+            return False
+            
+    except Exception as e:
+        st.error(f"Failed to load session: {e}")
+        return False
+
+def save_current_session() -> bool:
+    """Save the current session"""
+    try:
+        if "current_session" not in st.session_state:
+            # Create new session if none exists
+            title = st.text_input("Enter session title:", value="New Chat Session")
+            if title:
+                session = create_new_session(title, st.session_state.get("selected_model", "mistral"), 
+                                           st.session_state.get("reasoning_mode", "Standard"))
+                if not session:
+                    return False
+            else:
+                return False
+        
+        session = st.session_state.current_session
+        session.messages = st.session_state.messages
+        session.updated_at = datetime.datetime.now()
+        
+        success = session_manager.save_session(session)
+        if success:
+            st.success(f"Session saved: {session.title}")
+        else:
+            st.error("Failed to save session")
+        return success
+        
+    except Exception as e:
+        st.error(f"Error saving session: {e}")
+        return False
+
+def auto_save_current_session():
+    """Auto-save current session if enabled"""
+    if (config.session.enable_auto_save and 
+        "current_session" in st.session_state and 
+        "messages" in st.session_state):
+        
+        # Only auto-save if we have messages and it's been a while
+        if len(st.session_state.messages) > 0:
+            session = st.session_state.current_session
+            session_manager.auto_save_session(session.id, st.session_state.messages)
+
+def render_session_management_sidebar():
+    """Render session management UI in sidebar"""
+    with st.sidebar:
+        st.header("💾 Chat Sessions")
+        
+        # Session controls
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("💾 Save Session", help="Save current conversation"):
+                save_current_session()
+        
+        with col2:
+            if st.button("🔄 New Session", help="Start fresh conversation"):
+                title = st.text_input("Session title:", value="New Chat Session")
+                if title:
+                    create_new_session(title, st.session_state.get("selected_model", "mistral"), 
+                                     st.session_state.get("reasoning_mode", "Standard"))
+        
+        # Session search
+        if config.session.enable_session_search:
+            search_query = st.text_input("🔍 Search sessions", placeholder="Search by title or content...")
+            
+            # Get sessions
+            if search_query:
+                sessions = session_manager.search_sessions(search_query)
+            else:
+                sessions = session_manager.list_sessions(limit=10)
+            
+            # Display sessions
+            if sessions:
+                st.subheader("📝 Recent Sessions")
+                for session in sessions:
+                    with st.expander(f"📝 {session.title}", expanded=False):
+                        st.caption(f"Model: {session.model_used} | Mode: {session.reasoning_mode}")
+                        st.caption(f"Updated: {session.updated_at.strftime('%Y-%m-%d %H:%M')}")
+                        st.caption(f"Messages: {len(session.messages)}")
+                        
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            if st.button("📂 Load", key=f"load_{session.id}"):
+                                load_session(session.id)
+                        with col2:
+                            if st.button("✏️ Edit", key=f"edit_{session.id}"):
+                                new_title = st.text_input("New title:", value=session.title, key=f"edit_title_{session.id}")
+                                if new_title and new_title != session.title:
+                                    session_manager.update_session(session.id, {"title": new_title})
+                                    st.rerun()
+                        with col3:
+                            if st.button("🗑️ Delete", key=f"delete_{session.id}"):
+                                if session_manager.delete_session(session.id):
+                                    st.success("Session deleted")
+                                    st.rerun()
+                                else:
+                                    st.error("Failed to delete session")
+            else:
+                st.info("No sessions found")
+        
+        # Export/Import section
+        with st.expander("📤 Export/Import"):
+            if "current_session" in st.session_state:
+                session = st.session_state.current_session
+                
+                col1, col2 = st.columns(2)
+                with col1:
+                    if st.button("📄 Export JSON", key="export_json"):
+                        json_data = session_manager.export_session(session.id, "json")
+                        if json_data:
+                            st.download_button(
+                                label="Download JSON",
+                                data=json_data,
+                                file_name=f"{session.title}.json",
+                                mime="application/json"
+                            )
+                
+                with col2:
+                    if st.button("📝 Export Markdown", key="export_md"):
+                        md_data = session_manager.export_session(session.id, "markdown")
+                        if md_data:
+                            st.download_button(
+                                label="Download Markdown",
+                                data=md_data,
+                                file_name=f"{session.title}.md",
+                                mime="text/markdown"
+                            )
+            
+            # Import session
+            uploaded_file = st.file_uploader("Import session", type=["json"])
+            if uploaded_file:
+                try:
+                    session_data = uploaded_file.read().decode()
+                    imported_session = session_manager.import_session(session_data, "json")
+                    if imported_session:
+                        st.success(f"Imported session: {imported_session.title}")
+                        st.rerun()
+                    else:
+                        st.error("Failed to import session")
+                except Exception as e:
+                    st.error(f"Error importing session: {e}")
+
+def display_current_session_info():
+    """Display current session information"""
+    if "current_session" in st.session_state:
+        session = st.session_state.current_session
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        ">
+            <strong>📝 Session:</strong> {session.title} | 
+            <strong>🤖 Model:</strong> {session.model_used} | 
+            <strong>🧠 Mode:</strong> {session.reasoning_mode}
+            <br>
+            <small>Last updated: {session.updated_at.strftime('%Y-%m-%d %H:%M:%S')} | 
+            Messages: {len(session.messages)}</small>
+        </div>
+        """, unsafe_allow_html=True)
+
 def enhanced_chat_interface(doc_processor):
     """Enhanced chat interface with reasoning capabilities"""
     # Professional CSS with clean audio styling
@@ -1018,6 +1220,9 @@ def enhanced_chat_interface(doc_processor):
     ollama_chat = OllamaChat(selected_model)
     tool_registry = ToolRegistry(doc_processor)
 
+    # Display current session info if exists
+    display_current_session_info()
+
     # Initialize welcome message if needed
     if "messages" not in st.session_state:
         st.session_state.messages = [{
@@ -1035,6 +1240,10 @@ def enhanced_chat_interface(doc_processor):
     # Chat input
     if prompt := st.chat_input("Type a message..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Auto-save session if enabled and we have a current session
+        if "current_session" in st.session_state:
+            auto_save_current_session()
         
         # Process response based on reasoning mode
         with st.chat_message("assistant"):
@@ -1105,6 +1314,10 @@ def enhanced_chat_interface(doc_processor):
                         if response := ollama_chat.query({"inputs": prompt}):
                             st.write(response)
                             st.session_state.messages.append({"role": "assistant", "content": response})
+        
+        # Auto-save session after response
+        if "current_session" in st.session_state:
+            auto_save_current_session()
 
         st.rerun()
 
@@ -1140,6 +1353,9 @@ def main():
                 st.success(f"Document uploaded successfully! {result}")
             except Exception as e:
                 st.error(f"Error processing document: {str(e)}")
+
+    # Render session management sidebar
+    render_session_management_sidebar()
 
 if __name__ == "__main__":
     main()
