@@ -83,8 +83,12 @@ The architecture diagram illustrates the layered approach to system design, foll
 ## Key Components
 
 ### Frontend Layer
+**Implementation Status**: ✅ Fully Implemented
+**Technology**: Streamlit framework
+
 The frontend layer provides the user interface and handles user interactions, implementing responsive design principles and real-time updates.
 
+**Components**:
 - **Streamlit UI**: Clean, responsive web interface built with Streamlit framework
 - **Real-time Updates**: Streaming responses and progress indicators for enhanced user experience
 - **Multi-modal Input**: Support for text, file uploads, and image processing capabilities
@@ -92,8 +96,12 @@ The frontend layer provides the user interface and handles user interactions, im
 The frontend implementation follows research on user interface design and human-computer interaction (Norman 2013). The real-time update mechanism incorporates research on responsive web applications and user experience optimization (Nielsen 1993).
 
 ### Application Layer
+**Implementation Status**: ✅ Fully Implemented
+**Pattern**: Model-View-Controller (MVC)
+
 The application layer orchestrates the system's core functionality, managing request routing, configuration, and session state.
 
+**Components**:
 - **App Logic**: Request routing and response handling with intelligent request classification
 - **Config Manager**: Environment-based configuration with validation using Pydantic
 - **Session Management**: User state and conversation history with persistent storage
@@ -103,8 +111,12 @@ The application layer orchestrates the system's core functionality, managing req
 The application layer design follows the Model-View-Controller (MVC) pattern and incorporates research on web application architecture (Krasner and Pope 1988). The configuration management approach is based on research on software configuration and deployment automation (Humble and Farley 2010). The session management implementation follows research on persistent storage systems and database migration strategies (Fowler 2014).
 
 ### AI Processing Layer
+**Implementation Status**: ✅ Fully Implemented
+**Research Basis**: Wei et al. (2022), Lewis et al. (2020)
+
 The AI processing layer represents the core intelligence of the system, implementing advanced reasoning capabilities and document processing.
 
+**Components**:
 - **Reasoning Engine**: Chain-of-Thought, Multi-Step, and Agent-Based reasoning implementations
 - **Async Ollama Client**: High-performance LLM communication with connection pooling
 - **Document Processor**: RAG implementation with vector search and semantic understanding
@@ -112,8 +124,12 @@ The AI processing layer represents the core intelligence of the system, implemen
 The reasoning engine implementation is based on research by Wei et al. on Chain-of-Thought reasoning (Wei et al. 2201.11903) and Lewis et al. on Retrieval-Augmented Generation (Lewis et al. 2005.11401). The async client design follows research on high-performance HTTP clients and connection management (Fielding and Reschke 2014).
 
 ### Session Management Layer
+**Implementation Status**: ✅ Fully Implemented
+**Database**: SQLite with automatic migrations
+
 The session management layer provides persistent storage and conversation history management, enabling users to save, load, and organize their chat sessions.
 
+**Components**:
 - **Session Manager**: SQLite-based session storage with comprehensive CRUD operations
 - **Database Migrations**: Automatic schema versioning with Flyway-like migration system
 - **Session Search**: Full-text search capabilities across session titles and content
@@ -127,8 +143,12 @@ The session management implementation follows research on persistent storage sys
 **Migration Strategy**: The Flyway-like migration system ensures database schema compatibility across application versions, following the principle of immutable migrations and version control for database changes (Kleppmann 2017).
 
 ### External Services
+**Implementation Status**: ✅ Fully Implemented
+**Integration**: REST APIs and local services
+
 External services provide additional capabilities and data sources, enhancing the system's functionality.
 
+**Components**:
 - **Ollama API**: Local LLM inference with model management and optimization
 - **Web Search**: DuckDuckGo integration for real-time information retrieval
 - **Vector Store**: ChromaDB for semantic search and document similarity
@@ -136,8 +156,12 @@ External services provide additional capabilities and data sources, enhancing th
 The external service integration follows research on service-oriented architecture and API design (Newman 2015). The vector store implementation incorporates research on approximate nearest neighbor search algorithms (Johnson et al. 1908.10396).
 
 ### Caching Layer
+**Implementation Status**: ✅ Fully Implemented
+**Strategy**: Multi-layer caching (Redis + Memory)
+
 The caching layer optimizes system performance through intelligent data storage and retrieval strategies.
 
+**Components**:
 - **Response Cache**: Multi-layer caching (Redis + Memory) with intelligent key generation
 - **Intelligent Keys**: Hash-based cache key generation with parameter inclusion
 - **TTL Management**: Configurable expiration times with automatic cleanup
@@ -239,8 +263,12 @@ The session management flow demonstrates the complete lifecycle of session opera
 ## Performance Architecture
 
 ### Async Processing
+**Implementation Status**: ✅ Fully Implemented
+**Research Basis**: PEP 492 async/await patterns
+
 The async processing architecture enables high-performance, non-blocking operations through modern concurrency patterns.
 
+**Features**:
 - **Connection Pooling**: 100 total connections, 30 per host for optimal resource utilization
 - **Rate Limiting**: Configurable (default: 10 req/sec) with token bucket algorithm
 - **Retry Logic**: Exponential backoff with 3 attempts for fault tolerance
@@ -249,8 +277,12 @@ The async processing architecture enables high-performance, non-blocking operati
 The async implementation follows the Python asyncio best practices outlined in PEP 492 and incorporates research on concurrent programming patterns (PEP 492). The connection pooling strategy is based on research showing optimal performance with connection reuse (Fielding and Reschke 2014).
 
 ### Caching Strategy
+**Implementation Status**: ✅ Fully Implemented
+**Research Basis**: Aggarwal et al. (1999) hierarchical caching systems
+
 The caching strategy implements a sophisticated multi-layer approach to optimize response times and reduce computational overhead.
 
+**Architecture**:
 - **Multi-layer**: Redis primary + Memory fallback for distributed and local caching
 - **Smart Keys**: MD5 hash with parameter inclusion for collision resistance
 - **Performance**: 50-80% faster response times with intelligent cache management
@@ -259,8 +291,12 @@ The caching strategy implements a sophisticated multi-layer approach to optimize
 The multi-layer caching approach follows research on hierarchical caching systems and optimal cache replacement policies (Aggarwal et al. 1999). The MD5-based key generation provides collision resistance while maintaining reasonable performance, as demonstrated in cryptographic research (Rivest 1992).
 
 ### Memory Management
+**Implementation Status**: ✅ Fully Implemented
+**Strategy**: Automatic resource management
+
 Memory management ensures efficient resource utilization and prevents memory leaks through careful design and automatic cleanup.
 
+**Features**:
 - **Session State**: Streamlit session management with automatic cleanup
 - **Vector Store**: ChromaDB with configurable persistence and memory limits
 - **Session Database**: SQLite with optimized queries and connection pooling
@@ -276,8 +312,12 @@ The memory management approach follows research on garbage collection and memory
 ## Security Architecture
 
 ### Input Validation
+**Implementation Status**: ✅ Fully Implemented
+**Research Basis**: OWASP (2021) web application security
+
 Input validation represents a critical security measure, protecting against various forms of attack and ensuring system stability.
 
+**Features**:
 - **Expression Sanitization**: Safe mathematical operations with dangerous operation detection
 - **File Upload Security**: Type validation and size limits with malicious file detection
 - **Rate Limiting**: Per-user/IP request throttling to prevent abuse and DDoS attacks
@@ -286,8 +326,12 @@ Input validation represents a critical security measure, protecting against vari
 The input validation approach follows research on web application security and input sanitization techniques (OWASP 2021). The rate limiting implementation incorporates research on DDoS protection and resource allocation (Guérin and Pla 1997).
 
 ### Data Privacy
+**Implementation Status**: ✅ Fully Implemented
+**Research Basis**: Dwork (2006) privacy-preserving computing
+
 Data privacy represents a fundamental principle of the system, ensuring user data remains secure and private throughout processing.
 
+**Features**:
 - **Local Processing**: All data processed locally via Ollama with no external API calls
 - **No External Storage**: No data sent to external services except for web search queries
 - **Configurable Logging**: Optional structured logging with privacy-preserving defaults
@@ -298,8 +342,12 @@ The privacy approach follows research on privacy-preserving computing and local 
 ## Scalability Considerations
 
 ### Horizontal Scaling
+**Implementation Status**: ✅ Designed for scaling
+**Strategy**: Stateless design with distributed caching
+
 The system is designed for horizontal scaling, enabling deployment across multiple instances for high availability and performance.
 
+**Features**:
 - **Stateless Design**: Session state in Streamlit with no server-side state dependencies
 - **Redis Integration**: Distributed caching support for multi-instance deployments
 - **Load Balancing**: Ready for multiple instances with health check integration
@@ -308,8 +356,12 @@ The system is designed for horizontal scaling, enabling deployment across multip
 The horizontal scaling approach follows research on distributed systems and load balancing (Tanenbaum and van Steen 2007). The stateless design incorporates research on web application scalability and session management (Fielding and Reschke 2014).
 
 ### Performance Optimization
+**Implementation Status**: ✅ Fully Implemented
+**Strategy**: Async operations with intelligent caching
+
 Performance optimization ensures the system operates efficiently under various load conditions and resource constraints.
 
+**Features**:
 - **Async Operations**: Non-blocking request handling with efficient resource utilization
 - **Connection Reuse**: HTTP connection pooling for reduced latency and overhead
 - **Batch Processing**: Efficient document chunking and embedding generation
@@ -320,8 +372,12 @@ The performance optimization approach follows research on web application perfor
 ## Technology Stack
 
 ### Core Technologies
+**Implementation Status**: ✅ Fully Implemented
+**Selection Criteria**: Performance, reliability, and maintainability
+
 The technology stack is carefully selected to provide optimal performance, reliability, and maintainability.
 
+**Technologies**:
 - **Python 3.11+**: Main programming language with modern async/await support
 - **Streamlit**: Web application framework for rapid UI development
 - **Ollama**: Local LLM server for privacy-preserving AI inference
@@ -333,8 +389,12 @@ The technology selection is based on research on modern web application framewor
 **Technology Rationale**: Each technology choice is based on specific requirements and research findings. Python provides excellent async support and AI ecosystem integration. Streamlit enables rapid prototyping while maintaining production capabilities. Ollama ensures privacy by keeping AI processing local. ChromaDB provides efficient vector operations for semantic search. SQLite offers reliable persistence with minimal resource overhead.
 
 ### Key Libraries
+**Implementation Status**: ✅ Fully Implemented
+**Selection Criteria**: Reliability and maintainability
+
 The system leverages established libraries and frameworks to ensure reliability and maintainability.
 
+**Libraries**:
 - **aiohttp**: Async HTTP client/server for high-performance networking
 - **LangChain**: LLM application framework for AI system development
 - **Pydantic**: Data validation and settings management with type safety
@@ -343,8 +403,12 @@ The system leverages established libraries and frameworks to ensure reliability 
 The library selection follows research on software dependency management and ecosystem analysis (Decan et al. 2016). The testing approach incorporates research on software testing methodologies and quality assurance (Myers et al. 2011).
 
 ### External Services
+**Implementation Status**: ✅ Fully Implemented
+**Integration Strategy**: Service independence with graceful fallbacks
+
 External services provide additional capabilities while maintaining system independence and privacy.
 
+**Services**:
 - **DuckDuckGo**: Web search (no API key required) for real-time information
 - **Redis**: Optional distributed caching for multi-instance deployments
 - **Tesseract**: OCR for image processing and text extraction
@@ -355,9 +419,10 @@ The external service integration follows research on service-oriented architectu
 
 - **[Installation Guide](INSTALLATION.md)** - Setup and configuration
 - **[Features Overview](FEATURES.md)** - Detailed feature documentation
+- **[Reasoning Engine](REASONING_ENGINE.md)** - Advanced reasoning capabilities
 - **[Development Guide](DEVELOPMENT.md)** - Contributing and development
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Issue resolution
 - **[Production Roadmap](ROADMAP.md)** - Future development plans
-- **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
 
 ## 📚 References
 
