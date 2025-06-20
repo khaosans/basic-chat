@@ -527,78 +527,28 @@ def create_enhanced_audio_button(content: str, message_key: str):
             col1, col2, col3 = st.columns([1, 2, 1])
             with col2:
                 if st.button(
-                    "Generate Audio",
+                    "🎵 Generate Audio",
                     key=f"audio_btn_{message_key}",
-                    help="Convert this message to speech",
+                    help="Click to generate audio version of this message",
                     use_container_width=True
                 ):
-                    # Set loading state first
-                    audio_state["status"] = "loading"
-                    audio_state["error_message"] = None
-                    st.rerun()
-        
-        elif audio_state["status"] == "loading":
-            # Generate audio in loading state to prevent UI blocking
-            try:
-                with st.spinner("Generating audio..."):
-                    audio_file = text_to_speech(content)
-                    if audio_file:
-                        audio_state["audio_file"] = audio_file
-                        audio_state["status"] = "ready"
-                        audio_state["had_error"] = False  # Clear error flag on success
-                    else:
+                    # Generate audio immediately with spinner
+                    try:
+                        with st.spinner("Generating audio..."):
+                            audio_file = text_to_speech(content)
+                            if audio_file:
+                                audio_state["audio_file"] = audio_file
+                                audio_state["status"] = "ready"
+                                audio_state["had_error"] = False  # Clear error flag on success
+                            else:
+                                audio_state["status"] = "error"
+                                audio_state["error_message"] = "No content available for voice generation"
+                                audio_state["had_error"] = True  # Set error flag
+                    except Exception as e:
                         audio_state["status"] = "error"
-                        audio_state["error_message"] = "No content available for voice generation"
+                        audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
                         audio_state["had_error"] = True  # Set error flag
-            except Exception as e:
-                audio_state["status"] = "error"
-                audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
-                audio_state["had_error"] = True  # Set error flag
-            
-            # Show loading state
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
-                st.markdown(
-                    """
-                    <div style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                        padding: 12px;
-                        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-                        border: 1px solid #e2e8f0;
-                        border-radius: 8px;
-                        color: #4a5568;
-                        font-size: 14px;
-                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-                    ">
-                        <div class="loading-spinner" style="
-                            width: 16px;
-                            height: 16px;
-                            border: 2px solid #e2e8f0;
-                            border-top: 2px solid #4299e1;
-                            border-radius: 50%;
-                            animation: spin 1s linear infinite;
-                        "></div>
-                        Generating audio...
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-                
-                # Add a progress bar to show activity
-                st.progress(0, text="Processing text-to-speech...")
-                
-                # Add a timeout button in case it gets stuck
-                if st.button(
-                    "Cancel",
-                    key=f"cancel_{message_key}",
-                    help="Cancel audio generation",
-                    use_container_width=True
-                ):
-                    audio_state["status"] = "idle"
-                    audio_state["error_message"] = None
+                    
                     st.rerun()
         
         elif audio_state["status"] == "ready":
@@ -611,9 +561,9 @@ def create_enhanced_audio_button(content: str, message_key: str):
                 col1, col2, col3 = st.columns([2, 1, 2])
                 with col2:
                     if st.button(
-                        "Regenerate",
+                        "🔄 Regenerate Audio",
                         key=f"regenerate_{message_key}",
-                        help="Generate new audio",
+                        help="Generate new audio version",
                         use_container_width=True
                     ):
                         audio_state["status"] = "idle"
