@@ -364,33 +364,275 @@ def text_to_speech(text):
     if not text or text.strip() == "":
         return None
     
-    text_hash = hashlib.md5(text.encode()).hexdigest()
-    audio_file = f"temp_{text_hash}.mp3"
-    if not os.path.exists(audio_file):
-        tts = gTTS(text=text, lang='en')
-        tts.save(audio_file)
-    return audio_file
+    try:
+        text_hash = hashlib.md5(text.encode()).hexdigest()
+        audio_file = f"temp_{text_hash}.mp3"
+        
+        # Check if file already exists
+        if os.path.exists(audio_file) and os.path.getsize(audio_file) > 0:
+            return audio_file
+        
+        # Generate new audio file with timeout and error handling
+        import threading
+        import time
+        
+        # Flag to track if generation completed
+        generation_completed = threading.Event()
+        generation_error = None
+        result_file = None
+        
+        def generate_audio():
+            nonlocal generation_error, result_file
+            try:
+                # Set a shorter timeout for gTTS
+                tts = gTTS(text=text, lang='en', slow=False)
+                tts.save(audio_file)
+                
+                # Verify the file was created successfully
+                if os.path.exists(audio_file) and os.path.getsize(audio_file) > 0:
+                    result_file = audio_file
+                else:
+                    generation_error = Exception("Audio file was not created successfully")
+                    
+            except Exception as e:
+                generation_error = e
+            finally:
+                generation_completed.set()
+        
+        # Start audio generation in a separate thread
+        audio_thread = threading.Thread(target=generate_audio)
+        audio_thread.daemon = True
+        audio_thread.start()
+        
+        # Wait for completion with timeout (15 seconds)
+        if generation_completed.wait(timeout=15):
+            if generation_error:
+                raise generation_error
+            return result_file
+        else:
+            # Timeout occurred
+            raise Exception("Audio generation timed out after 15 seconds")
+            
+    except Exception as e:
+        # Clean up any partial files
+        try:
+            if 'audio_file' in locals() and os.path.exists(audio_file):
+                os.remove(audio_file)
+        except:
+            pass
+        raise Exception(f"Failed to generate audio: {str(e)}")
 
-def get_audio_html(file_path):
-    """Generate HTML for audio player with controls"""
-    # Handle None file_path
+def get_professional_audio_html(file_path: str) -> str:
+    """
+    Generate professional, minimal audio player HTML.
+    
+    Args:
+        file_path: Path to the audio file
+        
+    Returns:
+        HTML string for the audio player
+    """
     if not file_path:
-        return "<p>No audio available</p>"
+        return '<p style="color: #4a5568; font-style: italic; text-align: center; margin: 8px 0;">No audio available</p>'
     
     try:
         with open(file_path, "rb") as f:
             data = f.read()
             b64 = base64.b64encode(data).decode()
-            md = f"""
-                <audio controls style="width: 100%; margin-top: 10px;">
-                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+            
+            # Professional, minimal audio player
+            html = f"""
+            <div style="
+                background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 16px;
+                margin: 8px 0;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            ">
+                <audio 
+                    controls 
+                    style="
+                        width: 100%;
+                        height: 40px;
+                        border-radius: 8px;
+                        background: white;
+                        border: 1px solid #e2e8f0;
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                    "
+                    preload="metadata"
+                    aria-label="Audio playback controls"
+                >
+                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                    Your browser does not support the audio element.
                 </audio>
-                """
-            return md
+            </div>
+            """
+            return html
+            
     except FileNotFoundError:
-        return "<p>Audio file not found</p>"
+        return '<p style="color: #e53e3e; font-style: italic; text-align: center; margin: 8px 0;">Audio file not found</p>'
     except Exception as e:
-        return f"<p>Error loading audio: {str(e)}</p>"
+        return f'<p style="color: #e53e3e; font-style: italic; text-align: center; margin: 8px 0;">Error loading audio</p>'
+
+def create_enhanced_audio_button(content: str, message_key: str):
+    """
+    Create a professional, streamlined audio button with clean UX patterns.
+    
+    Args:
+        content: The text content to convert to speech
+        message_key: Unique key for this message's audio state
+    """
+    # Initialize session state for this message's audio
+    audio_state_key = f"audio_state_{message_key}"
+    if audio_state_key not in st.session_state:
+        st.session_state[audio_state_key] = {
+            "status": "idle",  # idle, loading, ready, error
+            "audio_file": None,
+            "error_message": None,
+            "had_error": False  # Track if there was a previous error
+        }
+    
+    audio_state = st.session_state[audio_state_key]
+    
+    # Create a clean container with consistent spacing
+    with st.container():
+        # Subtle divider for audio section
+        st.markdown("<hr style='margin: 16px 0 8px 0; border: none; border-top: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+        
+        # Audio section header
+        st.markdown(
+            """
+            <div style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 12px;
+                font-size: 14px;
+                color: #4a5568;
+                font-weight: 500;
+            ">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C13.1 2 14 2.9 14 4V12C14 13.1 13.1 14 12 14S10 13.1 10 12V4C10 2.9 10.9 2 12 2M18.5 12C18.5 15.6 15.6 18.5 12 18.5S5.5 15.6 5.5 12H7C7 14.5 9 16.5 11.5 16.5S16 14.5 16 12H18.5M12 20C16.4 20 20 16.4 20 12H22C22 17.5 17.5 22 12 22S2 17.5 2 12H4C4 16.4 7.6 20 12 20Z"/>
+                </svg>
+                Audio
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        
+        # Handle different states with clean, minimal UI
+        if audio_state["status"] == "idle":
+            # Clean, professional generate button
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button(
+                    "🎵 Generate Audio",
+                    key=f"audio_btn_{message_key}",
+                    help="Click to generate audio version of this message",
+                    use_container_width=True
+                ):
+                    # Generate audio immediately with spinner
+                    try:
+                        with st.spinner("Generating audio..."):
+                            audio_file = text_to_speech(content)
+                            if audio_file:
+                                audio_state["audio_file"] = audio_file
+                                audio_state["status"] = "ready"
+                                audio_state["had_error"] = False  # Clear error flag on success
+                            else:
+                                audio_state["status"] = "error"
+                                audio_state["error_message"] = "No content available for voice generation"
+                                audio_state["had_error"] = True  # Set error flag
+                    except Exception as e:
+                        audio_state["status"] = "error"
+                        audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
+                        audio_state["had_error"] = True  # Set error flag
+                    
+                    st.rerun()
+        
+        elif audio_state["status"] == "ready":
+            # Clean audio player with minimal controls
+            audio_html = get_professional_audio_html(audio_state["audio_file"])
+            st.markdown(audio_html, unsafe_allow_html=True)
+            
+            # Only show regenerate if there was a previous error
+            if hasattr(audio_state, "had_error") and audio_state.get("had_error", False):
+                col1, col2, col3 = st.columns([2, 1, 2])
+                with col2:
+                    if st.button(
+                        "🔄 Regenerate Audio",
+                        key=f"regenerate_{message_key}",
+                        help="Generate new audio version",
+                        use_container_width=True
+                    ):
+                        audio_state["status"] = "idle"
+                        audio_state["audio_file"] = None
+                        audio_state["had_error"] = False
+                        # Clean up old file
+                        try:
+                            if audio_state["audio_file"] and os.path.exists(audio_state["audio_file"]):
+                                os.remove(audio_state["audio_file"])
+                        except:
+                            pass
+                        st.rerun()
+        
+        elif audio_state["status"] == "error":
+            # Clean error state
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                st.markdown(
+                    f"""
+                    <div style="
+                        padding: 12px;
+                        background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+                        border: 1px solid #fc8181;
+                        border-radius: 8px;
+                        color: #c53030;
+                        font-size: 14px;
+                        text-align: center;
+                        box-shadow: 0 1px 2px rgba(197, 48, 48, 0.1);
+                    ">
+                        {audio_state['error_message']}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                if st.button(
+                    "Try Again",
+                    key=f"retry_{message_key}",
+                    help="Retry audio generation",
+                    use_container_width=True
+                ):
+                    audio_state["status"] = "idle"
+                    audio_state["error_message"] = None
+                    audio_state["had_error"] = False  # Clear error flag on retry
+                    st.rerun()
+
+def cleanup_audio_files():
+    """Clean up temporary audio files from session state"""
+    for key in list(st.session_state.keys()):
+        if key.startswith("audio_state_"):
+            audio_state = st.session_state[key]
+            if audio_state.get("audio_file") and os.path.exists(audio_state["audio_file"]):
+                try:
+                    os.remove(audio_state["audio_file"])
+                except:
+                    pass
+
+def get_audio_file_size(file_path: str) -> str:
+    """Get human-readable file size for audio files"""
+    try:
+        size_bytes = os.path.getsize(file_path)
+        if size_bytes < 1024:
+            return f"{size_bytes} B"
+        elif size_bytes < 1024 * 1024:
+            return f"{size_bytes / 1024:.1f} KB"
+        else:
+            return f"{size_bytes / (1024 * 1024):.1f} MB"
+    except:
+        return "Unknown size"
 
 def display_reasoning_result(result: ReasoningResult):
     """Display reasoning result with enhanced formatting"""
@@ -428,7 +670,7 @@ def display_reasoning_result(result: ReasoningResult):
 
 def enhanced_chat_interface(doc_processor):
     """Enhanced chat interface with reasoning capabilities"""
-    # Custom CSS for chat layout
+    # Professional CSS with clean audio styling
     st.markdown(
         """
         <style>
@@ -445,48 +687,99 @@ def enhanced_chat_interface(doc_processor):
             
             /* User messages */
             [data-testid="chat-message-user"] {
-                background: #007bff !important;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
                 color: white !important;
-                border-radius: 8px 8px 0 8px !important;
+                border-radius: 12px 12px 4px 12px !important;
                 padding: 0.75rem 1rem !important;
                 margin: 0.25rem 0 !important;
                 margin-left: auto !important;
                 max-width: 80% !important;
+                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2) !important;
             }
             
             /* Assistant messages */
             [data-testid="chat-message-assistant"] {
-                background: #f0f2f6 !important;
-                color: #333 !important;
-                border-radius: 8px 8px 8px 0 !important;
+                background: #ffffff !important;
+                color: #2d3748 !important;
+                border-radius: 12px 12px 12px 4px !important;
                 padding: 0.75rem 1rem !important;
                 margin: 0.25rem 0 !important;
                 margin-right: auto !important;
                 max-width: 80% !important;
-                border: 1px solid #e1e4e8 !important;
+                border: 1px solid #e2e8f0 !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
             }
 
-            /* Voice button styling */
+            /* Professional audio button styling */
             .stButton button {
-                width: auto;
-                margin: 0.5rem 0 0 0;
-                background: #f0f2f6;
-                color: #333;
-                border: 1px solid #e1e4e8;
+                background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%) !important;
+                color: #4a5568 !important;
+                border: 1px solid #e2e8f0 !important;
+                border-radius: 8px !important;
+                padding: 10px 20px !important;
+                font-size: 14px !important;
+                font-weight: 500 !important;
+                transition: all 0.2s ease !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
             }
 
-            .stButton button:hover {
-                background: #e1e4e8;
-                border: 1px solid #d0d7de;
+            .stButton button:hover:not(:disabled) {
+                background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%) !important;
+                border-color: #cbd5e0 !important;
+                transform: translateY(-1px) !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+                color: #2d3748 !important;
+            }
+
+            .stButton button:disabled {
+                background: #f7fafc !important;
+                color: #a0aec0 !important;
+                border-color: #e2e8f0 !important;
+                cursor: not-allowed !important;
+                opacity: 0.6 !important;
+                transform: none !important;
+                box-shadow: none !important;
+            }
+
+            /* Loading spinner animation */
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            .loading-spinner {
+                animation: spin 1s linear infinite;
             }
             
             /* Reasoning mode styling */
             .reasoning-mode {
-                background: #e8f4fd;
-                border: 1px solid #bee5eb;
+                background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+                border: 1px solid #90cdf4;
                 border-radius: 8px;
                 padding: 0.5rem;
                 margin: 0.5rem 0;
+            }
+
+            /* Focus indicators for accessibility */
+            .stButton button:focus {
+                outline: 2px solid #4299e1 !important;
+                outline-offset: 2px !important;
+            }
+
+            /* High contrast mode support */
+            @media (prefers-contrast: high) {
+                .stButton button {
+                    border: 2px solid #000 !important;
+                }
+            }
+
+            /* Reduced motion support */
+            @media (prefers-reduced-motion: reduce) {
+                .stButton button,
+                .loading-spinner {
+                    transition: none !important;
+                    animation: none !important;
+                }
             }
         </style>
         """,
@@ -737,12 +1030,7 @@ def enhanced_chat_interface(doc_processor):
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
             if msg["role"] == "assistant":
-                if st.button("🔊 Play Voice", key=f"audio_{hash(msg['content'])}"):
-                    audio_file = text_to_speech(msg["content"])
-                    if audio_file:
-                        st.markdown(get_audio_html(audio_file), unsafe_allow_html=True)
-                    else:
-                        st.warning("No content available for voice generation")
+                create_enhanced_audio_button(msg["content"], hash(msg['content']))
 
     # Chat input
     if prompt := st.chat_input("Type a message..."):
@@ -823,6 +1111,11 @@ def enhanced_chat_interface(doc_processor):
 # Main Function
 def main():
     """Main application entry point"""
+    
+    # Clean up audio files on app start
+    if "audio_cleanup_done" not in st.session_state:
+        cleanup_audio_files()
+        st.session_state.audio_cleanup_done = True
 
     # Initialize session state for messages
     if "messages" not in st.session_state:
