@@ -206,3 +206,37 @@ Chen, Charlie, et al. "Accelerating Large Language Model Decoding with Speculati
 ---
 
 **Built with ❤️ using modern Python, async/await, and best practices for production-ready AI applications.**
+
+## 🚀 Features
+
+- **Advanced Reasoning Engine**: Multiple reasoning modes including Chain-of-Thought, Multi-Step, and Agent-Based reasoning
+- **Multimodal Chat Interface**: Support for both text and image inputs
+- **Document Processing**: Upload and analyze PDFs, images, and text documents
+- **Session Management**: Save and load chat sessions with persistent storage
+- **Audio Output**: Text-to-speech functionality for assistant responses
+- **Real-time Streaming**: Live response streaming for better user experience
+- **Caching System**: Intelligent response caching for improved performance
+- **Tool Integration**: Built-in tools for date/time queries and document analysis
+- **Responsive Design**: Modern, professional UI with accessibility features
+
+### 🖼️ Image Upload Feature
+
+The chat interface now supports image uploads for visual analysis:
+
+- **Supported Formats**: PNG, JPG, JPEG, GIF, BMP, WebP
+- **File Size Limit**: Up to 10MB per image
+- **Automatic Processing**: Images are automatically resized and optimized
+- **Multimodal Models**: Works best with models like `llava`, `llava:7b`, `llava:13b`
+- **Reasoning Modes**: All reasoning modes support image analysis
+- **Quick Prompts**: Pre-built prompts for common image analysis tasks
+
+**How to use:**
+1. Upload an image using the file uploader in the chat
+2. Type your question about the image
+3. The AI will analyze the image and provide detailed responses
+
+**Example prompts:**
+- "What's in this image?"
+- "Describe this photo in detail"
+- "What objects can you see?"
+- "Is there any text in this image?"

@@ -14,7 +14,7 @@ import json
 import datetime
 import pytz
 import asyncio
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Union
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from dotenv import load_dotenv
@@ -24,6 +24,8 @@ import tempfile
 from gtts import gTTS
 import hashlib
 import base64
+from PIL import Image
+import io
 
 # Import our new reasoning engine
 from reasoning_engine import (
@@ -68,6 +70,16 @@ class ToolResponse:
     success: bool = True
     error: Optional[str] = None
 
+@dataclass
+class Message:
+    role: str  # "user" or "assistant"
+    content: Union[str, List[Dict]]  # Can be text or list of content blocks
+    timestamp: Optional[datetime.datetime] = None
+    
+    def __post_init__(self):
+        if self.timestamp is None:
+            self.timestamp = datetime.datetime.now()
+
 class Tool(ABC):
     @abstractmethod
     def name(self) -> str:
@@ -111,6 +123,37 @@ class OllamaChat:
         
         # Fallback to original sync implementation
         return self._query_sync(payload)
+    
+    def query_with_image(self, text: str, image_data: Dict) -> Optional[str]:
+        """Query the Ollama API with image input"""
+        try:
+            # Check if model supports images (like llava)
+            if not self._is_multimodal_model():
+                return "This model doesn't support image processing. Please use a multimodal model like 'llava'."
+            
+            # Prepare multimodal payload
+            ollama_payload = {
+                "model": self.model_name,
+                "prompt": text,
+                "system": self.system_prompt,
+                "images": [image_data["data"]],  # Base64 encoded image
+                "stream": False
+            }
+            
+            response = requests.post(self.api_url, json=ollama_payload)
+            response.raise_for_status()
+            
+            response_data = response.json()
+            return response_data.get("response", "")
+            
+        except Exception as e:
+            st.error(f"Error processing image query: {e}")
+            return None
+    
+    def _is_multimodal_model(self) -> bool:
+        """Check if the current model supports multimodal inputs"""
+        multimodal_models = ['llava', 'llava:7b', 'llava:13b', 'llava:34b', 'bakllava', 'llava-llama3']
+        return any(model in self.model_name.lower() for model in multimodal_models)
     
     async def _query_async(self, payload: Dict) -> Optional[str]:
         """Async query implementation"""
@@ -625,17 +668,103 @@ def cleanup_audio_files():
                     pass
 
 def get_audio_file_size(file_path: str) -> str:
-    """Get human-readable file size for audio files"""
+    """Get human-readable file size"""
+    size = os.path.getsize(file_path)
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size < 1024.0:
+            return f"{size:.1f} {unit}"
+        size /= 1024.0
+    return f"{size:.1f} TB"
+
+def process_uploaded_image(image_file) -> Dict:
+    """Process uploaded image and return metadata and base64 data"""
     try:
-        size_bytes = os.path.getsize(file_path)
-        if size_bytes < 1024:
-            return f"{size_bytes} B"
-        elif size_bytes < 1024 * 1024:
-            return f"{size_bytes / 1024:.1f} KB"
-        else:
-            return f"{size_bytes / (1024 * 1024):.1f} MB"
-    except:
-        return "Unknown size"
+        # Check file size (max 10MB)
+        image_data = image_file.read()
+        if len(image_data) > 10 * 1024 * 1024:  # 10MB limit
+            raise Exception("Image file is too large. Please use an image smaller than 10MB.")
+        
+        image_file.seek(0)  # Reset file pointer
+        
+        # Open with PIL for processing
+        image = Image.open(io.BytesIO(image_data))
+        
+        # Check if image is valid
+        if image.size[0] == 0 or image.size[1] == 0:
+            raise Exception("Invalid image file.")
+        
+        # Convert to RGB if necessary
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        
+        # Resize if too large (max 1024px on longest side)
+        max_size = 1024
+        if max(image.size) > max_size:
+            ratio = max_size / max(image.size)
+            new_size = tuple(int(dim * ratio) for dim in image.size)
+            image = image.resize(new_size, Image.Resampling.LANCZOS)
+        
+        # Convert to base64
+        buffer = io.BytesIO()
+        image.save(buffer, format='JPEG', quality=85, optimize=True)
+        img_base64 = base64.b64encode(buffer.getvalue()).decode()
+        
+        # Get image info
+        file_size = len(image_data)
+        file_size_str = get_audio_file_size_from_bytes(file_size)
+        
+        return {
+            "type": "image",
+            "data": img_base64,
+            "mime_type": "image/jpeg",
+            "file_name": image_file.name,
+            "file_size": file_size_str,
+            "dimensions": image.size,
+            "original_size": file_size
+        }
+    except Exception as e:
+        raise Exception(f"Error processing image: {str(e)}")
+
+def get_audio_file_size_from_bytes(size_bytes: int) -> str:
+    """Get human-readable file size from bytes"""
+    for unit in ['B', 'KB', 'MB', 'GB']:
+        if size_bytes < 1024.0:
+            return f"{size_bytes:.1f} {unit}"
+        size_bytes /= 1024.0
+    return f"{size_bytes:.1f} TB"
+
+def create_image_message_content(text: str, image_data: Dict) -> List[Dict]:
+    """Create a message content list with both text and image"""
+    content = []
+    
+    if text.strip():
+        content.append({
+            "type": "text",
+            "text": text
+        })
+    
+    content.append({
+        "type": "image",
+        "image_data": image_data
+    })
+    
+    return content
+
+def display_message_content(content: Union[str, List[Dict]]):
+    """Display message content (text and/or images)"""
+    if isinstance(content, str):
+        st.write(content)
+    elif isinstance(content, list):
+        for block in content:
+            if block["type"] == "text":
+                st.write(block["text"])
+            elif block["type"] == "image":
+                image_data = block["image_data"]
+                st.image(
+                    base64.b64decode(image_data["data"]),
+                    caption=f"📷 {image_data['file_name']} ({image_data['file_size']})",
+                    use_column_width=True
+                )
 
 def display_reasoning_result(result: ReasoningResult):
     """Display reasoning result with enhanced formatting"""
@@ -870,6 +999,61 @@ def display_current_session_info():
         </div>
         """, unsafe_allow_html=True)
 
+def analyze_image_with_reasoning(image_data: Dict, text_prompt: str, reasoning_mode: str, ollama_chat, reasoning_chain, multi_step, reasoning_agent):
+    """Analyze image using different reasoning modes"""
+    try:
+        if reasoning_mode == "Chain-of-Thought":
+            # For images, we'll use a simplified chain-of-thought approach
+            prompt_with_context = f"""
+            Analyze this image step by step:
+            1. First, describe what you see in the image
+            2. Then, answer the user's question: "{text_prompt}"
+            
+            Please show your reasoning process.
+            """
+            response = ollama_chat.query_with_image(prompt_with_context, image_data)
+            return response
+            
+        elif reasoning_mode == "Multi-Step":
+            # Multi-step analysis for images
+            steps = [
+                "Describe the visual elements in the image",
+                "Identify any text, objects, or people",
+                "Analyze the context and setting",
+                f"Answer the specific question: {text_prompt}"
+            ]
+            
+            full_response = ""
+            for i, step in enumerate(steps, 1):
+                step_prompt = f"Step {i}: {step}"
+                step_response = ollama_chat.query_with_image(step_prompt, image_data)
+                if step_response:
+                    full_response += f"\n\n**Step {i}:** {step_response}"
+            
+            return full_response.strip()
+            
+        elif reasoning_mode == "Agent-Based":
+            # Agent-based image analysis
+            agent_prompt = f"""
+            As an image analysis agent, please:
+            1. Examine the image carefully
+            2. Identify key elements and details
+            3. Provide a comprehensive analysis
+            4. Answer the user's question: "{text_prompt}"
+            
+            Show your analysis process.
+            """
+            response = ollama_chat.query_with_image(agent_prompt, image_data)
+            return response
+            
+        else:  # Standard mode
+            # Simple image analysis
+            response = ollama_chat.query_with_image(text_prompt, image_data)
+            return response
+            
+    except Exception as e:
+        return f"Error analyzing image: {str(e)}"
+
 def enhanced_chat_interface(doc_processor):
     """Enhanced chat interface with reasoning capabilities"""
     # Professional CSS with clean audio styling
@@ -982,6 +1166,35 @@ def enhanced_chat_interface(doc_processor):
                     transition: none !important;
                     animation: none !important;
                 }
+            }
+            
+            /* Image upload section styling */
+            .image-upload-section {
+                background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+                border: 2px dashed #cbd5e0;
+                border-radius: 12px;
+                padding: 1rem;
+                margin: 1rem 0;
+                transition: all 0.2s ease;
+            }
+            
+            .image-upload-section:hover {
+                border-color: #4299e1;
+                background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+            }
+            
+            /* Image preview styling */
+            .image-preview {
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            
+            /* Chat message with image styling */
+            .chat-message-image {
+                border-radius: 8px;
+                margin: 0.5rem 0;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
         </style>
         """,
@@ -1227,19 +1440,144 @@ def enhanced_chat_interface(doc_processor):
     if "messages" not in st.session_state:
         st.session_state.messages = [{
             "role": "assistant",
-            "content": "👋 Hello! I'm your AI assistant with enhanced reasoning capabilities. Choose a reasoning mode from the sidebar and let's start exploring!"
+            "content": "👋 Hello! I'm your AI assistant with enhanced reasoning capabilities. Choose a reasoning mode from the sidebar and let's start exploring! You can also upload images to discuss them with me!"
         }]
 
     # Display chat messages
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
-            st.write(msg["content"])
+            display_message_content(msg["content"])
             if msg["role"] == "assistant":
-                create_enhanced_audio_button(msg["content"], hash(msg['content']))
+                # Extract text content for audio button
+                text_content = msg["content"]
+                if isinstance(msg["content"], list):
+                    text_blocks = [block["text"] for block in msg["content"] if block["type"] == "text"]
+                    text_content = " ".join(text_blocks)
+                if text_content:
+                    create_enhanced_audio_button(text_content, hash(text_content))
+
+    # Image upload section
+    st.markdown("---")
+    
+    # Add helpful information about image upload
+    with st.expander("📷 Image Upload Help", expanded=False):
+        st.markdown("""
+        **How to use image upload:**
+        1. Upload an image using the file uploader below
+        2. Type your question about the image in the chat input
+        3. The AI will analyze the image and respond to your question
+        
+        **Supported formats:** PNG, JPG, JPEG, GIF, BMP, WebP
+        
+        **Best results with:** Multimodal models like 'llava', 'llava:7b', 'llava:13b'
+        
+        **Example prompts:**
+        - "What's in this image?"
+        - "Describe this photo in detail"
+        - "What objects can you see?"
+        - "Is there any text in this image?"
+        - "What emotions does this image convey?"
+        - "Analyze the composition of this photo"
+        - "What's happening in this scene?"
+        
+        **Tips:**
+        - Images are automatically resized for optimal processing
+        - Clear, high-quality images work best
+        - Be specific in your questions for better results
+        - Use different reasoning modes for different types of analysis
+        """)
+        
+        # Add quick prompt buttons
+        st.markdown("**Quick prompts:**")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("What's in this image?", key="prompt1"):
+                st.session_state.quick_prompt = "What's in this image?"
+        with col2:
+            if st.button("Describe this photo", key="prompt2"):
+                st.session_state.quick_prompt = "Describe this photo in detail"
+        with col3:
+            if st.button("Analyze objects", key="prompt3"):
+                st.session_state.quick_prompt = "What objects can you see in this image?"
+
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        uploaded_image = st.file_uploader(
+            "📷 Upload an image to discuss",
+            type=["png", "jpg", "jpeg", "gif", "bmp", "webp"],
+            help="Upload an image to discuss with the AI. Works best with multimodal models like 'llava'.",
+            key="chat_image_uploader"
+        )
+    
+    with col2:
+        if uploaded_image:
+            st.markdown("**Preview:**")
+            st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
+            
+            # Show image info
+            try:
+                image_data = process_uploaded_image(uploaded_image)
+                st.info(f"📊 **Image Info:**\n- Size: {image_data['file_size']}\n- Dimensions: {image_data['dimensions'][0]}×{image_data['dimensions'][1]}px")
+                
+                # Check if current model supports images
+                if not ollama_chat._is_multimodal_model():
+                    st.warning("""
+                    ⚠️ **Model Recommendation:**
+                    
+                    Your current model doesn't support image processing. 
+                    For best results with images, switch to a multimodal model like:
+                    - **llava** (recommended)
+                    - **llava:7b** (faster)
+                    - **llava:13b** (more accurate)
+                    """)
+                else:
+                    st.success("✅ Current model supports image processing!")
+                    
+            except:
+                pass
 
     # Chat input
+    # Check if there's a quick prompt set
+    if hasattr(st.session_state, 'quick_prompt') and st.session_state.quick_prompt:
+        # Show the quick prompt as a button or info
+        st.info(f"💡 Quick prompt ready: **{st.session_state.quick_prompt}**")
+        if st.button("Use this prompt", key="use_quick_prompt"):
+            st.session_state.pending_prompt = st.session_state.quick_prompt
+            st.session_state.quick_prompt = ""
+            st.rerun()
+    
     if prompt := st.chat_input("Type a message..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Check if there's a pending prompt from quick prompt
+        if hasattr(st.session_state, 'pending_prompt') and st.session_state.pending_prompt:
+            prompt = st.session_state.pending_prompt
+            st.session_state.pending_prompt = ""
+        
+        # Handle image + text message
+        if uploaded_image:
+            try:
+                # Process the uploaded image
+                image_data = process_uploaded_image(uploaded_image)
+                
+                # Create message content with both text and image
+                message_content = create_image_message_content(prompt, image_data)
+                
+                # Add user message to chat
+                st.session_state.messages.append({
+                    "role": "user", 
+                    "content": message_content
+                })
+                
+                # Clear the uploaded image
+                st.session_state.chat_image_uploader = None
+                
+            except Exception as e:
+                st.error(f"Error processing image: {str(e)}")
+                # Fall back to text-only message
+                st.session_state.messages.append({"role": "user", "content": prompt})
+        else:
+            # Text-only message
+            st.session_state.messages.append({"role": "user", "content": prompt})
         
         # Auto-save session if enabled and we have a current session
         if "current_session" in st.session_state:
@@ -1247,73 +1585,103 @@ def enhanced_chat_interface(doc_processor):
         
         # Process response based on reasoning mode
         with st.chat_message("assistant"):
-            # First check if it's a tool-based query
-            tool = tool_registry.get_tool(prompt)
-            if tool:
-                with st.spinner(f"Using {tool.name()}..."):
-                    response = tool.execute(prompt)
-                    if response.success:
-                        st.write(response.content)
-                        st.session_state.messages.append({"role": "assistant", "content": response.content})
+            # Check if this is an image message
+            last_message = st.session_state.messages[-1]
+            has_image = isinstance(last_message["content"], list) and any(
+                block["type"] == "image" for block in last_message["content"]
+            )
+            
+            if has_image:
+                # Handle image + text query
+                image_block = next(block for block in last_message["content"] if block["type"] == "image")
+                text_blocks = [block["text"] for block in last_message["content"] if block["type"] == "text"]
+                text_prompt = " ".join(text_blocks) if text_blocks else "What's in this image?"
+                
+                # Show image being analyzed
+                st.markdown("**📷 Analyzing this image:**")
+                st.image(
+                    base64.b64decode(image_block["image_data"]["data"]),
+                    caption=f"Analyzing: {image_block['image_data']['file_name']}",
+                    use_column_width=True
+                )
+                
+                with st.spinner(f"🔍 Analyzing image with {reasoning_mode} reasoning..."):
+                    response = analyze_image_with_reasoning(image_block["image_data"], text_prompt, reasoning_mode, ollama_chat, reasoning_chain, multi_step, reasoning_agent)
+                    if response:
+                        st.markdown("### 📝 Analysis Result")
+                        st.write(response)
+                        st.session_state.messages.append({"role": "assistant", "content": response})
                     else:
-                        st.error(response.content)
+                        st.error("Failed to analyze image. Please try again or check if your model supports image processing.")
             else:
-                # Use reasoning modes with separated thought process and final output
-                with st.spinner(f"Processing with {reasoning_mode} reasoning..."):
-                    try:
-                        if reasoning_mode == "Chain-of-Thought":
-                            with st.expander("💭 Thought Process", expanded=True):
-                                result = reasoning_chain.execute_reasoning(prompt)
-                                # Stream the thought process
-                                thought_placeholder = st.empty()
-                                for step in result.reasoning_steps:
-                                    thought_placeholder.markdown(f"- {step}")
-                                    time.sleep(0.5)  # Simulate streaming for smooth UX
-                            
-                            # Show final answer separately
-                            st.markdown("### 📝 Final Answer")
-                            st.markdown(result.content)
-                            st.session_state.messages.append({"role": "assistant", "content": result.content})
-                            
-                        elif reasoning_mode == "Multi-Step":
-                            with st.expander("🔍 Analysis & Planning", expanded=True):
-                                result = multi_step.step_by_step_reasoning(prompt)
-                                # Stream the analysis phase
-                                analysis_placeholder = st.empty()
-                                for step in result.reasoning_steps:
-                                    analysis_placeholder.markdown(f"- {step}")
-                                    time.sleep(0.5)
-                            
-                            st.markdown("### 📝 Final Answer")
-                            st.markdown(result.content)
-                            st.session_state.messages.append({"role": "assistant", "content": result.content})
-                            
-                        elif reasoning_mode == "Agent-Based":
-                            with st.expander("🤖 Agent Actions", expanded=True):
-                                result = reasoning_agent.run(prompt)
-                                # Stream agent actions
-                                action_placeholder = st.empty()
-                                for step in result.reasoning_steps:
-                                    action_placeholder.markdown(f"- {step}")
-                                    time.sleep(0.5)
-                            
-                            st.markdown("### 📝 Final Answer")
-                            st.markdown(result.content)
-                            st.session_state.messages.append({"role": "assistant", "content": result.content})
-                            
-                        else:  # Standard mode
-                            if response := ollama_chat.query({"inputs": prompt}):
-                                st.markdown(response)
-                                st.session_state.messages.append({"role": "assistant", "content": response})
-                            else:
-                                st.error("Failed to get response")
+                # Handle text-only query (existing logic)
+                # First check if it's a tool-based query
+                tool = tool_registry.get_tool(prompt)
+                if tool:
+                    with st.spinner(f"Using {tool.name()}..."):
+                        response = tool.execute(prompt)
+                        if response.success:
+                            st.write(response.content)
+                            st.session_state.messages.append({"role": "assistant", "content": response.content})
+                        else:
+                            st.error(response.content)
+                else:
+                    # Use reasoning modes with separated thought process and final output
+                    with st.spinner(f"Processing with {reasoning_mode} reasoning..."):
+                        try:
+                            if reasoning_mode == "Chain-of-Thought":
+                                with st.expander("💭 Thought Process", expanded=True):
+                                    result = reasoning_chain.execute_reasoning(prompt)
+                                    # Stream the thought process
+                                    thought_placeholder = st.empty()
+                                    for step in result.reasoning_steps:
+                                        thought_placeholder.markdown(f"- {step}")
+                                        time.sleep(0.5)  # Simulate streaming for smooth UX
                                 
-                    except Exception as e:
-                        st.error(f"Error in {reasoning_mode} mode: {str(e)}")
-                        # Fallback to standard mode
-                        if response := ollama_chat.query({"inputs": prompt}):
-                            st.write(response)
-                            st.session_state.messages.append({"role": "assistant", "content": response})
+                                # Show final answer separately
+                                st.markdown("### 📝 Final Answer")
+                                st.markdown(result.content)
+                                st.session_state.messages.append({"role": "assistant", "content": result.content})
+                                
+                            elif reasoning_mode == "Multi-Step":
+                                with st.expander("🔍 Analysis & Planning", expanded=True):
+                                    result = multi_step.step_by_step_reasoning(prompt)
+                                    # Stream the analysis phase
+                                    analysis_placeholder = st.empty()
+                                    for step in result.reasoning_steps:
+                                        analysis_placeholder.markdown(f"- {step}")
+                                        time.sleep(0.5)
+                                
+                                st.markdown("### 📝 Final Answer")
+                                st.markdown(result.content)
+                                st.session_state.messages.append({"role": "assistant", "content": result.content})
+                                
+                            elif reasoning_mode == "Agent-Based":
+                                with st.expander("🤖 Agent Actions", expanded=True):
+                                    result = reasoning_agent.run(prompt)
+                                    # Stream agent actions
+                                    action_placeholder = st.empty()
+                                    for step in result.reasoning_steps:
+                                        action_placeholder.markdown(f"- {step}")
+                                        time.sleep(0.5)
+                                
+                                st.markdown("### 📝 Final Answer")
+                                st.markdown(result.content)
+                                st.session_state.messages.append({"role": "assistant", "content": result.content})
+                                
+                            else:  # Standard mode
+                                if response := ollama_chat.query({"inputs": prompt}):
+                                    st.markdown(response)
+                                    st.session_state.messages.append({"role": "assistant", "content": response})
+                                else:
+                                    st.error("Failed to get response")
+                                    
+                        except Exception as e:
+                            st.error(f"Error in {reasoning_mode} mode: {str(e)}")
+                            # Fallback to standard mode
+                            if response := ollama_chat.query({"inputs": prompt}):
+                                st.write(response)
+                                st.session_state.messages.append({"role": "assistant", "content": response})
         
         # Auto-save session after response
         if "current_session" in st.session_state:
