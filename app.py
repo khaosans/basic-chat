@@ -371,30 +371,62 @@ def text_to_speech(text):
         tts.save(audio_file)
     return audio_file
 
-def get_audio_html(file_path):
-    """Generate HTML for audio player with controls"""
-    # Handle None file_path
+def get_professional_audio_html(file_path: str) -> str:
+    """
+    Generate professional, minimal audio player HTML.
+    
+    Args:
+        file_path: Path to the audio file
+        
+    Returns:
+        HTML string for the audio player
+    """
     if not file_path:
-        return "<p>No audio available</p>"
+        return '<p style="color: #4a5568; font-style: italic; text-align: center; margin: 8px 0;">No audio available</p>'
     
     try:
         with open(file_path, "rb") as f:
             data = f.read()
             b64 = base64.b64encode(data).decode()
-            md = f"""
-                <audio controls style="width: 100%; margin-top: 10px;">
-                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+            
+            # Professional, minimal audio player
+            html = f"""
+            <div style="
+                background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 16px;
+                margin: 8px 0;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            ">
+                <audio 
+                    controls 
+                    style="
+                        width: 100%;
+                        height: 40px;
+                        border-radius: 8px;
+                        background: white;
+                        border: 1px solid #e2e8f0;
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                    "
+                    preload="metadata"
+                    aria-label="Audio playback controls"
+                >
+                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                    Your browser does not support the audio element.
                 </audio>
-                """
-            return md
+            </div>
+            """
+            return html
+            
     except FileNotFoundError:
-        return "<p>Audio file not found</p>"
+        return '<p style="color: #e53e3e; font-style: italic; text-align: center; margin: 8px 0;">Audio file not found</p>'
     except Exception as e:
-        return f"<p>Error loading audio: {str(e)}</p>"
+        return f'<p style="color: #e53e3e; font-style: italic; text-align: center; margin: 8px 0;">Error loading audio</p>'
 
 def create_enhanced_audio_button(content: str, message_key: str):
     """
-    Create an enhanced audio button with modern UI patterns and accessibility features.
+    Create a professional, streamlined audio button with clean UX patterns.
     
     Args:
         content: The text content to convert to speech
@@ -411,165 +443,149 @@ def create_enhanced_audio_button(content: str, message_key: str):
     
     audio_state = st.session_state[audio_state_key]
     
-    # Create container for the audio component
-    audio_container = st.container()
-    
-    with audio_container:
-        # Add ARIA live region for screen readers
+    # Create a clean container with consistent spacing
+    with st.container():
+        # Subtle divider for audio section
+        st.markdown("<hr style='margin: 16px 0 8px 0; border: none; border-top: 1px solid #e2e8f0;'>", unsafe_allow_html=True)
+        
+        # Audio section header
         st.markdown(
-            f'<div id="audio-status-{message_key}" aria-live="polite" aria-atomic="true" style="display: none;"></div>',
+            """
+            <div style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 12px;
+                font-size: 14px;
+                color: #4a5568;
+                font-weight: 500;
+            ">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C13.1 2 14 2.9 14 4V12C14 13.1 13.1 14 12 14S10 13.1 10 12V4C10 2.9 10.9 2 12 2M18.5 12C18.5 15.6 15.6 18.5 12 18.5S5.5 15.6 5.5 12H7C7 14.5 9 16.5 11.5 16.5S16 14.5 16 12H18.5M12 20C16.4 20 20 16.4 20 12H22C22 17.5 17.5 22 12 22S2 17.5 2 12H4C4 16.4 7.6 20 12 20Z"/>
+                </svg>
+                Audio
+            </div>
+            """,
             unsafe_allow_html=True
         )
         
-        # Handle button click
-        if st.button(
-            "🎵 Generate Audio" if audio_state["status"] == "idle" else "⏳ Generating...",
-            key=f"audio_btn_{message_key}",
-            disabled=audio_state["status"] == "loading",
-            help="Generate audio version of this message" if audio_state["status"] == "idle" else "Audio generation in progress..."
-        ):
-            # Update state to loading
-            audio_state["status"] = "loading"
-            audio_state["error_message"] = None
-            
-            # Update ARIA live region
-            st.markdown(
-                f'<script>document.getElementById("audio-status-{message_key}").textContent = "Generating audio...";</script>',
-                unsafe_allow_html=True
-            )
-            
-            # Generate audio
-            try:
-                audio_file = text_to_speech(content)
-                if audio_file:
-                    audio_state["audio_file"] = audio_file
-                    audio_state["status"] = "ready"
-                    # Update ARIA live region
-                    st.markdown(
-                        f'<script>document.getElementById("audio-status-{message_key}").textContent = "Audio ready for playback";</script>',
-                        unsafe_allow_html=True
-                    )
-                else:
-                    audio_state["status"] = "error"
-                    audio_state["error_message"] = "No content available for voice generation"
-                    # Update ARIA live region
-                    st.markdown(
-                        f'<script>document.getElementById("audio-status-{message_key}").textContent = "Error: No content available";</script>',
-                        unsafe_allow_html=True
-                    )
-            except Exception as e:
-                audio_state["status"] = "error"
-                audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
-                # Update ARIA live region
+        # Handle different states with clean, minimal UI
+        if audio_state["status"] == "idle":
+            # Clean, professional generate button
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                if st.button(
+                    "Generate Audio",
+                    key=f"audio_btn_{message_key}",
+                    help="Convert this message to speech",
+                    use_container_width=True
+                ):
+                    audio_state["status"] = "loading"
+                    audio_state["error_message"] = None
+                    
+                    # Generate audio
+                    try:
+                        audio_file = text_to_speech(content)
+                        if audio_file:
+                            audio_state["audio_file"] = audio_file
+                            audio_state["status"] = "ready"
+                        else:
+                            audio_state["status"] = "error"
+                            audio_state["error_message"] = "No content available for voice generation"
+                    except Exception as e:
+                        audio_state["status"] = "error"
+                        audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
+                    
+                    st.rerun()
+        
+        elif audio_state["status"] == "loading":
+            # Minimal loading state
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
                 st.markdown(
-                    f'<script>document.getElementById("audio-status-{message_key}").textContent = "Error: Failed to generate audio";</script>',
+                    """
+                    <div style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        padding: 12px;
+                        background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+                        border: 1px solid #e2e8f0;
+                        border-radius: 8px;
+                        color: #4a5568;
+                        font-size: 14px;
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                    ">
+                        <div class="loading-spinner" style="
+                            width: 16px;
+                            height: 16px;
+                            border: 2px solid #e2e8f0;
+                            border-top: 2px solid #4299e1;
+                            border-radius: 50%;
+                            animation: spin 1s linear infinite;
+                        "></div>
+                        Generating audio...
+                    </div>
+                    """,
                     unsafe_allow_html=True
                 )
-            
-            st.rerun()
         
-        # Display current state
-        if audio_state["status"] == "loading":
-            # Show loading spinner with progress indicator
-            col1, col2 = st.columns([1, 4])
-            with col1:
-                st.markdown("⏳")
-            with col2:
-                st.markdown("**Generating audio...**")
-                # Add a subtle progress bar
-                st.progress(0, text="Processing text-to-speech")
-                
         elif audio_state["status"] == "ready":
-            # Show audio player with controls
-            st.markdown("✅ **Audio Ready**")
-            
-            # Create audio player with enhanced controls
-            audio_html = get_enhanced_audio_html(audio_state["audio_file"])
+            # Clean audio player with minimal controls
+            audio_html = get_professional_audio_html(audio_state["audio_file"])
             st.markdown(audio_html, unsafe_allow_html=True)
             
-            # Add regenerate button
-            if st.button("🔄 Regenerate", key=f"regenerate_{message_key}", help="Generate new audio"):
-                audio_state["status"] = "idle"
-                audio_state["audio_file"] = None
-                # Clean up old file
-                try:
-                    if audio_state["audio_file"] and os.path.exists(audio_state["audio_file"]):
-                        os.remove(audio_state["audio_file"])
-                except:
-                    pass
-                st.rerun()
-                
-        elif audio_state["status"] == "error":
-            # Show error state with retry option
-            st.error(f"❌ {audio_state['error_message']}")
-            
-            # Retry button
-            if st.button("🔄 Try Again", key=f"retry_{message_key}", help="Retry audio generation"):
-                audio_state["status"] = "idle"
-                audio_state["error_message"] = None
-                st.rerun()
-
-def get_enhanced_audio_html(file_path: str) -> str:
-    """
-    Generate enhanced HTML for audio player with modern controls and accessibility.
-    
-    Args:
-        file_path: Path to the audio file
+            # Subtle regenerate option
+            col1, col2, col3 = st.columns([2, 1, 2])
+            with col2:
+                if st.button(
+                    "Regenerate",
+                    key=f"regenerate_{message_key}",
+                    help="Generate new audio",
+                    use_container_width=True
+                ):
+                    audio_state["status"] = "idle"
+                    audio_state["audio_file"] = None
+                    # Clean up old file
+                    try:
+                        if audio_state["audio_file"] and os.path.exists(audio_state["audio_file"]):
+                            os.remove(audio_state["audio_file"])
+                    except:
+                        pass
+                    st.rerun()
         
-    Returns:
-        HTML string for the audio player
-    """
-    if not file_path:
-        return '<p style="color: #666; font-style: italic;">No audio available</p>'
-    
-    try:
-        with open(file_path, "rb") as f:
-            data = f.read()
-            b64 = base64.b64encode(data).decode()
-            
-            # Enhanced audio player with modern styling and accessibility
-            html = f"""
-            <div class="audio-player-container" style="
-                background: #f8f9fa;
-                border: 1px solid #e9ecef;
-                border-radius: 8px;
-                padding: 12px;
-                margin: 8px 0;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            ">
-                <audio 
-                    controls 
-                    style="
-                        width: 100%;
-                        height: 40px;
-                        border-radius: 6px;
-                        background: white;
-                    "
-                    preload="metadata"
-                    aria-label="Audio playback controls"
-                >
-                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-                    Your browser does not support the audio element.
-                </audio>
-                <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    margin-top: 8px;
-                    font-size: 12px;
-                    color: #6c757d;
-                ">
-                    <span>🎵 Audio generated successfully</span>
-                    <span>📱 Compatible with all devices</span>
-                </div>
-            </div>
-            """
-            return html
-            
-    except FileNotFoundError:
-        return '<p style="color: #dc3545; font-style: italic;">⚠️ Audio file not found</p>'
-    except Exception as e:
-        return f'<p style="color: #dc3545; font-style: italic;">⚠️ Error loading audio: {str(e)}</p>'
+        elif audio_state["status"] == "error":
+            # Clean error state
+            col1, col2, col3 = st.columns([1, 2, 1])
+            with col2:
+                st.markdown(
+                    f"""
+                    <div style="
+                        padding: 12px;
+                        background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+                        border: 1px solid #fc8181;
+                        border-radius: 8px;
+                        color: #c53030;
+                        font-size: 14px;
+                        text-align: center;
+                        box-shadow: 0 1px 2px rgba(197, 48, 48, 0.1);
+                    ">
+                        {audio_state['error_message']}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+                
+                if st.button(
+                    "Try Again",
+                    key=f"retry_{message_key}",
+                    help="Retry audio generation",
+                    use_container_width=True
+                ):
+                    audio_state["status"] = "idle"
+                    audio_state["error_message"] = None
+                    st.rerun()
 
 def cleanup_audio_files():
     """Clean up temporary audio files from session state"""
@@ -631,7 +647,7 @@ def display_reasoning_result(result: ReasoningResult):
 
 def enhanced_chat_interface(doc_processor):
     """Enhanced chat interface with reasoning capabilities"""
-    # Enhanced CSS for chat layout and audio components
+    # Professional CSS with clean audio styling
     st.markdown(
         """
         <style>
@@ -648,123 +664,98 @@ def enhanced_chat_interface(doc_processor):
             
             /* User messages */
             [data-testid="chat-message-user"] {
-                background: #007bff !important;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
                 color: white !important;
-                border-radius: 8px 8px 0 8px !important;
+                border-radius: 12px 12px 4px 12px !important;
                 padding: 0.75rem 1rem !important;
                 margin: 0.25rem 0 !important;
                 margin-left: auto !important;
                 max-width: 80% !important;
+                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2) !important;
             }
             
             /* Assistant messages */
             [data-testid="chat-message-assistant"] {
-                background: #f0f2f6 !important;
-                color: #333 !important;
-                border-radius: 8px 8px 8px 0 !important;
+                background: #ffffff !important;
+                color: #2d3748 !important;
+                border-radius: 12px 12px 12px 4px !important;
                 padding: 0.75rem 1rem !important;
                 margin: 0.25rem 0 !important;
                 margin-right: auto !important;
                 max-width: 80% !important;
-                border: 1px solid #e1e4e8 !important;
+                border: 1px solid #e2e8f0 !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
             }
 
-            /* Enhanced audio button styling */
+            /* Professional audio button styling */
             .stButton button {
-                width: auto;
-                margin: 0.5rem 0 0 0;
-                background: #f0f2f6;
-                color: #333;
-                border: 1px solid #e1e4e8;
-                border-radius: 6px;
-                padding: 8px 16px;
-                font-size: 14px;
-                transition: all 0.2s ease;
+                background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%) !important;
+                color: #4a5568 !important;
+                border: 1px solid #e2e8f0 !important;
+                border-radius: 8px !important;
+                padding: 10px 20px !important;
+                font-size: 14px !important;
+                font-weight: 500 !important;
+                transition: all 0.2s ease !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
             }
 
             .stButton button:hover:not(:disabled) {
-                background: #e1e4e8;
-                border: 1px solid #d0d7de;
-                transform: translateY(-1px);
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%) !important;
+                border-color: #cbd5e0 !important;
+                transform: translateY(-1px) !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+                color: #2d3748 !important;
             }
 
             .stButton button:disabled {
-                background: #f8f9fa;
-                color: #6c757d;
-                border: 1px solid #dee2e6;
-                cursor: not-allowed;
-                opacity: 0.6;
+                background: #f7fafc !important;
+                color: #a0aec0 !important;
+                border-color: #e2e8f0 !important;
+                cursor: not-allowed !important;
+                opacity: 0.6 !important;
+                transform: none !important;
+                box-shadow: none !important;
             }
 
-            /* Audio player container styling */
-            .audio-player-container {
-                transition: all 0.3s ease;
+            /* Loading spinner animation */
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
             }
 
-            .audio-player-container:hover {
-                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-            }
-
-            /* Loading animation */
-            @keyframes pulse {
-                0% { opacity: 1; }
-                50% { opacity: 0.5; }
-                100% { opacity: 1; }
-            }
-
-            .loading-pulse {
-                animation: pulse 1.5s ease-in-out infinite;
+            .loading-spinner {
+                animation: spin 1s linear infinite;
             }
             
             /* Reasoning mode styling */
             .reasoning-mode {
-                background: #e8f4fd;
-                border: 1px solid #bee5eb;
+                background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+                border: 1px solid #90cdf4;
                 border-radius: 8px;
                 padding: 0.5rem;
                 margin: 0.5rem 0;
             }
 
-            /* Accessibility improvements */
-            .sr-only {
-                position: absolute;
-                width: 1px;
-                height: 1px;
-                padding: 0;
-                margin: -1px;
-                overflow: hidden;
-                clip: rect(0, 0, 0, 0);
-                white-space: nowrap;
-                border: 0;
-            }
-
-            /* Focus indicators for keyboard navigation */
+            /* Focus indicators for accessibility */
             .stButton button:focus {
-                outline: 2px solid #007bff;
-                outline-offset: 2px;
+                outline: 2px solid #4299e1 !important;
+                outline-offset: 2px !important;
             }
 
             /* High contrast mode support */
             @media (prefers-contrast: high) {
                 .stButton button {
-                    border: 2px solid #000;
-                }
-                
-                .audio-player-container {
-                    border: 2px solid #000;
+                    border: 2px solid #000 !important;
                 }
             }
 
             /* Reduced motion support */
             @media (prefers-reduced-motion: reduce) {
                 .stButton button,
-                .audio-player-container {
-                    transition: none;
-                }
-                
-                .loading-pulse {
-                    animation: none;
+                .loading-spinner {
+                    transition: none !important;
+                    animation: none !important;
                 }
             }
         </style>
