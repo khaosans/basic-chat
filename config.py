@@ -10,13 +10,42 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv(".env.local")
 
+# --- Model Configuration ---
+# Defines the specific Ollama models to be used for different tasks.
+
+# A general-purpose model for standard chat interactions.
+# Default: "mistral"
+CHAT_MODEL = os.environ.get("CHAT_MODEL", "mistral:latest")
+
+# A model with strong reasoning capabilities for complex tasks and agent-based logic.
+# Default: "mistral"
+REASONING_MODEL = os.environ.get("REASONING_MODEL", "mistral:latest")
+
+# A specialized model for generating text embeddings for vector storage and retrieval.
+# Default: "nomic-embed-text"
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text:latest")
+
+# A vision-capable model for analyzing and understanding image content.
+# Default: "llava"
+VISION_MODEL = os.environ.get("VISION_MODEL", "llava:latest")
+
+
+# --- API Configuration ---
+# The base URL for the Ollama API.
+OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434")
+
+
+# --- System Settings ---
+# The timezone for date and time operations.
+TIMEZONE = os.environ.get("TIMEZONE", "UTC")
+
 @dataclass
 class AppConfig:
     """Application configuration with environment variable support"""
     
     # Ollama Configuration
-    ollama_url: str = os.getenv("OLLAMA_API_URL", "http://localhost:11434/api")
-    ollama_model: str = os.getenv("OLLAMA_MODEL", "mistral")
+    ollama_url: str = OLLAMA_API_URL
+    ollama_model: str = CHAT_MODEL
     
     # LLM Parameters
     max_tokens: int = int(os.getenv("MAX_TOKENS", "2048"))
@@ -45,7 +74,7 @@ class AppConfig:
     
     # Vector Store Configuration
     vectorstore_persist_directory: str = os.getenv("VECTORSTORE_DIR", "./chroma_db")
-    embedding_model: str = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
+    embedding_model: str = EMBEDDING_MODEL
     
     @classmethod
     def from_env(cls) -> "AppConfig":

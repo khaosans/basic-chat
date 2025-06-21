@@ -1,270 +1,334 @@
 """
-Caching utilities for BasicChat application
+Caching utilities for the application
+Provides in-memory and persistent caching capabilities
 """
 
-import hashlib
 import json
+import os
+import pickle
 import time
-from typing import Optional, Any, Dict
-from abc import ABC, abstractmethod
+from typing import Any, Dict, Optional, Union, List
+from datetime import datetime, timedelta
+import hashlib
+from cachetools import TTLCache, LRUCache
 import logging
-
-from cachetools import TTLCache
-from config import config
 
 logger = logging.getLogger(__name__)
 
-class CacheInterface(ABC):
-    """Abstract base class for cache implementations"""
+class CacheManager:
+    """Manages caching operations with both memory and disk storage"""
     
-    @abstractmethod
-    def get(self, key: str) -> Optional[str]:
-        """Get value from cache"""
-        pass
-    
-    @abstractmethod
-    def set(self, key: str, value: str, ttl: Optional[int] = None) -> bool:
-        """Set value in cache"""
-        pass
-    
-    @abstractmethod
-    def delete(self, key: str) -> bool:
-        """Delete value from cache"""
-        pass
-    
-    @abstractmethod
-    def clear(self) -> bool:
-        """Clear all cache entries"""
-        pass
-
-class MemoryCache(CacheInterface):
-    """In-memory cache implementation using TTLCache"""
-    
-    def __init__(self, ttl: int = 3600, maxsize: int = 1000):
-        self.cache = TTLCache(maxsize=maxsize, ttl=ttl)
-        self.ttl = ttl
-    
-    def get(self, key: str) -> Optional[str]:
-        """Get value from memory cache"""
-        try:
-            return self.cache.get(key)
-        except Exception as e:
-            logger.warning(f"Error getting from memory cache: {e}")
-            return None
-    
-    def set(self, key: str, value: str, ttl: Optional[int] = None) -> bool:
-        """Set value in memory cache"""
-        try:
-            self.cache[key] = value
-            return True
-        except Exception as e:
-            logger.warning(f"Error setting in memory cache: {e}")
-            return False
-    
-    def delete(self, key: str) -> bool:
-        """Delete value from memory cache"""
-        try:
-            if key in self.cache:
-                del self.cache[key]
-            return True
-        except Exception as e:
-            logger.warning(f"Error deleting from memory cache: {e}")
-            return False
-    
-    def clear(self) -> bool:
-        """Clear all cache entries"""
-        try:
-            self.cache.clear()
-            return True
-        except Exception as e:
-            logger.warning(f"Error clearing memory cache: {e}")
-            return False
-
-class RedisCache(CacheInterface):
-    """Redis cache implementation"""
-    
-    def __init__(self, redis_url: str):
-        try:
-            import redis
-            self.redis_client = redis.from_url(redis_url)
-            self.redis_client.ping()  # Test connection
-            self.connected = True
-        except Exception as e:
-            logger.warning(f"Failed to connect to Redis: {e}")
-            self.connected = False
-    
-    def get(self, key: str) -> Optional[str]:
-        """Get value from Redis cache"""
-        if not self.connected:
-            return None
+    def __init__(self, cache_dir: str = ".cache", max_memory_size: int = 100, ttl: int = 3600):
+        """
+        Initialize cache manager
         
-        try:
-            value = self.redis_client.get(key)
-            return value.decode('utf-8') if value else None
-        except Exception as e:
-            logger.warning(f"Error getting from Redis cache: {e}")
-            return None
-    
-    def set(self, key: str, value: str, ttl: Optional[int] = None) -> bool:
-        """Set value in Redis cache"""
-        if not self.connected:
-            return False
+        Args:
+            cache_dir: Directory for persistent cache files
+            max_memory_size: Maximum number of items in memory cache
+            ttl: Time to live for cache items in seconds
+        """
+        self.cache_dir = cache_dir
+        self.memory_cache: TTLCache[str, Any] = TTLCache(maxsize=max_memory_size, ttl=ttl)
+        self.lru_cache: LRUCache[str, Any] = LRUCache(maxsize=max_memory_size)
         
-        try:
-            self.redis_client.set(key, value, ex=ttl or config.cache_ttl)
-            return True
-        except Exception as e:
-            logger.warning(f"Error setting in Redis cache: {e}")
-            return False
-    
-    def delete(self, key: str) -> bool:
-        """Delete value from Redis cache"""
-        if not self.connected:
-            return False
+        # Ensure cache directory exists
+        os.makedirs(cache_dir, exist_ok=True)
         
-        try:
-            self.redis_client.delete(key)
-            return True
-        except Exception as e:
-            logger.warning(f"Error deleting from Redis cache: {e}")
-            return False
-    
-    def clear(self) -> bool:
-        """Clear all cache entries"""
-        if not self.connected:
-            return False
-        
-        try:
-            self.redis_client.flushdb()
-            return True
-        except Exception as e:
-            logger.warning(f"Error clearing Redis cache: {e}")
-            return False
-
-class ResponseCache:
-    """Main cache manager with fallback support"""
-    
-    def __init__(self):
-        self.primary_cache: Optional[CacheInterface] = None
-        self.fallback_cache: Optional[CacheInterface] = None
-        self._initialize_caches()
-    
-    def _initialize_caches(self):
-        """Initialize primary and fallback caches"""
-        # Try Redis first if enabled
-        if config.redis_enabled and config.redis_url:
-            try:
-                self.primary_cache = RedisCache(config.redis_url)
-                if self.primary_cache.connected:
-                    logger.info("Using Redis as primary cache")
-                else:
-                    self.primary_cache = None
-            except Exception as e:
-                logger.warning(f"Failed to initialize Redis cache: {e}")
-                self.primary_cache = None
-        
-        # Always initialize memory cache as fallback
-        self.fallback_cache = MemoryCache(
-            ttl=config.cache_ttl,
-            maxsize=config.cache_maxsize
-        )
-        
-        # If no primary cache, use memory cache as primary
-        if not self.primary_cache:
-            self.primary_cache = self.fallback_cache
-            logger.info("Using memory cache as primary cache")
-    
-    def get_cache_key(self, query: str, model: str, **kwargs) -> str:
-        """Generate cache key from query and parameters"""
-        # Create a hash of the query and parameters
-        key_data = {
-            "query": query,
-            "model": model,
-            **kwargs
+        # Cache statistics
+        self.stats = {
+            'hits': 0,
+            'misses': 0,
+            'sets': 0,
+            'deletes': 0
         }
-        key_string = json.dumps(key_data, sort_keys=True)
-        return hashlib.md5(key_string.encode()).hexdigest()
+    
+    def _get_cache_key(self, key: str) -> str:
+        """Generate a cache key with hash for file naming"""
+        return hashlib.md5(key.encode()).hexdigest()
+    
+    def _get_cache_path(self, key: str) -> str:
+        """Get the full path for a cache file"""
+        cache_key = self._get_cache_key(key)
+        return os.path.join(self.cache_dir, f"{cache_key}.cache")
     
     def get(self, key: str) -> Optional[str]:
-        """Get value from cache with fallback"""
-        if not config.enable_caching:
-            return None
+        """
+        Get a value from cache
         
-        # Try primary cache first
-        if self.primary_cache:
-            value = self.primary_cache.get(key)
-            if value:
-                logger.debug(f"Cache hit on primary cache for key: {key[:8]}...")
-                return value
+        Args:
+            key: Cache key
+            
+        Returns:
+            Cached value or None if not found
+        """
+        # Try memory cache first
+        if key in self.memory_cache:
+            self.stats['hits'] += 1
+            return self.memory_cache[key]
         
-        # Try fallback cache if different from primary
-        if self.fallback_cache and self.fallback_cache != self.primary_cache:
-            value = self.fallback_cache.get(key)
-            if value:
-                logger.debug(f"Cache hit on fallback cache for key: {key[:8]}...")
-                return value
+        # Try LRU cache
+        if key in self.lru_cache:
+            self.stats['hits'] += 1
+            return self.lru_cache[key]
         
-        logger.debug(f"Cache miss for key: {key[:8]}...")
+        # Try disk cache
+        cache_path = self._get_cache_path(key)
+        if os.path.exists(cache_path):
+            try:
+                with open(cache_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    
+                # Check if expired
+                if 'expires' in data and data['expires'] < time.time():
+                    os.remove(cache_path)
+                    self.stats['misses'] += 1
+                    return None
+                
+                # Move to memory cache
+                self.memory_cache[key] = data['value']
+                self.stats['hits'] += 1
+                return data['value']
+                
+            except (json.JSONDecodeError, IOError) as e:
+                logger.warning(f"Error reading cache file {cache_path}: {e}")
+                # Remove corrupted cache file
+                try:
+                    os.remove(cache_path)
+                except OSError:
+                    pass
+        
+        self.stats['misses'] += 1
         return None
     
-    def set(self, key: str, value: str, ttl: Optional[int] = None) -> bool:
-        """Set value in cache with fallback"""
-        if not config.enable_caching:
-            return False
+    def set(self, key: str, value: str, ttl: Optional[int] = None) -> None:
+        """
+        Set a value in cache
         
-        success = False
+        Args:
+            key: Cache key
+            value: Value to cache
+            ttl: Time to live in seconds (uses default if None)
+        """
+        if ttl is None:
+            ttl = 3600  # Default 1 hour
         
-        # Set in primary cache
-        if self.primary_cache:
-            success = self.primary_cache.set(key, value, ttl) or success
+        expires = time.time() + ttl
         
-        # Set in fallback cache if different from primary
-        if self.fallback_cache and self.fallback_cache != self.primary_cache:
-            success = self.fallback_cache.set(key, value, ttl) or success
+        # Store in memory cache
+        self.memory_cache[key] = value
         
-        if success:
-            logger.debug(f"Cached value for key: {key[:8]}...")
+        # Store in LRU cache for longer retention
+        self.lru_cache[key] = value
         
-        return success
+        # Store on disk
+        cache_path = self._get_cache_path(key)
+        try:
+            data = {
+                'value': value,
+                'expires': expires,
+                'created': time.time()
+            }
+            
+            with open(cache_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f)
+                
+        except IOError as e:
+            logger.warning(f"Error writing cache file {cache_path}: {e}")
+        
+        self.stats['sets'] += 1
     
-    def delete(self, key: str) -> bool:
-        """Delete value from all caches"""
-        success = False
+    def delete(self, key: str) -> None:
+        """
+        Delete a value from cache
         
-        if self.primary_cache:
-            success = self.primary_cache.delete(key) or success
+        Args:
+            key: Cache key to delete
+        """
+        # Remove from memory caches
+        self.memory_cache.pop(key, None)
+        self.lru_cache.pop(key, None)
         
-        if self.fallback_cache and self.fallback_cache != self.primary_cache:
-            success = self.fallback_cache.delete(key) or success
+        # Remove from disk
+        cache_path = self._get_cache_path(key)
+        try:
+            if os.path.exists(cache_path):
+                os.remove(cache_path)
+        except OSError as e:
+            logger.warning(f"Error deleting cache file {cache_path}: {e}")
         
-        return success
+        self.stats['deletes'] += 1
     
-    def clear(self) -> bool:
-        """Clear all caches"""
-        success = False
+    def clear(self) -> None:
+        """Clear all cache data"""
+        # Clear memory caches
+        self.memory_cache.clear()
+        self.lru_cache.clear()
         
-        if self.primary_cache:
-            success = self.primary_cache.clear() or success
-        
-        if self.fallback_cache and self.fallback_cache != self.primary_cache:
-            success = self.fallback_cache.clear() or success
-        
-        return success
+        # Clear disk cache
+        try:
+            for filename in os.listdir(self.cache_dir):
+                if filename.endswith('.cache'):
+                    filepath = os.path.join(self.cache_dir, filename)
+                    try:
+                        os.remove(filepath)
+                    except OSError:
+                        pass
+        except OSError as e:
+            logger.warning(f"Error clearing cache directory: {e}")
     
-    def get_stats(self) -> Dict[str, Any]:
-        """Get cache statistics"""
-        stats = {
-            "caching_enabled": config.enable_caching,
-            "primary_cache_type": type(self.primary_cache).__name__ if self.primary_cache else None,
-            "fallback_cache_type": type(self.fallback_cache).__name__ if self.fallback_cache else None,
+    def get_stats(self) -> Dict[str, Union[int, float]]:
+        """
+        Get cache statistics
+        
+        Returns:
+            Dictionary with cache statistics
+        """
+        total_requests = self.stats['hits'] + self.stats['misses']
+        hit_rate = (self.stats['hits'] / total_requests * 100) if total_requests > 0 else 0
+        
+        return {
+            'hits': self.stats['hits'],
+            'misses': self.stats['misses'],
+            'sets': self.stats['sets'],
+            'deletes': self.stats['deletes'],
+            'hit_rate': hit_rate,
+            'memory_size': len(self.memory_cache),
+            'lru_size': len(self.lru_cache)
+        }
+    
+    def cleanup_expired(self) -> None:
+        """Remove expired cache entries from disk"""
+        try:
+            for filename in os.listdir(self.cache_dir):
+                if filename.endswith('.cache'):
+                    filepath = os.path.join(self.cache_dir, filename)
+                    try:
+                        with open(filepath, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                        
+                        if 'expires' in data and data['expires'] < time.time():
+                            os.remove(filepath)
+                            
+                    except (json.JSONDecodeError, IOError):
+                        # Remove corrupted files
+                        try:
+                            os.remove(filepath)
+                        except OSError:
+                            pass
+                            
+        except OSError as e:
+            logger.warning(f"Error cleaning up cache: {e}")
+
+class ConversationCache:
+    """Specialized cache for conversation history"""
+    
+    def __init__(self, max_conversations: int = 50):
+        """
+        Initialize conversation cache
+        
+        Args:
+            max_conversations: Maximum number of conversations to cache
+        """
+        self.cache: LRUCache[str, Dict[str, Any]] = LRUCache(maxsize=max_conversations)
+        self.conversation_ids: List[str] = []
+    
+    def store_conversation(self, conversation_id: str, messages: List[Dict[str, Any]]) -> None:
+        """
+        Store a conversation in cache
+        
+        Args:
+            conversation_id: Unique conversation identifier
+            messages: List of conversation messages
+        """
+        self.cache[conversation_id] = {
+            'messages': messages,
+            'timestamp': time.time(),
+            'message_count': len(messages)
         }
         
-        # Add memory cache stats if available
-        if isinstance(self.primary_cache, MemoryCache):
-            stats["memory_cache_size"] = len(self.primary_cache.cache)
-            stats["memory_cache_maxsize"] = self.primary_cache.cache.maxsize
+        # Update conversation ID list
+        if conversation_id not in self.conversation_ids:
+            self.conversation_ids.append(conversation_id)
         
-        return stats
+        # Remove oldest if we exceed max
+        if len(self.conversation_ids) > self.cache.maxsize:
+            oldest_id = self.conversation_ids.pop(0)
+            self.cache.pop(oldest_id, None)
+    
+    def get_conversation(self, conversation_id: str) -> Optional[List[Dict[str, Any]]]:
+        """
+        Retrieve a conversation from cache
+        
+        Args:
+            conversation_id: Unique conversation identifier
+            
+        Returns:
+            List of conversation messages or None if not found
+        """
+        if conversation_id in self.cache:
+            return self.cache[conversation_id]['messages']
+        return None
+    
+    def add_message(self, conversation_id: str, message: Dict[str, Any]) -> None:
+        """
+        Add a message to an existing conversation
+        
+        Args:
+            conversation_id: Unique conversation identifier
+            message: Message to add
+        """
+        if conversation_id in self.cache:
+            self.cache[conversation_id]['messages'].append(message)
+            self.cache[conversation_id]['message_count'] += 1
+            self.cache[conversation_id]['timestamp'] = time.time()
+    
+    def delete_conversation(self, conversation_id: str) -> None:
+        """
+        Delete a conversation from cache
+        
+        Args:
+            conversation_id: Unique conversation identifier
+        """
+        self.cache.pop(conversation_id, None)
+        if conversation_id in self.conversation_ids:
+            self.conversation_ids.remove(conversation_id)
+    
+    def get_conversation_stats(self, conversation_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get statistics for a conversation
+        
+        Args:
+            conversation_id: Unique conversation identifier
+            
+        Returns:
+            Dictionary with conversation statistics or None if not found
+        """
+        if conversation_id in self.cache:
+            return self.cache[conversation_id]
+        return None
+    
+    def list_conversations(self) -> List[str]:
+        """
+        Get list of cached conversation IDs
+        
+        Returns:
+            List of conversation IDs
+        """
+        return self.conversation_ids.copy()
+    
+    def clear(self) -> None:
+        """Clear all cached conversations"""
+        self.cache.clear()
+        self.conversation_ids.clear()
 
-# Global cache instance
-response_cache = ResponseCache() 
+# Global cache instances
+cache_manager = CacheManager()
+conversation_cache = ConversationCache()
+
+def get_cache_manager() -> CacheManager:
+    """Get the global cache manager instance"""
+    return cache_manager
+
+def get_conversation_cache() -> ConversationCache:
+    """Get the global conversation cache instance"""
+    return conversation_cache 

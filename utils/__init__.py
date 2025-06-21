@@ -2,13 +2,15 @@
 Utility modules for BasicChat application
 """
 
-from .caching import ResponseCache, response_cache
-from .async_ollama import AsyncOllamaChat, AsyncOllamaClient, async_chat
+from .caching import CacheManager, ConversationCache, cache_manager, conversation_cache
+from .async_ollama import AsyncOllamaClient, get_async_client, close_async_client
 
 __all__ = [
-    "ResponseCache",
-    "response_cache", 
-    "AsyncOllamaChat",
+    "CacheManager",
+    "ConversationCache", 
+    "cache_manager",
+    "conversation_cache",
     "AsyncOllamaClient",
-    "async_chat"
+    "get_async_client",
+    "close_async_client"
 ] 

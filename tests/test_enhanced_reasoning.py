@@ -4,7 +4,7 @@ Tests for enhanced reasoning engine with improved tools
 
 import pytest
 from unittest.mock import Mock, patch
-from reasoning_engine import ReasoningAgent, ReasoningResult
+from reasoning_engine import ReasoningEngine, ReasoningResult
 from utils.enhanced_tools import EnhancedCalculator, EnhancedTimeTools
 
 class TestEnhancedReasoningAgent:
@@ -12,7 +12,7 @@ class TestEnhancedReasoningAgent:
     
     def setup_method(self):
         """Setup agent for each test"""
-        self.agent = ReasoningAgent(model_name="mistral")
+        self.agent = ReasoningEngine(model_name="mistral")
     
     def test_enhanced_calculator_tool(self):
         """Test enhanced calculator tool integration"""
