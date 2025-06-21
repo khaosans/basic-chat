@@ -4,40 +4,86 @@ Configuration management for BasicChat application
 
 import os
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv(".env.local")
+# Load environment variables from .env file
+load_dotenv()
+
+# --- Core Ollama Configuration ---
+OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api")
+
+# --- Model Configuration ---
+# Specifies the default model for general reasoning tasks.
+DEFAULT_MODEL = os.environ.get("DEFAULT_MODEL", "mistral")
+
+# Specifies the model to use for vision-related tasks (e.g., image analysis).
+VISION_MODEL = os.environ.get("VISION_MODEL", "llava")
+
+# Specifies the model used for generating text embeddings.
+EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")
+
+# --- Reasoning Engine Configuration ---
+# Defines the list of available reasoning modes in the UI.
+REASONING_MODES: List[str] = [
+    "Standard",
+    "Chain-of-Thought",
+    "Multi-Step",
+    "Agent-Based"
+]
+
+# Sets the default reasoning mode for the application.
+# Must be one of the values from REASONING_MODES.
+DEFAULT_REASONING_MODE = os.environ.get("DEFAULT_REASONING_MODE", "Chain-of-Thought")
+if DEFAULT_REASONING_MODE not in REASONING_MODES:
+    raise ValueError(f"Invalid DEFAULT_REASONING_MODE: '{DEFAULT_REASONING_MODE}'. "
+                     f"Must be one of {REASONING_MODES}")
+
+# --- Performance & Reliability ---
+# Enables or disables caching for faster responses on repeated queries.
+ENABLE_CACHING = os.environ.get("ENABLE_CACHING", "true").lower() == "true"
+CACHE_TTL = int(os.environ.get("CACHE_TTL", "3600"))  # Time-to-live for cache in seconds
+REQUEST_TIMEOUT = int(os.environ.get("REQUEST_TIMEOUT", "30")) # Request timeout in seconds
+
+# --- Redis Configuration (Optional) ---
+REDIS_ENABLED = os.environ.get("REDIS_ENABLED", "false").lower() == "true"
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
+
+# --- UI Configuration ---
+# Defines the title of the web application.
+APP_TITLE = "BasicChat"
+
+# Defines the path to the favicon for the web application.
+FAVICON_PATH = "assets/brand/favicon/favicon-32x32.png"
 
 @dataclass
 class AppConfig:
     """Application configuration with environment variable support"""
     
     # Ollama Configuration
-    ollama_url: str = os.getenv("OLLAMA_API_URL", "http://localhost:11434/api")
-    ollama_model: str = os.getenv("OLLAMA_MODEL", "mistral")
+    ollama_url: str = OLLAMA_API_URL
+    ollama_model: str = DEFAULT_MODEL
     
     # LLM Parameters
     max_tokens: int = int(os.getenv("MAX_TOKENS", "2048"))
     temperature: float = float(os.getenv("TEMPERATURE", "0.7"))
     
     # Caching Configuration
-    cache_ttl: int = int(os.getenv("CACHE_TTL", "3600"))
+    cache_ttl: int = CACHE_TTL
     cache_maxsize: int = int(os.getenv("CACHE_MAXSIZE", "1000"))
-    enable_caching: bool = os.getenv("ENABLE_CACHING", "true").lower() == "true"
+    enable_caching: bool = ENABLE_CACHING
     
     # Performance Configuration
     enable_streaming: bool = os.getenv("ENABLE_STREAMING", "true").lower() == "true"
-    request_timeout: int = int(os.getenv("REQUEST_TIMEOUT", "30"))
+    request_timeout: int = REQUEST_TIMEOUT
     connect_timeout: int = int(os.getenv("CONNECT_TIMEOUT", "5"))
     max_retries: int = int(os.getenv("MAX_RETRIES", "3"))
     rate_limit: int = int(os.getenv("RATE_LIMIT", "10"))
     rate_limit_period: int = int(os.getenv("RATE_LIMIT_PERIOD", "1"))
     
     # Redis Configuration (for distributed caching)
-    redis_url: Optional[str] = os.getenv("REDIS_URL")
-    redis_enabled: bool = os.getenv("REDIS_ENABLED", "false").lower() == "true"
+    redis_url: Optional[str] = REDIS_URL
+    redis_enabled: bool = REDIS_ENABLED
     
     # Logging Configuration
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
@@ -45,7 +91,7 @@ class AppConfig:
     
     # Vector Store Configuration
     vectorstore_persist_directory: str = os.getenv("VECTORSTORE_DIR", "./chroma_db")
-    embedding_model: str = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
+    embedding_model: str = EMBEDDING_MODEL
     
     @classmethod
     def from_env(cls) -> "AppConfig":
