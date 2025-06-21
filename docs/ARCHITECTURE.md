@@ -4,83 +4,128 @@ This document provides a high-level overview of the technical architecture of Ba
 
 [← Back to README](../README.md)
 
+---
+
 ## 🏛️ Core Architecture
 
-The application is designed with a modular, layered architecture that separates the user interface, application logic, and AI processing.
+The application is designed with a modular, layered architecture that separates the user interface, application logic, and core services. This separation makes the system easier to develop, test, and maintain.
 
 ```mermaid
 graph TD
-    subgraph User Interface
-        A["Streamlit UI"]
+    classDef ui fill:#87CEEB,stroke:#4682B4,color:#000
+    classDef logic fill:#98FB98,stroke:#3CB371,color:#000
+    classDef service fill:#F0E68C,stroke:#BDB76B,color:#000
+    classDef external fill:#D3D3D3,stroke:#A9A9A9,color:#000
+
+    subgraph User Facing
+        A["<br/><b>Streamlit UI</b><br/>User interaction and file uploads<br/>"]:::ui
     end
 
     subgraph Application Logic
-        B["App Controller (app.py)"]
-        C["Reasoning Engine"]
-        D["Document Processor"]
-        E["Configuration"]
+        B["<b>App Controller</b><br/>(app.py)<br/>Routes user input"]:::logic
+        C["<b>Reasoning Engine</b><br/>Determines logic and uses tools"]:::logic
+        D["<b>Document Processor</b><br/>Manages document lifecycle and RAG"]:::logic
     end
 
     subgraph Core Services
-        F["Async Ollama Client"]
-        G["ChromaDB Vector Store"]
-        H["Tool Registry (Web, Calc)"]
-        I["Caching (Redis/Memory)"]
+        F["<b>Async Ollama Client</b><br/>Communicates with LLMs"]:::service
+        G["<b>ChromaDB Vector Store</b><br/>Stores and retrieves document embeddings"]:::service
+        H["<b>Tool Registry</b><br/>Provides Calculator, Web Search, etc."_]:::service
+        I["<b>Caching Service</b><br/>In-memory & Redis for performance"]:::service
     end
     
-    subgraph External
-        J["Ollama (Local LLMs)"]
+    subgraph External Systems
+        J["<b>Ollama Service</b><br/>Hosts local LLMs"]:::external
     end
 
-    A -- "User Input / File Upload" --> B
-    B -- "Process Query" --> C
-    B -- "Process File" --> D
+    A -- "User Query / File" --> B
     
-    C -- "Uses Tools" --> H
-    C -- "Sends LLM Request" --> F
-    D -- "Manages Embeddings" --> G
+    B -- "Processes Query" --> C
+    B -- "Processes File" --> D
     
-    F -- "Talks to" --> J
-    F -- "Checks/Stores Cache" --> I
+    C -- "Uses" --> H
+    C -- "Sends Request" --> F
+    
+    D -- "Manages" --> G
+    
+    F -- "Queries" --> J
+    F -- "Caches" --> I
     
     J -- "LLM Response" --> F
     F -- "Returns Response" --> C
     C -- "Final Answer" --> B
-    B -- "Displays to" --> A
-    
-    E -- "Provides Settings" --> B
-    E -- "Provides Settings" --> C
-    E -- "Provides Settings" --> D
+    B -- "Displays Result" --> A
 ```
 
 ## 🧩 Key Components
 
--   **Streamlit UI (`app.py`)**: The main web interface that captures user input, handles file uploads, and displays the AI's responses. It acts as the primary controller for the application.
+-   **Streamlit UI (`app.py`)**: The main web interface that captures user input, handles file uploads, and displays the AI's responses.
+-   **Reasoning Engine (`reasoning_engine.py`)**: The core logic unit. It interprets user queries, decides which reasoning mode to use, and coordinates with tools and the LLM to generate an answer.
+-   **Document Processor (`document_processor.py`)**: Manages the entire lifecycle of documents, from text extraction and embedding to storage and retrieval for RAG.
+-   **Core Services**: A set of internal services that provide essential functionalities:
+    -   `Async Ollama Client`: A high-performance client for non-blocking communication with the Ollama server.
+    -   `ChromaDB Vector Store`: A local database for efficient semantic search over documents.
+    -   `Tool Registry`: Provides access to built-in capabilities like the calculator and web search.
+    -   `Caching`: A multi-layer cache to accelerate responses.
 
--   **Reasoning Engine (`reasoning_engine.py`)**: This is the brain of the application. It processes user queries, determines which reasoning mode to use (e.g., Chain-of-Thought), and interacts with tools (like the calculator or web search) and the LLM to formulate an answer.
+---
 
--   **Document Processor (`document_processor.py`)**: Manages the lifecycle of uploaded documents. It handles:
-    -   Extracting text from PDFs and images (OCR).
-    -   Splitting documents into manageable chunks.
-    -   Creating vector embeddings using a local model.
-    -   Storing and retrieving embeddings from the ChromaDB vector store for RAG.
-    -   Managing the cleanup of database directories.
+## 🔄 Data Flows
 
--   **Async Ollama Client (`utils/async_ollama.py`)**: A high-performance, asynchronous client for communicating with the local Ollama LLM server. It includes connection pooling and caching to ensure fast and reliable responses.
+The following diagrams illustrate how data moves through the system for different scenarios.
 
--   **ChromaDB Vector Store**: A local vector database used to store document embeddings. The Document Processor uses it to perform semantic searches and retrieve relevant context for Retrieval-Augmented Generation (RAG).
+### Standard Query with Tool Use
 
--   **Configuration (`config.py`)**: A centralized module that manages all application settings, such as which AI models to use and caching configurations.
+This flow shows how the system answers a question like *"What is the square root of 144?"* using the **Agent-Based** reasoning mode.
 
-## 🔄 Data Flow for Document Analysis (RAG)
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Streamlit UI
+    participant Engine as Reasoning Engine
+    participant Tools as Tool Registry
+    participant LLM as Ollama LLM
+    
+    User->>+UI: Asks "sqrt(144)?"
+    UI->>+Engine: Process query
+    Engine->>+LLM: "Should I use a tool for 'sqrt(144)'?"
+    LLM-->>-Engine: "Yes, use calculator"
+    Engine->>+Tools: Execute calculator with "sqrt(144)"
+    Tools-->>-Engine: Return "12"
+    Engine->>+LLM: "The tool returned 12. Formulate the final answer."
+    LLM-->>-Engine: "The square root of 144 is 12."
+    Engine-->>-UI: Send final answer
+    UI-->>-User: Display "The square root of 144 is 12."
+```
 
-1.  A user uploads a document (e.g., a PDF) via the Streamlit UI.
-2.  The `Document Processor` takes the file, extracts its text, and splits it into smaller chunks.
-3.  Each chunk is converted into a numerical representation (an embedding) by the `nomic-embed-text` model.
-4.  These embeddings are stored in a dedicated collection within the `ChromaDB` vector store.
-5.  When the user asks a question about the document, the `Reasoning Engine` converts the question into an embedding.
-6.  It then queries `ChromaDB` to find the most relevant text chunks from the document.
-7.  This retrieved context is combined with the user's question and sent to the `mistral` LLM to generate a final, context-aware answer.
+### Document Analysis (RAG)
+
+This flow shows how the system answers a question based on an uploaded document.
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Streamlit UI
+    participant DocProc as Document Processor
+    participant DB as ChromaDB
+    participant Engine as Reasoning Engine
+    participant LLM as Ollama LLM
+
+    User->>+UI: Uploads "research_paper.pdf"
+    UI->>+DocProc: Process file
+    DocProc->>+DB: Extract text, create embeddings,<br/>and store in database
+    DB-->>-DocProc: Confirm storage
+    DocProc-->>-UI: Notify success
+
+    User->>+UI: Asks "What was the main finding?"
+    UI->>+Engine: Process query with document context
+    Engine->>+DB: Search for relevant chunks in "research_paper.pdf"
+    DB-->>-Engine: Return top 3 relevant text chunks
+    Engine->>+LLM: "Context: [text chunks]<br/>Question: What was the main finding?"
+    LLM-->>-Engine: Generate answer based on context
+    Engine-->>-UI: Send final answer
+    UI-->>-User: Display answer
+```
 
 ## Performance Architecture
 
