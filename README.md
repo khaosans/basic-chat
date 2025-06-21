@@ -244,21 +244,38 @@ We welcome contributions! Please see our [Development Guide](docs/DEVELOPMENT.md
 
 ## 🔧 Configuration
 
-Create `.env.local` for custom configuration:
+Create a `.env` file in the root of the project to customize your setup.
+
 ```bash
-# Ollama Configuration
+# .env
+
+# --- Core Ollama Configuration ---
+# The base URL for the Ollama API
 OLLAMA_API_URL=http://localhost:11434/api
-OLLAMA_MODEL=mistral
 
-# Performance Settings
+# --- Model & Reasoning Defaults ---
+# Sets the default model for general chat and reasoning
+DEFAULT_MODEL=mistral
+
+# Sets the default reasoning mode on startup.
+# Options: "Standard", "Chain-of-Thought", "Multi-Step", "Agent-Based"
+DEFAULT_REASONING_MODE=Agent-Based
+
+# --- Task-Specific Models ---
+# Model to use for analyzing images
+VISION_MODEL=llava
+
+# Model used to create embeddings for documents
+EMBEDDING_MODEL=nomic-embed-text
+
+# --- Performance Settings ---
 ENABLE_CACHING=true
-CACHE_TTL=3600
-RATE_LIMIT=10
-REQUEST_TIMEOUT=30
+CACHE_TTL=3600 # Cache time-to-live in seconds
+REQUEST_TIMEOUT=30 # Request timeout in seconds
 
-# Redis Configuration (Optional)
-REDIS_URL=redis://localhost:6379
+# --- Redis Configuration (Optional) ---
 REDIS_ENABLED=false
+REDIS_URL=redis://localhost:6379
 ```
 
 ## 📝 License

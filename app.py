@@ -14,7 +14,9 @@ import json
 import datetime
 import pytz
 import asyncio
-from typing import Optional, Dict, List
+import logging
+import traceback
+from typing import Optional, Dict, List, Any
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from dotenv import load_dotenv
@@ -30,7 +32,6 @@ from reasoning_engine import (
     ReasoningAgent, 
     ReasoningChain, 
     MultiStepReasoning, 
-    ReasoningDocumentProcessor,
     ReasoningResult
 )
 
@@ -39,7 +40,34 @@ from config import config
 from utils.async_ollama import AsyncOllamaChat, async_chat
 from utils.caching import response_cache
 
+# Import the proper DocumentProcessor with vector database support
+from document_processor import DocumentProcessor, ProcessedFile
+
+# Import configuration constants
+from config import (
+    APP_TITLE,
+    FAVICON_PATH,
+    DEFAULT_MODEL,
+    VISION_MODEL,
+    REASONING_MODES,
+    DEFAULT_REASONING_MODE
+)
+
+# Import Ollama API functions
+from ollama_api import get_available_models
+
 load_dotenv(".env.local")  # Load environment variables from .env.local
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('app.log')
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Use Ollama model instead of Hugging Face
 OLLAMA_API_URL = os.environ.get("OLLAMA_API_URL", "http://localhost:11434/api")
@@ -103,7 +131,7 @@ class OllamaChat:
                 # Try async implementation
                 return asyncio.run(self._query_async(payload))
             except Exception as e:
-                st.warning(f"Async query failed, falling back to sync: {e}")
+                logger.warning(f"Async query failed, falling back to sync: {e}")
                 self._use_sync_fallback = True
         
         # Fallback to original sync implementation
@@ -114,7 +142,7 @@ class OllamaChat:
         try:
             return await self.async_chat.query(payload)
         except Exception as e:
-            st.error(f"Async query error: {e}")
+            logger.error(f"Async query error: {e}")
             return None
     
     def _query_sync(self, payload: Dict) -> Optional[str]:
@@ -133,6 +161,7 @@ class OllamaChat:
         
         for attempt in range(max_retries):
             try:
+                logger.debug(f"Making Ollama API request (attempt {attempt + 1}/{max_retries})")
                 response = requests.post(self.api_url, json=ollama_payload, stream=True)
                 response.raise_for_status()
                 
@@ -144,19 +173,19 @@ class OllamaChat:
                             response_text = chunk_data.get("response", "")
                             full_response += response_text
                         except json.JSONDecodeError:
-                            print(f"JSONDecodeError: {chunk}")  # Debugging
+                            logger.debug(f"JSONDecodeError: {chunk}")
                             continue
                 return full_response
             
             except requests.exceptions.RequestException as e:
-                st.error(f"Ollama API error (attempt {attempt + 1}/{max_retries}): {e}")
+                logger.error(f"Ollama API error (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
                     time.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
                 else:
                     return None
             except Exception as e:
-                st.error(f"Error processing Ollama response: {e}")
+                logger.error(f"Error processing Ollama response: {e}")
                 return None
         return None
     
@@ -168,7 +197,7 @@ class OllamaChat:
                     yield chunk
                 return
             except Exception as e:
-                st.warning(f"Async stream failed, falling back to sync: {e}")
+                logger.warning(f"Async stream failed, falling back to sync: {e}")
                 self._use_sync_fallback = True
         
         # Fallback to sync implementation
@@ -199,7 +228,7 @@ class OllamaChat:
                     except json.JSONDecodeError:
                         continue
         except Exception as e:
-            st.error(f"Error in stream query: {e}")
+            logger.error(f"Error in stream query: {e}")
             yield f"Error: {str(e)}"
     
     async def health_check(self) -> bool:
@@ -212,70 +241,6 @@ class OllamaChat:
     def get_cache_stats(self) -> Dict:
         """Get cache statistics"""
         return response_cache.get_stats()
-
-class DocumentProcessor:
-    def __init__(self):
-        self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200,
-            length_function=len,
-        )
-        self.processed_files = []
-        
-        # Initialize vectorstore if exists
-        self.vectorstore = None
-
-    def process_file(self, file) -> None:
-        """Process and store file with proper chunking and embedding"""
-        try:
-            # Create temporary file
-            with tempfile.NamedTemporaryFile(delete=False, suffix=f".{file.name.split('.')[-1]}") as tmp_file:
-                tmp_file.write(file.getvalue())
-                file_path = tmp_file.name
-
-            # Load documents based on file type
-            if file.type == "application/pdf":
-                loader = PyPDFLoader(file_path)
-                documents = loader.load()
-            elif file.type.startswith("image/"):
-                try:
-                    loader = UnstructuredImageLoader(file_path)
-                    documents = loader.load()
-                except Exception as e:
-                    st.error(f"Failed to load image: {str(e)}")
-                    return
-            else:
-                raise ValueError(f"Unsupported file type: {file.type}")
-
-            # Split documents into chunks
-            chunks = self.text_splitter.split_documents(documents)
-            
-            # Store file info
-            self.processed_files.append({
-                "name": file.name,
-                "size": len(file.getvalue()),
-                "type": file.type,
-                "chunks": len(chunks)
-            })
-
-            # Cleanup
-            os.unlink(file_path)
-            
-            return f"✅ Processed {file.name} into {len(chunks)} chunks"
-
-        except Exception as e:
-            raise Exception(f"Failed to process file: {str(e)}")
-
-    def get_relevant_context(self, query: str, k: int = 3) -> str:
-        """Get relevant context for a query"""
-        if not self.vectorstore:
-            return ""
-        
-        try:
-            return ""
-        except Exception as e:
-            print(f"Error getting context: {e}")
-            return ""
 
 class DocumentSummaryTool(Tool):
     def __init__(self, doc_processor):
@@ -292,15 +257,15 @@ class DocumentSummaryTool(Tool):
 
     def execute(self, input_text: str) -> ToolResponse:
         try:
-            if not self.doc_processor.processed_files:
+            processed_files = self.doc_processor.get_processed_files()
+            if not processed_files:
                 return ToolResponse(content="No documents have been uploaded yet.", success=False)
 
             summary = ""
-            for file_data in self.doc_processor.processed_files:
-                summary += f"Summary of {file_data['name']}:\n"
-                # In a real implementation, you would summarize the document content here
-                # For now, just return the document name
-                summary += "This feature is not yet implemented.\n"
+            for file_data in processed_files:
+                summary += f"📄 **{file_data['name']}** ({file_data['type']})\n"
+                summary += f"Size: {file_data['size']} bytes\n"
+                summary += "✅ Document processed and available for search\n\n"
 
             return ToolResponse(content=summary)
         except Exception as e:
@@ -669,355 +634,56 @@ def display_reasoning_result(result: ReasoningResult):
         st.write("**Sources:**", ", ".join(result.sources))
 
 def enhanced_chat_interface(doc_processor):
-    """Enhanced chat interface with reasoning capabilities"""
-    # Professional CSS with clean audio styling
-    st.markdown(
-        """
-        <style>
-            /* Main container */
-            .main {
-                max-width: 800px !important;
-                padding: 1rem !important;
-            }
-            
-            /* Message containers */
-            .stChatMessage {
-                padding: 0.5rem 0 !important;
-            }
-            
-            /* User messages */
-            [data-testid="chat-message-user"] {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-                color: white !important;
-                border-radius: 12px 12px 4px 12px !important;
-                padding: 0.75rem 1rem !important;
-                margin: 0.25rem 0 !important;
-                margin-left: auto !important;
-                max-width: 80% !important;
-                box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2) !important;
-            }
-            
-            /* Assistant messages */
-            [data-testid="chat-message-assistant"] {
-                background: #ffffff !important;
-                color: #2d3748 !important;
-                border-radius: 12px 12px 12px 4px !important;
-                padding: 0.75rem 1rem !important;
-                margin: 0.25rem 0 !important;
-                margin-right: auto !important;
-                max-width: 80% !important;
-                border: 1px solid #e2e8f0 !important;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-            }
-
-            /* Professional audio button styling */
-            .stButton button {
-                background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%) !important;
-                color: #4a5568 !important;
-                border: 1px solid #e2e8f0 !important;
-                border-radius: 8px !important;
-                padding: 10px 20px !important;
-                font-size: 14px !important;
-                font-weight: 500 !important;
-                transition: all 0.2s ease !important;
-                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-            }
-
-            .stButton button:hover:not(:disabled) {
-                background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%) !important;
-                border-color: #cbd5e0 !important;
-                transform: translateY(-1px) !important;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
-                color: #2d3748 !important;
-            }
-
-            .stButton button:disabled {
-                background: #f7fafc !important;
-                color: #a0aec0 !important;
-                border-color: #e2e8f0 !important;
-                cursor: not-allowed !important;
-                opacity: 0.6 !important;
-                transform: none !important;
-                box-shadow: none !important;
-            }
-
-            /* Loading spinner animation */
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-
-            .loading-spinner {
-                animation: spin 1s linear infinite;
-            }
-            
-            /* Reasoning mode styling */
-            .reasoning-mode {
-                background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
-                border: 1px solid #90cdf4;
-                border-radius: 8px;
-                padding: 0.5rem;
-                margin: 0.5rem 0;
-            }
-
-            /* Focus indicators for accessibility */
-            .stButton button:focus {
-                outline: 2px solid #4299e1 !important;
-                outline-offset: 2px !important;
-            }
-
-            /* High contrast mode support */
-            @media (prefers-contrast: high) {
-                .stButton button {
-                    border: 2px solid #000 !important;
-                }
-            }
-
-            /* Reduced motion support */
-            @media (prefers-reduced-motion: reduce) {
-                .stButton button,
-                .loading-spinner {
-                    transition: none !important;
-                    animation: none !important;
-                }
-            }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-
-    # Add reasoning mode selection in sidebar
+    """
+    Main chat interface using Streamlit, with enhanced features.
+    """
+    
+    # Sidebar Configuration
     with st.sidebar:
-        st.header("🧠 Reasoning Mode")
-        reasoning_mode = st.selectbox(
-            "Select Reasoning Mode",
-            ["Standard", "Chain-of-Thought", "Multi-Step", "Agent-Based"],
-            help="Choose how the AI should process your questions"
+        st.header("✨ Configuration")
+        st.info(f"""
+        - **Active Model**: `{st.session_state.selected_model}`
+        - **Reasoning Mode**: `{st.session_state.reasoning_mode}`
+        """)
+
+        st.markdown("---")
+        
+        # --- Document Management ---
+        st.header("📚 Documents")
+        
+        uploaded_file = st.file_uploader(
+            "Upload a document to analyze",
+            type=["pdf", "txt", "png", "jpg", "jpeg"],
+            help="Upload a document to chat with it.",
+            key="document_uploader"
         )
-        
-        # Enhanced mode descriptions with detailed explanations
-        mode_descriptions = {
-            "Standard": {
-                "short": "Basic chat with simple responses",
-                "detailed": """
-                - Direct question-answer format
-                - No visible reasoning steps
-                - Fastest response time
-                - Best for simple queries
-                """
-            },
-            "Chain-of-Thought": {
-                "short": "Shows step-by-step reasoning process",
-                "detailed": """
-                - Breaks down complex problems
-                - Shows each step of thinking
-                - Explains assumptions and logic
-                - Best for understanding 'why'
-                """
-            },
-            "Multi-Step": {
-                "short": "Breaks complex questions into multiple steps",
-                "detailed": """
-                - Analyzes question components
-                - Gathers relevant context
-                - Builds structured solution
-                - Best for complex problems
-                """
-            },
-            "Agent-Based": {
-                "short": "Uses tools and agents for enhanced capabilities",
-                "detailed": """
-                - Accesses external tools
-                - Uses multiple specialized agents
-                - Combines different capabilities
-                - Best for tasks requiring tools
-                """
-            }
-        }
-        
-        # Show short description in info box
-        st.info(f"**{reasoning_mode}**: {mode_descriptions[reasoning_mode]['short']}")
-        
-        # Show detailed explanation in an expander
-        with st.expander("See detailed explanation"):
-            st.markdown(mode_descriptions[reasoning_mode]['detailed'])
-        
-        # Add model selection with detailed descriptions
-        st.header("🤖 Model Selection")
-        
-        # Define model descriptions and use cases
-        model_descriptions = {
-            "mistral": {
-                "short": "Powerful general-purpose model with strong reasoning",
-                "detailed": """
-                - Best for: Complex reasoning and analysis
-                - Strengths:
-                  • Strong logical reasoning capabilities
-                  • Excellent at step-by-step problem solving
-                  • Good balance of speed and accuracy
-                  • Efficient context handling
-                - Ideal for:
-                  • Academic and technical writing
-                  • Mathematical problem solving
-                  • Code analysis and explanation
-                  • Complex multi-step tasks
-                """
-            },
-            "llava": {
-                "short": "Multimodal model for text and image processing",
-                "detailed": """
-                - Best for: Image understanding and visual tasks
-                - Strengths:
-                  • Can analyze images and provide descriptions
-                  • Understands visual context and details
-                  • Can answer questions about images
-                  • Combines visual and textual reasoning
-                - Ideal for:
-                  • Image analysis tasks
-                  • Visual question answering
-                  • Document analysis with images
-                  • Visual content description
-                """
-            },
-            "codellama": {
-                "short": "Specialized model for programming tasks",
-                "detailed": """
-                - Best for: Code-related tasks and development
-                - Strengths:
-                  • Strong code understanding
-                  • Excellent at code generation
-                  • Bug detection and fixing
-                  • Technical documentation
-                - Ideal for:
-                  • Programming assistance
-                  • Code review and analysis
-                  • Algorithm implementation
-                  • Technical problem solving
-                """
-            },
-            "llama2": {
-                "short": "Versatile base model for general tasks",
-                "detailed": """
-                - Best for: General-purpose applications
-                - Strengths:
-                  • Well-rounded capabilities
-                  • Good at general conversation
-                  • Decent reasoning abilities
-                  • Broad knowledge base
-                - Ideal for:
-                  • General chat applications
-                  • Basic content generation
-                  • Simple analysis tasks
-                  • Everyday queries
-                """
-            },
-            "nomic-embed-text": {
-                "short": "Specialized model for text embeddings",
-                "detailed": """
-                - Best for: Text analysis and similarity tasks
-                - Strengths:
-                  • High-quality text embeddings
-                  • Semantic search capabilities
-                  • Document comparison
-                  • Content organization
-                - Ideal for:
-                  • Document retrieval
-                  • Similarity matching
-                  • Content classification
-                  • Search functionality
-                """
-            }
-        }
-        
-        try:
-            from ollama_api import get_available_models
-            available_models = get_available_models()
-            
-            # Initialize session state for model selection if not exists
-            if 'selected_model' not in st.session_state:
-                st.session_state.selected_model = OLLAMA_MODEL
-            
-            # Create columns for model selection and quick info button
-            col1, col2 = st.columns([3, 1])
-            
-            with col1:
-                selected_model = st.selectbox(
-                    "Choose Model",
-                    available_models,
-                    index=available_models.index(st.session_state.selected_model) if st.session_state.selected_model in available_models else 0,
-                    key='model_selector',
-                    help="Select the Ollama model to use for reasoning"
-                )
-            
-            # Update session state
-            st.session_state.selected_model = selected_model
-            
-            # Show model information based on selection
-            if selected_model.lower() in model_descriptions:
-                model_info = model_descriptions[selected_model.lower()]
-                
-                # Show short description in info box
-                st.info(f"**{selected_model}**: {model_info['short']}")
-                
-                # Show detailed description in expander
-                with st.expander("See model capabilities and best uses"):
-                    st.markdown(model_info['detailed'])
-                    
-                    # Add performance note specific to the model
-                    st.markdown("---")
-                    st.markdown("**💻 Performance Note:**")
-                    if selected_model.lower() in ['llava', 'codellama']:
-                        st.markdown("This model may require more computational resources.")
-                    elif selected_model.lower() == 'mistral':
-                        st.markdown("Offers good performance with moderate resource requirements.")
-                    else:
-                        st.markdown("Standard resource requirements apply.")
-            else:
-                # Generic description for unknown models
-                st.info(f"**{selected_model}**: Custom or specialized Ollama model")
-                with st.expander("About this model"):
-                    st.markdown("""
-                    This appears to be a custom or specialized model. Consider the following:
-                    - Capabilities will depend on the model's training
-                    - Refer to the model's documentation for specific use cases
-                    - Performance characteristics may vary
-                    - Test the model with your specific use case
-                    """)
-                    
-        except Exception as e:
-            st.warning(f"Could not fetch available models: {e}")
-            selected_model = OLLAMA_MODEL
-            if selected_model in model_descriptions:
-                st.info(f"**{selected_model}**: {model_descriptions[selected_model]['short']}")
-                with st.expander("See model details"):
-                    st.markdown(model_descriptions[selected_model]['detailed'])
 
-        # Add a general note about model selection
-        with st.expander("📝 Tips for choosing models"):
-            st.markdown("""
-            **When selecting a model, consider:**
-            - Task complexity and specific requirements
-            - Available system resources (RAM, CPU/GPU)
-            - Speed vs accuracy trade-offs
-            - Whether you need specialized capabilities (code, images, etc.)
-            
-            **Quick Guide:**
-            - Use **Mistral** for general reasoning and complex tasks
-            - Use **LLaVA** for image-related tasks
-            - Use **CodeLlama** for programming tasks
-            - Use **Llama2** for general conversation
-            - Use **Nomic-Embed** for text embedding and search
-            """)
+        processed_files = doc_processor.get_processed_files()
+        if processed_files:
+            st.subheader("📋 Processed Documents")
+            for file_data in processed_files:
+                col1, col2 = st.columns([4, 1])
+                with col1:
+                    st.write(f"• {file_data['name']}")
+                with col2:
+                    if st.button("🗑️", key=f"delete_{file_data['name']}", help="Remove document"):
+                        doc_processor.remove_file(file_data['name'])
+                        st.rerun()
+        else:
+            st.info("No documents uploaded yet.")
 
-    # Initialize reasoning components with the selected model
-    reasoning_agent = ReasoningAgent(selected_model)
-    reasoning_chain = ReasoningChain(selected_model)
-    multi_step = MultiStepReasoning(doc_processor, selected_model)
+    # Initialize reasoning components with the selected model from session state
+    selected_model = st.session_state.selected_model
     
     # Create chat instances
     ollama_chat = OllamaChat(selected_model)
     tool_registry = ToolRegistry(doc_processor)
-
+    
+    # Initialize reasoning engines
+    reasoning_chain = ReasoningChain(selected_model)
+    multi_step = MultiStepReasoning(selected_model)
+    reasoning_agent = ReasoningAgent(selected_model)
+    
     # Initialize welcome message if needed
     if "messages" not in st.session_state:
         st.session_state.messages = [{
@@ -1050,15 +716,26 @@ def enhanced_chat_interface(doc_processor):
                         st.error(response.content)
             else:
                 # Use reasoning modes with separated thought process and final output
-                with st.spinner(f"Processing with {reasoning_mode} reasoning..."):
+                with st.spinner(f"Processing with {st.session_state.reasoning_mode} reasoning..."):
                     try:
-                        if reasoning_mode == "Chain-of-Thought":
+                        # Get relevant document context first
+                        context = doc_processor.get_relevant_context(prompt) if doc_processor else ""
+                        
+                        # Add context to the prompt if available
+                        enhanced_prompt = prompt
+                        if context:
+                            enhanced_prompt = f"Context from uploaded documents:\n{context}\n\nQuestion: {prompt}"
+                        
+                        if st.session_state.reasoning_mode == "Chain-of-Thought":
+                            result = reasoning_chain.execute_reasoning(question=prompt, context=context)
+                            
                             with st.expander("💭 Thought Process", expanded=True):
-                                result = reasoning_chain.execute_reasoning(prompt)
                                 # Stream the thought process
                                 thought_placeholder = st.empty()
+                                full_thought_process = ""
                                 for step in result.reasoning_steps:
-                                    thought_placeholder.markdown(f"- {step}")
+                                    full_thought_process += f"- {step}\n"
+                                    thought_placeholder.markdown(full_thought_process)
                                     time.sleep(0.5)  # Simulate streaming for smooth UX
                             
                             # Show final answer separately
@@ -1066,26 +743,32 @@ def enhanced_chat_interface(doc_processor):
                             st.markdown(result.content)
                             st.session_state.messages.append({"role": "assistant", "content": result.content})
                             
-                        elif reasoning_mode == "Multi-Step":
+                        elif st.session_state.reasoning_mode == "Multi-Step":
+                            result = multi_step.step_by_step_reasoning(query=prompt, context=context)
+                            
                             with st.expander("🔍 Analysis & Planning", expanded=True):
-                                result = multi_step.step_by_step_reasoning(prompt)
                                 # Stream the analysis phase
                                 analysis_placeholder = st.empty()
+                                full_analysis = ""
                                 for step in result.reasoning_steps:
-                                    analysis_placeholder.markdown(f"- {step}")
+                                    full_analysis += f"- {step}\n"
+                                    analysis_placeholder.markdown(full_analysis)
                                     time.sleep(0.5)
                             
                             st.markdown("### 📝 Final Answer")
                             st.markdown(result.content)
                             st.session_state.messages.append({"role": "assistant", "content": result.content})
                             
-                        elif reasoning_mode == "Agent-Based":
+                        elif st.session_state.reasoning_mode == "Agent-Based":
+                            result = reasoning_agent.run(query=prompt, context=context)
+                            
                             with st.expander("🤖 Agent Actions", expanded=True):
-                                result = reasoning_agent.run(prompt)
                                 # Stream agent actions
                                 action_placeholder = st.empty()
+                                full_actions = ""
                                 for step in result.reasoning_steps:
-                                    action_placeholder.markdown(f"- {step}")
+                                    full_actions += f"- {step}\n"
+                                    action_placeholder.markdown(full_actions)
                                     time.sleep(0.5)
                             
                             st.markdown("### 📝 Final Answer")
@@ -1093,14 +776,17 @@ def enhanced_chat_interface(doc_processor):
                             st.session_state.messages.append({"role": "assistant", "content": result.content})
                             
                         else:  # Standard mode
-                            if response := ollama_chat.query({"inputs": prompt}):
+                            # Note: The standard mode now also benefits from context
+                            if response := ollama_chat.query({"inputs": enhanced_prompt}):
                                 st.markdown(response)
                                 st.session_state.messages.append({"role": "assistant", "content": response})
                             else:
                                 st.error("Failed to get response")
                                 
                     except Exception as e:
-                        st.error(f"Error in {reasoning_mode} mode: {str(e)}")
+                        logger.error(f"Error in {st.session_state.reasoning_mode} mode: {str(e)}")
+                        logger.error(f"Traceback: {traceback.format_exc()}")
+                        st.error(f"Error in {st.session_state.reasoning_mode} mode: {str(e)}")
                         # Fallback to standard mode
                         if response := ollama_chat.query({"inputs": prompt}):
                             st.write(response)
@@ -1111,35 +797,79 @@ def enhanced_chat_interface(doc_processor):
 # Main Function
 def main():
     """Main application entry point"""
-    
+    st.set_page_config(
+        page_title=APP_TITLE,
+        page_icon=FAVICON_PATH,
+        layout="wide"
+    )
+
     # Clean up audio files on app start
     if "audio_cleanup_done" not in st.session_state:
         cleanup_audio_files()
         st.session_state.audio_cleanup_done = True
 
-    # Initialize session state for messages
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
+    # Initialize document processor and session state variables
+    if "doc_processor" not in st.session_state:
+        logger.info("Initializing document processor")
+        st.session_state.doc_processor = DocumentProcessor()
+    if "selected_model" not in st.session_state:
+        st.session_state.selected_model = DEFAULT_MODEL
+    if "reasoning_mode" not in st.session_state:
+        st.session_state.reasoning_mode = DEFAULT_REASONING_MODE
+    if "processed_file_id" not in st.session_state:
+        st.session_state.processed_file_id = None
+        
+    doc_processor = st.session_state.doc_processor
 
-    # Initialize document processor
-    doc_processor = DocumentProcessor()
+    # Handle document upload logic
+    uploaded_file = st.session_state.get("document_uploader")
+    if uploaded_file is not None and uploaded_file.file_id != st.session_state.processed_file_id:
+        logger.info(f"Processing uploaded file: {uploaded_file.name} (type: {uploaded_file.type}, size: {len(uploaded_file.getvalue())} bytes)")
+        
+        try:
+            with st.spinner(f"Processing '{uploaded_file.name}'..."):
+                logger.info(f"Starting document processing for: {uploaded_file.name}")
+                doc_processor.process_file(uploaded_file)
+                logger.info(f"Document processing completed successfully for: {uploaded_file.name}")
+                
+            st.success(f"✅ Document '{uploaded_file.name}' processed successfully!")
+
+            # Auto-select model if an image was uploaded
+            if uploaded_file.type.startswith("image/"):
+                logger.info(f"Image detected, checking for vision model: {VISION_MODEL}")
+                available_models = get_available_models()
+                logger.info(f"Available models: {available_models}")
+                # Correctly parse the list of model name strings
+                if VISION_MODEL.split(':')[0] in [m.split(':')[0] for m in available_models]:
+                    st.session_state.selected_model = VISION_MODEL
+                    logger.info(f"Switched to vision model: {VISION_MODEL}")
+                    st.toast(f"🖼️ Switched to {VISION_MODEL} for image analysis.")
+                else:
+                    logger.warning(f"Vision model {VISION_MODEL} not found in available models")
+            
+            # Mark file as processed to prevent reprocessing and rerun
+            st.session_state.processed_file_id = uploaded_file.file_id
+            st.rerun()
+
+        except Exception as e:
+            logger.error(f"Error processing document '{uploaded_file.name}': {str(e)}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            logger.error(f"File details - Name: {uploaded_file.name}, Type: {uploaded_file.type}, Size: {len(uploaded_file.getvalue())} bytes")
+            
+            # Log additional diagnostic information
+            try:
+                logger.info(f"Document processor state: {len(doc_processor.processed_files)} processed files")
+                logger.info(f"ChromaDB client status: {doc_processor.client is not None}")
+                logger.info(f"Embeddings model: {doc_processor.embeddings.model}")
+            except Exception as diag_error:
+                logger.error(f"Error during diagnostics: {diag_error}")
+            
+            st.error(f"❌ Error processing document: {str(e)}")
+            # Also mark as processed on error to prevent reprocessing loop
+            st.session_state.processed_file_id = uploaded_file.file_id
 
     # Enhanced chat interface
     enhanced_chat_interface(doc_processor)
-
-    with st.sidebar:
-        st.header("📚 Documents")
-        uploaded_file = st.file_uploader(
-            "Upload a document",
-            type=["pdf", "txt", "png", "jpg", "jpeg"],
-            help="Upload documents to analyze",
-        )
-        if uploaded_file:
-            try:
-                result = doc_processor.process_file(uploaded_file)
-                st.success(f"Document uploaded successfully! {result}")
-            except Exception as e:
-                st.error(f"Error processing document: {str(e)}")
 
 if __name__ == "__main__":
     main()
