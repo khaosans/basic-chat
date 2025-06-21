@@ -17,6 +17,7 @@ ENV/
 
 # Data and Logs
 chroma_db/
+chroma_db_*/
 logs/
 *.log
 
@@ -53,8 +54,10 @@ node_modules/
 .env
 .env.*
 
-# ChromaDB
+# ChromaDB - All patterns
 chroma_db/
+chroma_db_*/
+test_chroma_db/
 
 # MyPy
 .mypy_cache/

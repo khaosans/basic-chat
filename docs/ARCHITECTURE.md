@@ -1,124 +1,86 @@
 # System Architecture
 
-[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md)
+This document provides a high-level overview of the technical architecture of BasicChat. It outlines the main components and the flow of data through the system.
 
----
+[← Back to README](../README.md)
 
-## Overview
-BasicChat employs a modern, layered architecture combining asynchronous processing, intelligent caching, and advanced reasoning capabilities. The system follows microservices patterns while maintaining cohesive integration, enabling independent development and testing (Fowler 2014).
+## 🏛️ Core Architecture
 
-## Core Architecture
+The application is designed with a modular, layered architecture that separates the user interface, application logic, and AI processing.
 
 ```mermaid
 graph TD
-    classDef ui fill:#4285f4,stroke:#2956a3,color:white
-    classDef logic fill:#34a853,stroke:#1e7e34,color:white
-    classDef model fill:#ea4335,stroke:#b92d22,color:white
-    classDef storage fill:#fbbc05,stroke:#cc9a04,color:black
-    classDef cache fill:#9c27b0,stroke:#6a1b9a,color:white
+    subgraph User Interface
+        A["Streamlit UI"]
+    end
 
-    A["Streamlit UI"]:::ui
-    B["App Logic"]:::logic
-    C["Async Ollama Client"]:::logic
-    D["Reasoning Engine"]:::logic
-    E["Document Processor"]:::logic
-    F["Ollama API"]:::model
-    G["Web Search"]:::model
-    H["Vector Store"]:::storage
-    I["Response Cache"]:::cache
-    J["Config Manager"]:::logic
+    subgraph Application Logic
+        B["App Controller (app.py)"]
+        C["Reasoning Engine"]
+        D["Document Processor"]
+        E["Configuration"]
+    end
 
-    A -->|User Input| B
-    B -->|Async Request| C
-    B -->|Reasoning Request| D
-    B -->|Document Upload| E
-    C -->|LLM Query| F
-    D -->|Tool Request| G
-    E -->|Embeddings| H
-    C -->|Cache Check| I
-    B -->|Config| J
-    F -->|Response| C
-    G -->|Results| D
-    H -->|Context| D
-    C -->|Cached/New| B
-    B -->|Display| A
+    subgraph Core Services
+        F["Async Ollama Client"]
+        G["ChromaDB Vector Store"]
+        H["Tool Registry (Web, Calc)"]
+        I["Caching (Redis/Memory)"]
+    end
+    
+    subgraph External
+        J["Ollama (Local LLMs)"]
+    end
+
+    A -- "User Input / File Upload" --> B
+    B -- "Process Query" --> C
+    B -- "Process File" --> D
+    
+    C -- "Uses Tools" --> H
+    C -- "Sends LLM Request" --> F
+    D -- "Manages Embeddings" --> G
+    
+    F -- "Talks to" --> J
+    F -- "Checks/Stores Cache" --> I
+    
+    J -- "LLM Response" --> F
+    F -- "Returns Response" --> C
+    C -- "Final Answer" --> B
+    B -- "Displays to" --> A
+    
+    E -- "Provides Settings" --> B
+    E -- "Provides Settings" --> C
+    E -- "Provides Settings" --> D
 ```
 
-## Key Components
+## 🧩 Key Components
 
-### Frontend Layer
-- **Streamlit UI**: Responsive web interface with real-time updates
-- **Multi-modal Input**: Text, file uploads, and image processing
-- **Reasoning Mode Selection**: Dynamic switching between AI reasoning approaches
+-   **Streamlit UI (`app.py`)**: The main web interface that captures user input, handles file uploads, and displays the AI's responses. It acts as the primary controller for the application.
 
-### Application Layer
-- **App Logic**: Request routing and response handling with intelligent classification
-- **Config Manager**: Environment-based configuration with Pydantic validation
-- **Session Management**: User state and conversation history with persistent storage
+-   **Reasoning Engine (`reasoning_engine.py`)**: This is the brain of the application. It processes user queries, determines which reasoning mode to use (e.g., Chain-of-Thought), and interacts with tools (like the calculator or web search) and the LLM to formulate an answer.
 
-### AI Processing Layer
-- **Reasoning Engine**: Chain-of-Thought, Multi-Step, and Agent-Based reasoning implementations
-- **Async Ollama Client**: High-performance LLM communication with connection pooling
-- **Document Processor**: RAG implementation with vector search and semantic understanding
+-   **Document Processor (`document_processor.py`)**: Manages the lifecycle of uploaded documents. It handles:
+    -   Extracting text from PDFs and images (OCR).
+    -   Splitting documents into manageable chunks.
+    -   Creating vector embeddings using a local model.
+    -   Storing and retrieving embeddings from the ChromaDB vector store for RAG.
+    -   Managing the cleanup of database directories.
 
-The reasoning engine implementation is based on research by Wei et al. on Chain-of-Thought reasoning (Wei et al. 2201.11903) and Lewis et al. on Retrieval-Augmented Generation (Lewis et al. 2005.11401).
+-   **Async Ollama Client (`utils/async_ollama.py`)**: A high-performance, asynchronous client for communicating with the local Ollama LLM server. It includes connection pooling and caching to ensure fast and reliable responses.
 
-### External Services
-- **Ollama API**: Local LLM inference with model management
-- **Web Search**: DuckDuckGo integration for real-time information retrieval
-- **Vector Store**: ChromaDB for semantic search and document similarity
+-   **ChromaDB Vector Store**: A local vector database used to store document embeddings. The Document Processor uses it to perform semantic searches and retrieve relevant context for Retrieval-Augmented Generation (RAG).
 
-### Caching Layer
-- **Response Cache**: Multi-layer caching (Redis + Memory) with intelligent key generation
-- **Smart Keys**: MD5 hash with parameter inclusion for collision resistance
-- **TTL Management**: Configurable expiration times with automatic cleanup
+-   **Configuration (`config.py`)**: A centralized module that manages all application settings, such as which AI models to use and caching configurations.
 
-## Data Flow
+## 🔄 Data Flow for Document Analysis (RAG)
 
-### User Query Processing
-```mermaid
-graph TD
-    classDef user fill:#4285f4,stroke:#2956a3,color:white
-    classDef sys fill:#34a853,stroke:#1e7e34,color:white
-    classDef model fill:#ea4335,stroke:#b92d22,color:white
-    classDef store fill:#fbbc05,stroke:#cc9a04,color:black
-    classDef out fill:#b892f4,stroke:#6c3ebf,color:white
-
-    U["User"]:::user --> Q["Query/Input"]:::sys
-    Q --> RM["Reasoning Mode Selection"]:::sys
-    RM -->|Agent| AG["Agent & Tools"]:::model
-    RM -->|CoT| COT["Chain-of-Thought"]:::model
-    RM -->|Multi-Step| MS["Multi-Step Reasoning"]:::model
-    AG --> T["Tool Use (Web, Calc, Time)"]:::model
-    COT --> LLM1["LLM (Mistral)"]:::model
-    MS --> LLM2["LLM (Mistral)"]:::model
-    T --> LLM3["LLM (Mistral)"]:::model
-    LLM1 --> OUT["Output"]:::out
-    LLM2 --> OUT
-    LLM3 --> OUT
-```
-
-### Document Processing Pipeline
-```mermaid
-graph LR
-    classDef input fill:#4285f4,stroke:#2956a3,color:white
-    classDef process fill:#34a853,stroke:#1e7e34,color:white
-    classDef storage fill:#fbbc05,stroke:#cc9a04,color:black
-    classDef output fill:#ea4335,stroke:#b92d22,color:white
-
-    A["Document/Image Upload"]:::input --> B["Type Detection"]:::process
-    B -->|PDF| C["PDF Loader"]:::process
-    B -->|Image| D["Image Loader"]:::process
-    B -->|Text| E["Text Loader"]:::process
-
-    C --> F["Text Extraction"]:::process
-    D --> F
-    E --> F
-
-    F --> G["Chunking & Embedding"]:::process
-    G --> H["Vector Store (ChromaDB)"]:::storage
-    H --> I["Context Retrieval for RAG"]:::output
-```
+1.  A user uploads a document (e.g., a PDF) via the Streamlit UI.
+2.  The `Document Processor` takes the file, extracts its text, and splits it into smaller chunks.
+3.  Each chunk is converted into a numerical representation (an embedding) by the `nomic-embed-text` model.
+4.  These embeddings are stored in a dedicated collection within the `ChromaDB` vector store.
+5.  When the user asks a question about the document, the `Reasoning Engine` converts the question into an embedding.
+6.  It then queries `ChromaDB` to find the most relevant text chunks from the document.
+7.  This retrieved context is combined with the user's question and sent to the `mistral` LLM to generate a final, context-aware answer.
 
 ## Performance Architecture
 

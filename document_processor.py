@@ -20,11 +20,17 @@ import base64
 import logging
 import traceback
 import uuid
+import atexit
+import signal
+import weakref
 
 from config import EMBEDDING_MODEL, VISION_MODEL
 
 # Configure logging for document processor
 logger = logging.getLogger(__name__)
+
+# Global registry for cleanup tracking
+_chroma_instances = weakref.WeakSet()
 
 def is_package_installed(package_name):
     return importlib.util.find_spec(package_name) is not None
@@ -40,6 +46,9 @@ class DocumentProcessor:
     def __init__(self):
         """Initialize the document processor with Chroma DB"""
         logger.info("Initializing DocumentProcessor")
+        
+        # Register this instance for cleanup
+        _chroma_instances.add(self)
         
         try:
             logger.info(f"Initializing embeddings with model: {EMBEDDING_MODEL}")
@@ -83,7 +92,7 @@ class DocumentProcessor:
         # Initialize processed files list
         self.processed_files: List[ProcessedFile] = []
         
-        # Text splitter for documents
+        # Initialize text splitter
         try:
             logger.info("Initializing text splitter")
             self.text_splitter = RecursiveCharacterTextSplitter(
@@ -96,7 +105,22 @@ class DocumentProcessor:
             logger.error(f"Failed to initialize text splitter: {e}")
             raise
         
-        logger.info("DocumentProcessor initialization completed successfully")
+        logger.info("DocumentProcessor initialized successfully")
+
+    def __del__(self):
+        """Destructor to ensure cleanup when object is garbage collected"""
+        try:
+            self.cleanup()
+        except Exception as e:
+            logger.warning(f"Error during automatic cleanup: {e}")
+
+    def __enter__(self):
+        """Context manager entry"""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit with cleanup"""
+        self.cleanup()
 
     def _get_image_description(self, uploaded_file) -> str:
         """Generates a detailed description for an image file using a vision model."""
@@ -381,7 +405,7 @@ class DocumentProcessor:
         logger.info("Clearing vector store")
         
         try:
-            if os.path.exists(self.persist_directory):
+            if hasattr(self, 'persist_directory') and os.path.exists(self.persist_directory):
                 # Force remove readonly files
                 def handle_error(func, path, exc_info):
                     import stat
@@ -507,8 +531,92 @@ class DocumentProcessor:
                     logger.info("Cleaned up original chroma_db directory")
                 except Exception as e:
                     logger.warning(f"Failed to clean up original chroma_db directory: {e}")
+            
+            # Clean up test directories
+            test_dirs = ["./test_chroma_db", "./temp_chroma_db"]
+            for test_dir in test_dirs:
+                if os.path.exists(test_dir):
+                    try:
+                        shutil.rmtree(test_dir, ignore_errors=True)
+                        logger.info(f"Cleaned up test directory: {test_dir}")
+                    except Exception as e:
+                        logger.warning(f"Failed to clean up test directory {test_dir}: {e}")
                     
             logger.info("All ChromaDB directories cleaned up")
             
         except Exception as e:
             logger.error(f"Failed to clean up ChromaDB directories: {e}")
+
+    @staticmethod
+    def cleanup_all_instances():
+        """Clean up all DocumentProcessor instances"""
+        logger.info("Cleaning up all DocumentProcessor instances")
+        
+        try:
+            # Clean up all registered instances
+            for instance in list(_chroma_instances):
+                try:
+                    instance.cleanup()
+                except Exception as e:
+                    logger.warning(f"Failed to cleanup instance: {e}")
+            
+            # Clear the registry
+            _chroma_instances.clear()
+            
+            # Clean up all directories
+            DocumentProcessor.cleanup_all_chroma_directories()
+            
+            logger.info("All DocumentProcessor instances cleaned up")
+            
+        except Exception as e:
+            logger.error(f"Failed to cleanup all instances: {e}")
+
+    @staticmethod
+    def get_chroma_directories():
+        """Get a list of all ChromaDB directories"""
+        import glob
+        chroma_dirs = glob.glob("./chroma_db*")
+        return chroma_dirs
+
+    @staticmethod
+    def cleanup_old_directories(max_age_hours=24):
+        """Clean up ChromaDB directories older than specified age"""
+        import time
+        import glob
+        
+        logger.info(f"Cleaning up ChromaDB directories older than {max_age_hours} hours")
+        
+        try:
+            chroma_dirs = glob.glob("./chroma_db*")
+            current_time = time.time()
+            max_age_seconds = max_age_hours * 3600
+            
+            for chroma_dir in chroma_dirs:
+                try:
+                    if os.path.exists(chroma_dir):
+                        dir_age = current_time - os.path.getmtime(chroma_dir)
+                        if dir_age > max_age_seconds:
+                            shutil.rmtree(chroma_dir, ignore_errors=True)
+                            logger.info(f"Cleaned up old directory: {chroma_dir} (age: {dir_age/3600:.1f}h)")
+                except Exception as e:
+                    logger.warning(f"Failed to check/clean directory {chroma_dir}: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Failed to cleanup old directories: {e}")
+
+# Global cleanup functions
+def cleanup_on_exit():
+    """Cleanup function to be called on application exit"""
+    logger.info("Application exit cleanup initiated")
+    DocumentProcessor.cleanup_all_instances()
+
+def cleanup_on_signal(signum, frame):
+    """Cleanup function to be called on signal"""
+    logger.info(f"Signal {signum} received, cleaning up")
+    DocumentProcessor.cleanup_all_instances()
+    exit(0)
+
+# Register cleanup handlers
+atexit.register(cleanup_on_exit)
+signal.signal(signal.SIGINT, cleanup_on_signal)
+signal.signal(signal.SIGTERM, cleanup_on_signal)

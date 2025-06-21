@@ -808,6 +808,15 @@ def main():
         cleanup_audio_files()
         st.session_state.audio_cleanup_done = True
 
+    # Clean up old ChromaDB directories on app start
+    if "chroma_cleanup_done" not in st.session_state:
+        try:
+            from document_processor import DocumentProcessor
+            DocumentProcessor.cleanup_old_directories(max_age_hours=1)  # Clean up directories older than 1 hour
+            st.session_state.chroma_cleanup_done = True
+        except Exception as e:
+            logger.warning(f"Failed to cleanup old ChromaDB directories: {e}")
+
     # Initialize document processor and session state variables
     if "doc_processor" not in st.session_state:
         logger.info("Initializing document processor")
@@ -823,34 +832,23 @@ def main():
 
     # Handle document upload logic
     uploaded_file = st.session_state.get("document_uploader")
-    if uploaded_file is not None and uploaded_file.file_id != st.session_state.processed_file_id:
-        logger.info(f"Processing uploaded file: {uploaded_file.name} (type: {uploaded_file.type}, size: {len(uploaded_file.getvalue())} bytes)")
+    
+    if uploaded_file and uploaded_file.file_id != st.session_state.processed_file_id:
+        logger.info(f"Processing new document: {uploaded_file.name}")
         
         try:
-            with st.spinner(f"Processing '{uploaded_file.name}'..."):
-                logger.info(f"Starting document processing for: {uploaded_file.name}")
-                doc_processor.process_file(uploaded_file)
-                logger.info(f"Document processing completed successfully for: {uploaded_file.name}")
-                
-            st.success(f"✅ Document '{uploaded_file.name}' processed successfully!")
-
-            # Auto-select model if an image was uploaded
-            if uploaded_file.type.startswith("image/"):
-                logger.info(f"Image detected, checking for vision model: {VISION_MODEL}")
-                available_models = get_available_models()
-                logger.info(f"Available models: {available_models}")
-                # Correctly parse the list of model name strings
-                if VISION_MODEL.split(':')[0] in [m.split(':')[0] for m in available_models]:
-                    st.session_state.selected_model = VISION_MODEL
-                    logger.info(f"Switched to vision model: {VISION_MODEL}")
-                    st.toast(f"🖼️ Switched to {VISION_MODEL} for image analysis.")
-                else:
-                    logger.warning(f"Vision model {VISION_MODEL} not found in available models")
+            # Process the uploaded file
+            doc_processor.process_file(uploaded_file)
             
-            # Mark file as processed to prevent reprocessing and rerun
+            # Update session state to mark as processed
             st.session_state.processed_file_id = uploaded_file.file_id
-            st.rerun()
-
+            
+            # Show success message
+            st.success(f"✅ Document '{uploaded_file.name}' processed successfully!")
+            
+            # Clear the uploader to prevent reprocessing
+            st.session_state.document_uploader = None
+            
         except Exception as e:
             logger.error(f"Error processing document '{uploaded_file.name}': {str(e)}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
@@ -870,6 +868,16 @@ def main():
 
     # Enhanced chat interface
     enhanced_chat_interface(doc_processor)
+
+    # Add cleanup button in sidebar for development
+    if st.sidebar.button("🧹 Cleanup ChromaDB", help="Clean up all ChromaDB directories (development only)"):
+        try:
+            from document_processor import DocumentProcessor
+            DocumentProcessor.cleanup_all_chroma_directories()
+            st.sidebar.success("ChromaDB cleanup completed!")
+            st.rerun()
+        except Exception as e:
+            st.sidebar.error(f"Cleanup failed: {e}")
 
 if __name__ == "__main__":
     main()
