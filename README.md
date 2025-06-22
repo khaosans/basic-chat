@@ -48,7 +48,7 @@
 
 ### 🧠 **Advanced Reasoning**
 - **Multi-Modal Reasoning**: 5 different reasoning strategies for optimal problem-solving
-- **Chain-of-Thought**: Step-by-step reasoning for complex problems
+- **Chain-of-Thought**: Step-by-step reasoning for complex problems (Wei et al.)
 - **Agent-Based**: Intelligent tool selection and execution
 - **Auto Mode**: Automatically selects the best reasoning approach
 
@@ -60,7 +60,7 @@
 
 ### 📄 **Document & Image Analysis**
 - **Multi-Format Support**: PDF, text, markdown, and image files
-- **Advanced RAG**: Retrieval-Augmented Generation with semantic search
+- **Advanced RAG**: Retrieval-Augmented Generation with semantic search (Lewis et al.)
 - **OCR Capabilities**: Image text extraction using vision models
 - **Vector Storage**: Efficient ChromaDB-based document indexing
 
@@ -74,7 +74,7 @@
 
 ## 🚀 Quick Start
 
-### 1. **Prerequisites**
+### **Prerequisites**
 
 ```bash
 # Required Software
@@ -83,7 +83,7 @@
 - Git (for cloning)
 ```
 
-### 2. **Installation**
+### **Installation**
 
 ```bash
 # Clone the repository
@@ -98,7 +98,7 @@ source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. **Download AI Models**
+### **Download AI Models**
 
 ```bash
 # Core models for reasoning and embeddings
@@ -109,7 +109,7 @@ ollama pull nomic-embed-text
 ollama pull llava
 ```
 
-### 4. **Launch Application**
+### **Launch Application**
 
 ```bash
 # Start Ollama service (if not running)
@@ -287,6 +287,34 @@ We welcome contributions! Please see our [Development Guide](docs/DEVELOPMENT.md
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 📚 References
+
+### **Research Papers**
+
+Wei, Jason, et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
+
+Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
+
+Johnson, Jeff, Matthijs Douze, and Hervé Jégou. "Billion-Scale Similarity Search with GPUs." *IEEE Transactions on Big Data*, vol. 7, no. 3, 2019, pp. 535-547.
+
+### **Core Technologies**
+
+Ollama. "Local Large Language Model Server." *Ollama.ai*, 2024, https://ollama.ai.
+
+Streamlit. "Web Application Framework." *Streamlit.io*, 2024, https://streamlit.io.
+
+LangChain. "LLM Application Framework." *LangChain.com*, 2024, https://langchain.com.
+
+ChromaDB. "Vector Database for AI Applications." *ChromaDB.ai*, 2024, https://chromadb.ai.
+
+### **Development Tools**
+
+Beazley, David M., and Brian K. Jones. *Python Cookbook*. 3rd ed., O'Reilly Media, 2013.
+
+Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
 
 ---
 

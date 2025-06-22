@@ -535,9 +535,8 @@ graph LR
     TYPE_CHECK --> REVIEW
 ```
 
-**Diagram Narrative: Development Workflow**
-
-This diagram illustrates the complete development cycle from feature branching through testing, review, and merge, with quality gates ensuring code quality at each stage. The workflow integrates unit tests, integration tests, linting, and type checking as mandatory quality gates, ensuring that only high-quality code reaches production. Follow this workflow for all feature development to maintain code quality, enable effective collaboration, and ensure reliable deployments.
+**Development Workflow:**
+The development workflow ensures code quality and collaboration through systematic processes. Feature development follows a structured approach with clear quality gates at each stage. The workflow integrates automated testing, code review, and quality checks to maintain high standards while enabling rapid development cycles.
 
 ### **Git Workflow**
 

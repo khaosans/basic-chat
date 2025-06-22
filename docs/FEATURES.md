@@ -10,7 +10,7 @@ This document provides a comprehensive overview of BasicChat's capabilities, org
 
 ### **Multi-Modal Reasoning Engine**
 
-BasicChat features a sophisticated reasoning engine that can adapt its approach based on query complexity and requirements.
+BasicChat features a sophisticated reasoning engine that adapts its approach based on query complexity and requirements.
 
 <div align="center">
 
@@ -359,6 +359,12 @@ The web search integration is optimized for both performance and privacy. The sy
 - No user tracking or data collection
 - Search queries are not logged or stored
 - Results are cached locally for performance without compromising privacy
+
+**Capabilities:**
+- **Real-time Results**: Current information and news
+- **No API Key**: Privacy-preserving search
+- **Smart Caching**: Reduces redundant requests
+- **Result Formatting**: Clean, readable output
 
 ---
 

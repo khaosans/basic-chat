@@ -83,7 +83,8 @@ This diagram illustrates how user input flows through each architectural layer, 
 
 ## 🧩 Core Components
 
-### 1. **Reasoning Engine** (`reasoning_engine.py`)
+### **1. Reasoning Engine** (`reasoning_engine.py`)
+
 The central orchestrator that manages different reasoning strategies and coordinates tool usage.
 
 **Key Responsibilities:**
@@ -144,7 +145,8 @@ classDiagram
 
 This class diagram explains the flexible, extensible design of the reasoning engine, where the main orchestrator delegates to agent, chain, multi-step, or auto classes. The use of the Strategy pattern allows for easy addition of new reasoning modes, supporting future extensibility (Wei et al.).
 
-### 2. **Document Processor** (`document_processor.py`)
+### **2. Document Processor** (`document_processor.py`)
+
 Manages the complete document lifecycle with advanced RAG capabilities.
 
 **Key Features:**
@@ -198,7 +200,8 @@ graph LR
 
 This diagram shows how documents and images are processed for retrieval-augmented generation (RAG). Text and images are extracted, chunked, embedded, and stored for semantic search, with a dual pipeline ensuring both formats are handled efficiently (Lewis et al.).
 
-### 3. **Async Ollama Client** (`utils/async_ollama.py`)
+### **3. Async Ollama Client** (`utils/async_ollama.py`)
+
 High-performance client for Ollama API with advanced connection management.
 
 **Performance Features:**
@@ -244,7 +247,8 @@ sequenceDiagram
 
 This sequence diagram visualizes high-performance request handling, where connection pooling, rate limiting, and caching optimize LLM calls. The client checks the pool, rate, and cache before making a request or returning a cached result, ensuring efficient and reliable interactions.
 
-### 4. **Tool Registry** (`utils/enhanced_tools.py`)
+### **4. Tool Registry** (`utils/enhanced_tools.py`)
+
 Extensible tool system providing specialized capabilities.
 
 **Available Tools:**
@@ -287,7 +291,7 @@ This diagram shows how tools are organized for extensibility, with a central reg
 
 ## 🔄 Data Flow Architecture
 
-### Standard Query Processing
+### **Standard Query Processing**
 
 ```mermaid
 sequenceDiagram
@@ -333,7 +337,7 @@ The caching system implements a multi-layered approach that optimizes for both p
 **Error Handling and Fallbacks:**
 The system implements comprehensive error handling with graceful degradation strategies. When primary components fail, the system automatically falls back to alternative approaches while maintaining user experience. For example, if the main reasoning engine fails, the system can fall back to a simplified response generation approach. Error messages are logged with sufficient detail for debugging while providing user-friendly notifications that don't expose internal system details.
 
-### Document Analysis (RAG) Flow
+### **Document Analysis (RAG) Flow**
 
 ```mermaid
 sequenceDiagram
@@ -371,7 +375,7 @@ This diagram explains how document context is used to answer questions by proces
 
 ## 🚀 Performance Architecture
 
-### Caching Strategy
+### **Caching Strategy**
 
 ```mermaid
 graph TB
@@ -417,7 +421,7 @@ The multi-layer caching strategy is designed to maximize hit rates while minimiz
 **Cache Key Design:**
 Cache keys are designed to balance uniqueness with efficiency. The system uses a hierarchical key structure that includes query hash, model parameters, and context information. This approach ensures that similar queries with different parameters are cached separately while maintaining reasonable key sizes. The key generation process is optimized to minimize computational overhead while providing sufficient uniqueness for accurate cache lookups.
 
-### Async Processing Pipeline
+### **Async Processing Pipeline**
 
 ```mermaid
 graph LR
@@ -454,7 +458,7 @@ This diagram shows how asynchronous workers and connection pooling boost through
 
 ## 🔒 Security & Privacy Architecture
 
-### Data Privacy Model
+### **Data Privacy Model**
 
 ```mermaid
 graph TB
@@ -498,7 +502,7 @@ This diagram clarifies how data is protected at every stage, with local processi
 
 ## 🏗️ Technology Stack
 
-### Core Technologies
+### **Core Technologies**
 
 ```mermaid
 graph TB
@@ -556,7 +560,7 @@ This diagram presents the main technologies and their roles, showing how Python,
 
 ## 📈 Scalability Considerations
 
-### Horizontal Scaling
+### **Horizontal Scaling**
 
 ```mermaid
 graph TB
@@ -613,13 +617,13 @@ This diagram explains how the system scales to support more users, with a load b
 
 ## 📚 References
 
-### Core Technologies
+### **Core Technologies**
 - **Ollama**: [https://ollama.ai](https://ollama.ai) - Local large language model server
 - **Streamlit**: [https://streamlit.io](https://streamlit.io) - Web application framework
 - **LangChain**: [https://langchain.com](https://langchain.com) - LLM application framework
 - **ChromaDB**: [https://chromadb.ai](https://chromadb.ai) - Vector database
 
-### Research Papers
+### **Research Papers**
 - **Chain-of-Thought Reasoning**: Wei et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
 - **Retrieval-Augmented Generation**: Lewis et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
 - **Vector Similarity Search**: Johnson et al. "Billion-Scale Similarity Search with GPUs." *IEEE Transactions on Big Data* 7.3 (2019): 535-547.
