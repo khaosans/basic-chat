@@ -1,218 +1,529 @@
 # System Architecture
 
-This document provides a high-level overview of the technical architecture of BasicChat. It outlines the main components and the flow of data through the system.
+This document provides a comprehensive overview of BasicChat's technical architecture, including component interactions, data flows, and system design principles.
 
 [← Back to README](../README.md)
 
 ---
 
-## 🏛️ Core Architecture
+## 🏗️ High-Level Architecture
 
-The application is designed with a modular, layered architecture that separates the user interface, application logic, and core services. This separation makes the system easier to develop, test, and maintain.
+BasicChat follows a **layered microservices architecture** with clear separation of concerns, enabling scalability, maintainability, and testability. The system is built around a **reasoning engine** that orchestrates multiple specialized components.
+
+```mermaid
+graph TB
+    subgraph "🎨 Presentation Layer"
+        UI[Streamlit Web Interface]
+        AUDIO[Audio Processing]
+    end
+    
+    subgraph "🧠 Application Layer"
+        RE[Reasoning Engine]
+        DP[Document Processor]
+        TR[Tool Registry]
+    end
+    
+    subgraph "🔧 Service Layer"
+        AO[Async Ollama Client]
+        VS[Vector Store Service]
+        CS[Caching Service]
+        WS[Web Search Service]
+    end
+    
+    subgraph "🗄️ Data Layer"
+        CHROMA[ChromaDB Vector Store]
+        CACHE[Redis/Memory Cache]
+        FILES[File Storage]
+    end
+    
+    subgraph "🌐 External Services"
+        OLLAMA[Ollama LLM Server]
+        DDG[DuckDuckGo Search]
+    end
+    
+    %% Presentation Layer Connections
+    UI --> RE
+    UI --> DP
+    AUDIO --> RE
+    
+    %% Application Layer Connections
+    RE --> AO
+    RE --> VS
+    RE --> TR
+    DP --> VS
+    TR --> WS
+    
+    %% Service Layer Connections
+    AO --> OLLAMA
+    VS --> CHROMA
+    CS --> CACHE
+    WS --> DDG
+    
+    %% Data Layer Connections
+    CHROMA --> FILES
+    CACHE --> FILES
+    
+    classDef presentation fill:#E1F5FE,stroke:#01579B,stroke-width:2px
+    classDef application fill:#F3E5F5,stroke:#4A148C,stroke-width:2px
+    classDef service fill:#E8F5E8,stroke:#1B5E20,stroke-width:2px
+    classDef data fill:#FFF3E0,stroke:#E65100,stroke-width:2px
+    classDef external fill:#FCE4EC,stroke:#880E4F,stroke-width:2px
+    
+    class UI,AUDIO presentation
+    class RE,DP,TR application
+    class AO,VS,CS,WS service
+    class CHROMA,CACHE,FILES data
+    class OLLAMA,DDG external
+```
+
+## 🧩 Core Components
+
+### 1. **Reasoning Engine** (`reasoning_engine.py`)
+The central orchestrator that manages different reasoning strategies and coordinates tool usage.
+
+**Key Responsibilities:**
+- **Multi-Modal Reasoning**: Supports 5 reasoning modes (Auto, Standard, Chain-of-Thought, Multi-Step, Agent-Based)
+- **Tool Orchestration**: Intelligently selects and executes appropriate tools
+- **Context Management**: Integrates document context with user queries
+- **Response Synthesis**: Combines multiple sources into coherent answers
+
+**Architecture Pattern:** Strategy Pattern with Factory Method
+
+```mermaid
+classDiagram
+    class ReasoningEngine {
+        +run(query, mode, document_processor) ReasoningResult
+        -_retrieve_and_format_context() str
+    }
+    
+    class ReasoningAgent {
+        +run(query, context, stream_callback) ReasoningResult
+        -_create_tools() List[Tool]
+        -_web_search(query) str
+        -_enhanced_calculate(expression) str
+    }
+    
+    class ReasoningChain {
+        +execute_reasoning(question, context) ReasoningResult
+        -_parse_chain_of_thought_response() tuple
+    }
+    
+    class MultiStepReasoning {
+        +step_by_step_reasoning(query, context) ReasoningResult
+        -_generate_sub_queries() List[str]
+        -_synthesize_final_answer() str
+    }
+    
+    class AutoReasoning {
+        +auto_reason(query, context) ReasoningResult
+        -_analyze_query_complexity() Dict
+        -_fallback_analysis() Dict
+    }
+    
+    ReasoningEngine --> ReasoningAgent
+    ReasoningEngine --> ReasoningChain
+    ReasoningEngine --> MultiStepReasoning
+    ReasoningEngine --> AutoReasoning
+```
+
+### 2. **Document Processor** (`document_processor.py`)
+Manages the complete document lifecycle with advanced RAG capabilities.
+
+**Key Features:**
+- **Multi-Format Support**: PDF, text, markdown, images (OCR)
+- **Intelligent Chunking**: Recursive character splitting with overlap
+- **Vector Embeddings**: Local embedding generation with Ollama
+- **Semantic Search**: ChromaDB-based similarity search
+- **Memory Management**: Automatic cleanup and resource optimization
+
+```mermaid
+graph LR
+    subgraph "📄 Document Processing Pipeline"
+        UPLOAD[File Upload]
+        EXTRACT[Text Extraction]
+        CHUNK[Text Chunking]
+        EMBED[Vector Embedding]
+        STORE[Vector Storage]
+        SEARCH[Semantic Search]
+    end
+    
+    UPLOAD --> EXTRACT
+    EXTRACT --> CHUNK
+    CHUNK --> EMBED
+    EMBED --> STORE
+    STORE --> SEARCH
+    
+    subgraph "🖼️ Image Processing"
+        IMG[Image Upload]
+        OCR[Vision Model OCR]
+        DESC[Description Generation]
+    end
+    
+    IMG --> OCR
+    OCR --> DESC
+    DESC --> CHUNK
+```
+
+### 3. **Async Ollama Client** (`utils/async_ollama.py`)
+High-performance client for Ollama API with advanced connection management.
+
+**Performance Features:**
+- **Connection Pooling**: 100 total connections, 30 per host
+- **Rate Limiting**: Token bucket algorithm (10 req/sec default)
+- **Retry Logic**: Exponential backoff with 3 attempts
+- **Streaming Support**: Real-time response streaming
+- **Health Monitoring**: Automatic service availability checks
+
+```mermaid
+sequenceDiagram
+    participant Client as AsyncOllamaClient
+    participant Pool as Connection Pool
+    participant Throttle as Rate Limiter
+    participant Ollama as Ollama Server
+    participant Cache as Response Cache
+    
+    Client->>Pool: Get Connection
+    Pool-->>Client: Available Connection
+    
+    Client->>Throttle: Check Rate Limit
+    Throttle-->>Client: Allow Request
+    
+    Client->>Cache: Check Cache
+    alt Cache Hit
+        Cache-->>Client: Cached Response
+    else Cache Miss
+        Client->>Ollama: Make Request
+        Ollama-->>Client: Response
+        Client->>Cache: Store Response
+    end
+    
+    Client->>Pool: Return Connection
+```
+
+### 4. **Tool Registry** (`utils/enhanced_tools.py`)
+Extensible tool system providing specialized capabilities.
+
+**Available Tools:**
+- **Enhanced Calculator**: Advanced mathematical operations with step-by-step reasoning
+- **Time Tools**: Timezone-aware time calculations and conversions
+- **Web Search**: Real-time information retrieval via DuckDuckGo
+- **Document Summary**: Intelligent document summarization
 
 ```mermaid
 graph TD
-    classDef ui fill:#87CEEB,stroke:#4682B4,color:#000
-    classDef logic fill:#98FB98,stroke:#3CB371,color:#000
-    classDef service fill:#F0E68C,stroke:#BDB76B,color:#000
-    classDef external fill:#D3D3D3,stroke:#A9A9A9,color:#000
-
-    subgraph User Facing
-        A["<br/><b>Streamlit UI</b><br/>User interaction and file uploads<br/>"]:::ui
-    end
-
-    subgraph Application Logic
-        B["<b>App Controller</b><br/>(app.py)<br/>Routes user input"]:::logic
-        C["<b>Reasoning Engine</b><br/>Determines logic and uses tools"]:::logic
-        D["<b>Document Processor</b><br/>Manages document lifecycle and RAG"]:::logic
-    end
-
-    subgraph Core Services
-        F["<b>Async Ollama Client</b><br/>Communicates with LLMs"]:::service
-        G["<b>ChromaDB Vector Store</b><br/>Stores and retrieves document embeddings"]:::service
-        H["<b>Tool Registry</b><br/>Provides Calculator, Web Search, etc."_]:::service
-        I["<b>Caching Service</b><br/>In-memory & Redis for performance"]:::service
+    subgraph "🛠️ Tool Registry"
+        TR[Tool Registry]
+        CALC[Enhanced Calculator]
+        TIME[Time Tools]
+        WEB[Web Search]
+        DOC[Document Summary]
     end
     
-    subgraph External Systems
-        J["<b>Ollama Service</b><br/>Hosts local LLMs"]:::external
+    subgraph "🔧 Tool Capabilities"
+        MATH[Mathematical Operations]
+        TZ[Timezone Conversions]
+        SEARCH[Real-time Search]
+        SUMMARY[Document Analysis]
     end
-
-    A -- "User Query / File" --> B
     
-    B -- "Processes Query" --> C
-    B -- "Processes File" --> D
+    TR --> CALC
+    TR --> TIME
+    TR --> WEB
+    TR --> DOC
     
-    C -- "Uses" --> H
-    C -- "Sends Request" --> F
-    
-    D -- "Manages" --> G
-    
-    F -- "Queries" --> J
-    F -- "Caches" --> I
-    
-    J -- "LLM Response" --> F
-    F -- "Returns Response" --> C
-    C -- "Final Answer" --> B
-    B -- "Displays Result" --> A
+    CALC --> MATH
+    TIME --> TZ
+    WEB --> SEARCH
+    DOC --> SUMMARY
 ```
 
-## 🧩 Key Components
+## 🔄 Data Flow Architecture
 
--   **Streamlit UI (`app.py`)**: The main web interface that captures user input, handles file uploads, and displays the AI's responses.
--   **Reasoning Engine (`reasoning_engine.py`)**: The core logic unit. It interprets user queries, decides which reasoning mode to use, and coordinates with tools and the LLM to generate an answer.
--   **Document Processor (`document_processor.py`)**: Manages the entire lifecycle of documents, from text extraction and embedding to storage and retrieval for RAG.
--   **Core Services**: A set of internal services that provide essential functionalities:
-    -   `Async Ollama Client`: A high-performance client for non-blocking communication with the Ollama server.
-    -   `ChromaDB Vector Store`: A local database for efficient semantic search over documents.
-    -   `Tool Registry`: Provides access to built-in capabilities like the calculator and web search.
-    -   `Caching`: A multi-layer cache to accelerate responses.
-
----
-
-## 🔄 Data Flows
-
-The following diagrams illustrate how data moves through the system for different scenarios.
-
-### Standard Query with Tool Use
-
-This flow shows how the system answers a question like *"What is the square root of 144?"* using the **Agent-Based** reasoning mode.
+### Standard Query Processing
 
 ```mermaid
 sequenceDiagram
     participant User
     participant UI as Streamlit UI
-    participant Engine as Reasoning Engine
-    participant Tools as Tool Registry
-    participant LLM as Ollama LLM
+    participant RE as Reasoning Engine
+    participant TR as Tool Registry
+    participant AO as Async Ollama
+    participant Cache as Cache Service
     
-    User->>+UI: Asks "sqrt(144)?"
-    UI->>+Engine: Process query
-    Engine->>+LLM: "Should I use a tool for 'sqrt(144)'?"
-    LLM-->>-Engine: "Yes, use calculator"
-    Engine->>+Tools: Execute calculator with "sqrt(144)"
-    Tools-->>-Engine: Return "12"
-    Engine->>+LLM: "The tool returned 12. Formulate the final answer."
-    LLM-->>-Engine: "The square root of 144 is 12."
-    Engine-->>-UI: Send final answer
-    UI-->>-User: Display "The square root of 144 is 12."
+    User->>UI: Submit Query
+    UI->>RE: Process Query
+    
+    RE->>Cache: Check Cache
+    alt Cache Hit
+        Cache-->>RE: Cached Response
+        RE-->>UI: Return Response
+    else Cache Miss
+        RE->>RE: Analyze Query Complexity
+        RE->>TR: Select Appropriate Tools
+        
+        alt Tool Required
+            RE->>TR: Execute Tool
+            TR-->>RE: Tool Result
+        end
+        
+        RE->>AO: Generate LLM Response
+        AO-->>RE: LLM Response
+        RE->>Cache: Store Response
+        RE-->>UI: Return Response
+    end
+    
+    UI-->>User: Display Result
 ```
 
-### Document Analysis (RAG)
-
-This flow shows how the system answers a question based on an uploaded document.
+### Document Analysis (RAG) Flow
 
 ```mermaid
 sequenceDiagram
     participant User
     participant UI as Streamlit UI
-    participant DocProc as Document Processor
-    participant DB as ChromaDB
-    participant Engine as Reasoning Engine
-    participant LLM as Ollama LLM
-
-    User->>+UI: Uploads "research_paper.pdf"
-    UI->>+DocProc: Process file
-    DocProc->>+DB: Extract text, create embeddings,<br/>and store in database
-    DB-->>-DocProc: Confirm storage
-    DocProc-->>-UI: Notify success
-
-    User->>+UI: Asks "What was the main finding?"
-    UI->>+Engine: Process query with document context
-    Engine->>+DB: Search for relevant chunks in "research_paper.pdf"
-    DB-->>-Engine: Return top 3 relevant text chunks
-    Engine->>+LLM: "Context: [text chunks]<br/>Question: What was the main finding?"
-    LLM-->>-Engine: Generate answer based on context
-    Engine-->>-UI: Send final answer
-    UI-->>-User: Display answer
+    participant DP as Document Processor
+    participant VS as Vector Store
+    participant RE as Reasoning Engine
+    participant AO as Async Ollama
+    
+    User->>UI: Upload Document
+    UI->>DP: Process Document
+    
+    DP->>DP: Extract Text
+    DP->>DP: Create Chunks
+    DP->>DP: Generate Embeddings
+    DP->>VS: Store Vectors
+    VS-->>DP: Confirm Storage
+    DP-->>UI: Processing Complete
+    
+    User->>UI: Ask Question
+    UI->>RE: Process Query
+    
+    RE->>VS: Search Relevant Chunks
+    VS-->>RE: Top K Chunks
+    RE->>AO: Generate Answer with Context
+    AO-->>RE: Contextual Response
+    RE-->>UI: Return Answer
+    UI-->>User: Display Answer
 ```
 
-## Performance Architecture
-
-### Async Processing
-- **Connection Pooling**: 100 total connections, 30 per host for optimal resource utilization
-- **Rate Limiting**: Configurable (default: 10 req/sec) with token bucket algorithm
-- **Retry Logic**: Exponential backoff with 3 attempts for fault tolerance
-- **Health Monitoring**: Real-time service availability checks with automatic failover
+## 🚀 Performance Architecture
 
 ### Caching Strategy
-- **Multi-layer**: Redis primary + Memory fallback for distributed and local caching
-- **Smart Keys**: MD5 hash with parameter inclusion for collision resistance
-- **Performance**: 50-80% faster response times with intelligent cache management
-- **Hit Rate**: 70-85% for repeated queries with optimal key design
 
-### Memory Management
-- **Session State**: Streamlit session management with automatic cleanup
-- **Vector Store**: ChromaDB with configurable persistence and memory limits
-- **Cache Limits**: Configurable TTL and size limits with automatic eviction
-- **Resource Cleanup**: Automatic cleanup and garbage collection for optimal performance
+```mermaid
+graph TB
+    subgraph "💾 Multi-Layer Cache"
+        L1[L1: Memory Cache]
+        L2[L2: Redis Cache]
+        L3[L3: Disk Cache]
+    end
+    
+    subgraph "🔑 Cache Keys"
+        QUERY[Query Hash]
+        MODEL[Model Name]
+        PARAMS[Parameters]
+        CONTEXT[Context Hash]
+    end
+    
+    subgraph "📊 Cache Performance"
+        HIT_RATE[70-85% Hit Rate]
+        RESPONSE_TIME[50-80% Faster]
+        TTL[Configurable TTL]
+    end
+    
+    QUERY --> L1
+    MODEL --> L1
+    PARAMS --> L1
+    CONTEXT --> L1
+    
+    L1 --> L2
+    L2 --> L3
+    
+    L1 --> HIT_RATE
+    L2 --> RESPONSE_TIME
+    L3 --> TTL
+```
 
-## Security Architecture
+### Async Processing Pipeline
 
-### Input Validation
-- **Expression Sanitization**: Safe mathematical operations with dangerous operation detection
-- **File Upload Security**: Type validation and size limits with malicious file detection
-- **Rate Limiting**: Per-user/IP request throttling to prevent abuse and DDoS attacks
-- **Error Handling**: Graceful degradation and fallbacks with actionable error messages
+```mermaid
+graph LR
+    subgraph "⚡ Async Processing"
+        REQ[Request Queue]
+        WORKER1[Worker 1]
+        WORKER2[Worker 2]
+        WORKER3[Worker 3]
+        RESP[Response Queue]
+    end
+    
+    subgraph "🔧 Connection Pool"
+        POOL[Connection Pool]
+        LIMITER[Rate Limiter]
+        RETRY[Retry Logic]
+    end
+    
+    REQ --> WORKER1
+    REQ --> WORKER2
+    REQ --> WORKER3
+    
+    WORKER1 --> POOL
+    WORKER2 --> POOL
+    WORKER3 --> POOL
+    
+    POOL --> LIMITER
+    LIMITER --> RETRY
+    RETRY --> RESP
+```
 
-### Data Privacy
-- **Local Processing**: All data processed locally via Ollama with no external API calls
-- **No External Storage**: No data sent to external services except for web search queries
-- **Configurable Logging**: Optional structured logging with privacy-preserving defaults
-- **Session Isolation**: User session separation with no cross-user data access
+## 🔒 Security & Privacy Architecture
 
-## Scalability Considerations
+### Data Privacy Model
 
-### Horizontal Scaling
-- **Stateless Design**: Session state in Streamlit with no server-side state dependencies
-- **Redis Integration**: Distributed caching support for multi-instance deployments
-- **Load Balancing**: Ready for multiple instances with health check integration
-- **Health Checks**: Service availability monitoring with automatic failover
+```mermaid
+graph TB
+    subgraph "🔒 Privacy Controls"
+        LOCAL[Local Processing Only]
+        NO_EXTERNAL[No External APIs]
+        ENCRYPT[Encrypted Storage]
+        CLEANUP[Auto Cleanup]
+    end
+    
+    subgraph "🛡️ Security Measures"
+        VALIDATION[Input Validation]
+        SANITIZATION[Expression Sanitization]
+        RATE_LIMIT[Rate Limiting]
+        ERROR_HANDLING[Error Handling]
+    end
+    
+    subgraph "📊 Data Flow"
+        USER[User Input]
+        PROCESS[Local Processing]
+        STORE[Local Storage]
+        CLEAN[Auto Cleanup]
+    end
+    
+    USER --> VALIDATION
+    VALIDATION --> SANITIZATION
+    SANITIZATION --> PROCESS
+    
+    PROCESS --> LOCAL
+    PROCESS --> NO_EXTERNAL
+    
+    PROCESS --> STORE
+    STORE --> ENCRYPT
+    STORE --> CLEANUP
+    CLEANUP --> CLEAN
+```
 
-### Performance Optimization
-- **Async Operations**: Non-blocking request handling with efficient resource utilization
-- **Connection Reuse**: HTTP connection pooling for reduced latency and overhead
-- **Batch Processing**: Efficient document chunking and embedding generation
-- **Memory Management**: Configurable cache sizes with optimal eviction policies
-
-## Technology Stack
+## 🏗️ Technology Stack
 
 ### Core Technologies
-- **Python 3.11+**: Main programming language with modern async/await support
-- **Streamlit**: Web application framework for rapid UI development
-- **Ollama**: Local LLM server for privacy-preserving AI inference
-- **ChromaDB**: Vector database for semantic search and similarity matching
 
-### Key Libraries
-- **aiohttp**: Async HTTP client/server for high-performance networking
-- **LangChain**: LLM application framework for AI system development
-- **Pydantic**: Data validation and settings management with type safety
-- **pytest**: Testing framework with comprehensive test coverage
+```mermaid
+graph TB
+    subgraph "🐍 Backend"
+        PYTHON[Python 3.11+]
+        STREAMLIT[Streamlit]
+        LANGCHAIN[LangChain]
+        PYDANTIC[Pydantic]
+    end
+    
+    subgraph "🤖 AI/ML"
+        OLLAMA[Ollama]
+        CHROMA[ChromaDB]
+        EMBEDDINGS[Text Embeddings]
+        VISION[Vision Models]
+    end
+    
+    subgraph "⚡ Performance"
+        AIOHTTP[aiohttp]
+        REDIS[Redis]
+        CACHETOOLS[cachetools]
+        THROTTLE[asyncio-throttle]
+    end
+    
+    subgraph "🛠️ Tools"
+        DUCKDUCKGO[DuckDuckGo Search]
+        GTTS[gTTS]
+        PILLOW[Pillow]
+        PYTZ[pytz]
+    end
+    
+    PYTHON --> STREAMLIT
+    PYTHON --> LANGCHAIN
+    PYTHON --> PYDANTIC
+    
+    LANGCHAIN --> OLLAMA
+    LANGCHAIN --> CHROMA
+    LANGCHAIN --> EMBEDDINGS
+    LANGCHAIN --> VISION
+    
+    STREAMLIT --> AIOHTTP
+    STREAMLIT --> REDIS
+    STREAMLIT --> CACHETOOLS
+    STREAMLIT --> THROTTLE
+    
+    LANGCHAIN --> DUCKDUCKGO
+    STREAMLIT --> GTTS
+    STREAMLIT --> PILLOW
+    STREAMLIT --> PYTZ
+```
 
-### External Services
-- **DuckDuckGo**: Web search (no API key required) for real-time information
-- **Redis**: Optional distributed caching for multi-instance deployments
-- **Tesseract**: OCR for image processing and text extraction
+## 📈 Scalability Considerations
+
+### Horizontal Scaling
+
+```mermaid
+graph TB
+    subgraph "🔄 Load Balancer"
+        LB[Load Balancer]
+    end
+    
+    subgraph "🖥️ Application Instances"
+        INST1[Instance 1]
+        INST2[Instance 2]
+        INST3[Instance 3]
+    end
+    
+    subgraph "🗄️ Shared Services"
+        REDIS_SHARED[Redis Cluster]
+        CHROMA_SHARED[ChromaDB Cluster]
+    end
+    
+    subgraph "🔍 Health Checks"
+        HEALTH[Health Monitor]
+        FAILOVER[Auto Failover]
+    end
+    
+    LB --> INST1
+    LB --> INST2
+    LB --> INST3
+    
+    INST1 --> REDIS_SHARED
+    INST2 --> REDIS_SHARED
+    INST3 --> REDIS_SHARED
+    
+    INST1 --> CHROMA_SHARED
+    INST2 --> CHROMA_SHARED
+    INST3 --> CHROMA_SHARED
+    
+    HEALTH --> INST1
+    HEALTH --> INST2
+    HEALTH --> INST3
+    
+    HEALTH --> FAILOVER
+    FAILOVER --> LB
+```
 
 ## 🔗 Related Documentation
 
-- **[Installation Guide](INSTALLATION.md)** - Setup and configuration
 - **[Features Overview](FEATURES.md)** - Detailed feature documentation
-- **[Development Guide](DEVELOPMENT.md)** - Contributing and development
-- **[Production Roadmap](ROADMAP.md)** - Future development plans
+- **[Development Guide](DEVELOPMENT.md)** - Contributing and development workflows
+- **[Roadmap](ROADMAP.md)** - Future development plans
 - **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
 
 ## 📚 References
-
-### Research Papers
-- **Chain-of-Thought Reasoning**: Wei et al. demonstrate that step-by-step reasoning significantly improves AI performance on complex tasks (Wei et al. 2201.11903).
-- **Retrieval-Augmented Generation**: Lewis et al. introduce RAG as a method to enhance language models with external knowledge (Lewis et al. 2005.11401).
-- **Vector Similarity Search**: Johnson et al. provide comprehensive analysis of approximate nearest neighbor search methods (Johnson et al. 1908.10396).
-
-### Academic References
-- **Distributed Systems**: Tanenbaum and van Steen provide comprehensive coverage of distributed system principles and practices (Tanenbaum and van Steen 2007).
-- **Web Application Architecture**: Fielding and Reschke document HTTP protocol and web application design principles (Fielding and Reschke 2014).
-- **Software Testing**: Myers et al. present comprehensive software testing methodologies and best practices (Myers et al. 2011).
 
 ### Core Technologies
 - **Ollama**: [https://ollama.ai](https://ollama.ai) - Local large language model server
@@ -220,21 +531,11 @@ sequenceDiagram
 - **LangChain**: [https://langchain.com](https://langchain.com) - LLM application framework
 - **ChromaDB**: [https://chromadb.ai](https://chromadb.ai) - Vector database
 
-### Works Cited
-Wei, Jason, et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
-
-Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
-
-Johnson, Jeff, et al. "Billion-Scale Similarity Search with GPUs." *arXiv preprint arXiv:1908.10396*, 2019.
-
-Fowler, Martin. *Microservices: A Definition of This New Architectural Term*. Martin Fowler, 2014, martinfowler.com/articles/microservices.html.
-
-Tanenbaum, Andrew S., and Maarten van Steen. *Distributed Systems: Principles and Paradigms*. 2nd ed., Prentice Hall, 2007.
-
-Fielding, Roy T., and Julian F. Reschke. "Hypertext Transfer Protocol (HTTP/1.1): Authentication." *Internet Engineering Task Force*, RFC 7235, 2014.
-
-Myers, Glenford J., et al. *The Art of Software Testing*. 3rd ed., John Wiley & Sons, 2011.
+### Research Papers
+- **Chain-of-Thought Reasoning**: Wei et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
+- **Retrieval-Augmented Generation**: Lewis et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
+- **Vector Similarity Search**: Johnson et al. "Billion-Scale Similarity Search with GPUs." *arXiv preprint arXiv:1908.10396*, 2019.
 
 ---
 
-[← Back to README](../README.md) | [Installation ←](INSTALLATION.md) | [Features ←](FEATURES.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 
+[← Back to README](../README.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 
