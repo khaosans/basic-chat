@@ -8,74 +8,72 @@
 
 ```mermaid
 graph TB
-    subgraph "User Input"
+    subgraph "📥 Input Layer"
         QUERY[User Query]
         MODE[Reasoning Mode]
         CONTEXT[Document Context]
     end
     
-    subgraph "Reasoning Engine"
+    subgraph "🧠 Reasoning Layer"
         COT[Chain-of-Thought]
         MULTI[Multi-Step]
         AGENT[Agent-Based]
         AUTO[Auto Mode]
     end
     
-    subgraph "Tool Integration"
+    subgraph "🛠️ Tool Layer"
         CALC[Calculator]
         TIME[Time Tools]
         SEARCH[Web Search]
         DOCS[Document Tools]
     end
     
-    subgraph "Performance"
+    subgraph "⚡ Performance Layer"
         CACHE[Smart Caching]
         ASYNC[Async Processing]
         POOL[Connection Pool]
     end
     
-    subgraph "Output"
+    subgraph "📤 Output Layer"
         RESULT[Final Answer]
         STEPS[Reasoning Steps]
         CONFIDENCE[Confidence Score]
     end
     
-    QUERY --> COT
-    QUERY --> MULTI
-    QUERY --> AGENT
+    %% Clear flow from input to reasoning
     QUERY --> AUTO
-    
-    MODE --> COT
-    MODE --> MULTI
-    MODE --> AGENT
     MODE --> AUTO
-    
-    CONTEXT --> COT
-    CONTEXT --> MULTI
-    CONTEXT --> AGENT
     CONTEXT --> AUTO
     
+    %% Reasoning modes flow
+    AUTO --> COT
+    AUTO --> MULTI
+    AUTO --> AGENT
+    
+    %% Tools for each reasoning mode
     COT --> CALC
     MULTI --> DOCS
     AGENT --> SEARCH
     AGENT --> TIME
     
+    %% Performance optimization
     CALC --> CACHE
     SEARCH --> ASYNC
     DOCS --> POOL
     
+    %% Final output
     CACHE --> RESULT
     ASYNC --> STEPS
     POOL --> CONFIDENCE
     
     classDef input fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
-    classDef engine fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef reasoning fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
     classDef tools fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
     classDef performance fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
     classDef output fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
     
     class QUERY,MODE,CONTEXT input
-    class COT,MULTI,AGENT,AUTO engine
+    class COT,MULTI,AGENT,AUTO reasoning
     class CALC,TIME,SEARCH,DOCS tools
     class CACHE,ASYNC,POOL performance
     class RESULT,STEPS,CONFIDENCE output
