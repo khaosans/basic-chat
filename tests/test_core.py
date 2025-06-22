@@ -32,9 +32,12 @@ class TestOllamaChat:
         ({"inputs": ""}, (str, type(None))),
         ({"inputs": None}, (str, type(None))),
     ])
-    def test_should_handle_different_payload_types(self, payload, expected_type):
+    @patch('app.asyncio.run')
+    def test_should_handle_different_payload_types(self, mock_asyncio_run, payload, expected_type):
         """Should handle different payload types correctly"""
         chat = OllamaChat()
+        mock_asyncio_run.return_value = "test response"
+        
         result = chat.query(payload)
         assert isinstance(result, expected_type)
     
