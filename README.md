@@ -300,6 +300,8 @@ Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP 
 
 Johnson, Jeff, Matthijs Douze, and Hervé Jégou. "Billion-Scale Similarity Search with GPUs." *IEEE Transactions on Big Data*, vol. 7, no. 3, 2019, pp. 535-547.
 
+Chen, Charlie, et al. "Speculative Decoding: Accelerating LLM Inference via Speculative Sampling." *arXiv preprint arXiv:2302.01318*, 2023.
+
 ### **Core Technologies**
 
 Ollama. "Local Large Language Model Server." *Ollama.ai*, 2024, https://ollama.ai.
@@ -310,11 +312,51 @@ LangChain. "LLM Application Framework." *LangChain.com*, 2024, https://langchain
 
 ChromaDB. "Vector Database for AI Applications." *ChromaDB.ai*, 2024, https://chromadb.ai.
 
+DuckDuckGo. "Privacy-Focused Search Engine." *DuckDuckGo.com*, 2024, https://duckduckgo.com.
+
+### **AI Models**
+
+Mistral AI. "Mistral 7B: The Most Powerful Open Source Language Model." *Mistral.ai*, 2024, https://mistral.ai.
+
+Meta AI. "LLaMA: Open and Efficient Foundation Language Models." *AI.meta.com*, 2024, https://ai.meta.com/llama.
+
+Microsoft. "Phi-2: The Unquestionable Code Generation." *Microsoft.com*, 2024, https://www.microsoft.com/en-us/research/project/phi-2.
+
+Nomic AI. "Nomic Embed: Text Embedding Model." *Nomic.ai*, 2024, https://docs.nomic.ai/reference/endpoints/nomic-embed-text-v1.
+
+Liu, Haotian, et al. "LLaVA: Large Language and Vision Assistant." *arXiv preprint arXiv:2304.08485*, 2023.
+
 ### **Development Tools**
 
 Beazley, David M., and Brian K. Jones. *Python Cookbook*. 3rd ed., O'Reilly Media, 2013.
 
 Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
+
+### **Libraries & Frameworks**
+
+pytz. "World Timezone Definitions for Python." *Python Hosted*, 2024, https://pythonhosted.org/pytz.
+
+Redis. "In-Memory Data Structure Store." *Redis.io*, 2024, https://redis.io.
+
+Tesseract. "Optical Character Recognition Engine." *GitHub*, 2024, https://github.com/tesseract-ocr/tesseract.
+
+Python Software Foundation. "Abstract Syntax Trees." *Python Documentation*, 2024, https://docs.python.org/3/library/ast.html.
+
+### **Standards & Compliance**
+
+OWASP Foundation. "OWASP Top Ten." *OWASP.org*, 2024, https://owasp.org/www-project-top-ten.
+
+European Union. "General Data Protection Regulation (GDPR)." *Official Journal of the European Union*, vol. L119, 2016, pp. 1-88.
+
+California Legislature. "California Consumer Privacy Act (CCPA)." *California Civil Code*, 2018.
+
+U.S. Department of Health and Human Services. "Health Insurance Portability and Accountability Act (HIPAA)." *Federal Register*, vol. 65, no. 250, 2000, pp. 82462-82829.
+
+### **Technical Methods**
+
+Sparck Jones, Karen. "A Statistical Interpretation of Term Specificity and Its Application in Retrieval." *Journal of Documentation*, vol. 28, no. 1, 1972, pp. 11-21.
+
+Malkov, Yury A., and Dmitry A. Yashunin. "Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs." *IEEE Transactions on Pattern Analysis and Machine Intelligence*, vol. 42, no. 4, 2020, pp. 824-836.
 
 ---
 
