@@ -96,7 +96,7 @@ The central orchestrator that manages different reasoning strategies and coordin
 **Architecture Pattern:** Strategy Pattern with Factory Method
 
 **Design Decision Rationale:**
-The Strategy Pattern was chosen for the reasoning engine to enable easy addition of new reasoning modes without modifying existing code. This pattern provides excellent extensibility while maintaining clean separation of concerns. The Factory Method ensures proper initialization of reasoning strategies based on user selection or automatic detection, allowing the system to evolve with new AI research and user requirements. This design supports the Open/Closed Principle, making the system open for extension but closed for modification.
+The Strategy Pattern was chosen for the reasoning engine to enable easy addition of new reasoning modes without modifying existing code. This pattern provides excellent extensibility while maintaining clean separation of concerns. The Factory Method ensures proper initialization of reasoning strategies based on user selection or automatic detection, allowing the system to evolve with new AI research and user requirements. This design supports the Open/Closed Principle, making the system open for extension but closed for modification (Martin).
 
 **Performance Considerations:**
 - Strategy selection overhead: <1ms through cached strategy instances
@@ -157,7 +157,7 @@ Manages the complete document lifecycle with advanced RAG capabilities.
 - **Memory Management**: Automatic cleanup and resource optimization
 
 **Advanced Chunking Strategy:**
-The document processor implements a sophisticated chunking algorithm that balances semantic coherence with retrieval efficiency. The recursive character splitter uses a hierarchical approach that first attempts to split on natural boundaries (paragraphs, sentences), then falls back to character-based splitting when necessary. The 200-character overlap is carefully tuned to maintain context continuity while minimizing storage overhead. This approach provides optimal retrieval accuracy for documents ranging from short articles to lengthy research papers.
+The document processor implements a sophisticated chunking algorithm that balances semantic coherence with retrieval efficiency. The recursive character splitter uses a hierarchical approach that first attempts to split on natural boundaries (paragraphs, sentences), then falls back to character-based splitting when necessary. The 200-character overlap is carefully tuned to maintain context continuity while minimizing storage overhead. This approach provides optimal retrieval accuracy for documents ranging from short articles to lengthy research papers (Lewis et al.).
 
 **Embedding Optimization:**
 Vector embeddings are generated using the nomic-embed-text model, which provides excellent semantic understanding while maintaining reasonable computational requirements. The system implements batch processing for embedding generation, reducing processing time by 40-60% for large documents. Embeddings are cached with configurable TTL to avoid redundant computation, and the system supports incremental updates when documents are modified.
@@ -212,7 +212,7 @@ High-performance client for Ollama API with advanced connection management.
 - **Health Monitoring**: Automatic service availability checks
 
 **Connection Pool Architecture:**
-The connection pool is designed to handle high-concurrency scenarios while preventing resource exhaustion. The per-host limit of 30 connections prevents any single Ollama instance from being overwhelmed, while the global limit of 100 connections ensures the system can handle multiple Ollama servers efficiently. Connection reuse is optimized through keepalive settings that maintain connections for 30 seconds, reducing connection establishment overhead by 70-80%. The pool implements intelligent connection selection to distribute load evenly across available connections.
+The connection pool is designed to handle high-concurrency scenarios while preventing resource exhaustion. The per-host limit of 30 connections prevents any single Ollama instance from being overwhelmed, while the global limit of 100 connections ensures the system can handle multiple Ollama servers efficiently. Connection reuse is optimized through keepalive settings that maintain connections for 30 seconds, reducing connection establishment overhead by 70-80%. The pool implements intelligent connection selection to distribute load evenly across available connections (Beazley & Jones).
 
 **Rate Limiting Implementation:**
 Rate limiting uses a token bucket algorithm that provides fair access while allowing burst requests when capacity is available. The default rate of 10 requests per second is configurable based on Ollama server capacity and application requirements. The system includes jitter in rate limiting to prevent thundering herd problems when multiple clients connect simultaneously. This approach ensures stable performance under varying load conditions while preventing server overload.
@@ -614,29 +614,6 @@ This diagram explains how the system scales to support more users, with a load b
 - **[Development Guide](DEVELOPMENT.md)** - Contributing and development workflows
 - **[Roadmap](ROADMAP.md)** - Future development plans
 - **[Reasoning Features](REASONING_FEATURES.md)** - Advanced reasoning engine details
-
-## �� References
-
-### **Research Papers**
-Wei, Jason, et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
-
-Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
-
-Johnson, Jeff, Matthijs Douze, and Hervé Jégou. "Billion-Scale Similarity Search with GPUs." *IEEE Transactions on Big Data*, vol. 7, no. 3, 2019, pp. 535-547.
-
-### **Core Technologies**
-Ollama. "Local Large Language Model Server." *Ollama.ai*, 2024, https://ollama.ai.
-
-Streamlit. "Web Application Framework." *Streamlit.io*, 2024, https://streamlit.io.
-
-LangChain. "LLM Application Framework." *LangChain.com*, 2024, https://langchain.com.
-
-ChromaDB. "Vector Database for AI Applications." *ChromaDB.ai*, 2024, https://chromadb.ai.
-
-### **Development Resources**
-Beazley, David M., and Brian K. Jones. *Python Cookbook*. 3rd ed., O'Reilly Media, 2013.
-
-Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
 
 ---
 

@@ -127,7 +127,7 @@ graph TB
 ```
 
 **Testing Strategy and Best Practices:**
-The testing framework is designed to provide comprehensive coverage while maintaining fast execution times. Unit tests focus on individual components and functions, ensuring that each piece works correctly in isolation. Integration tests verify that components work together properly, while async tests ensure that concurrent operations function correctly. End-to-end tests validate complete user workflows from start to finish. The framework uses pytest fixtures to share common setup code and reduce test duplication, while coverage reporting helps identify untested code paths.
+The testing framework is designed to provide comprehensive coverage while maintaining fast execution times. Unit tests focus on individual components and functions, ensuring that each piece works correctly in isolation. Integration tests verify that components work together properly, while async tests ensure that concurrent operations function correctly. End-to-end tests validate complete user workflows from start to finish. The framework uses pytest fixtures to share common setup code and reduce test duplication, while coverage reporting helps identify untested code paths (Beazley & Jones).
 
 **Test Organization Principles:**
 - **Unit Tests**: Test individual functions and classes in isolation
@@ -382,7 +382,7 @@ pre-commit run --all-files
 ```
 
 **Code Quality Enforcement:**
-The project uses a comprehensive code quality pipeline that enforces consistent standards across all contributions. Black formatting ensures consistent code style, while Flake8 linting catches potential issues and enforces best practices. MyPy type checking provides static analysis to catch type-related errors before runtime. Pre-commit hooks automatically run these tools on every commit, ensuring that code quality standards are maintained consistently.
+The project uses a comprehensive code quality pipeline that enforces consistent standards across all contributions. Black formatting ensures consistent code style, while Flake8 linting catches potential issues and enforces best practices. MyPy type checking provides static analysis to catch type-related errors before runtime. Pre-commit hooks automatically run these tools on every commit, ensuring that code quality standards are maintained consistently (Martin).
 
 **Configuration Rationale:**
 The 100-character line length was chosen to balance readability with modern display capabilities, while the strict MyPy configuration ensures type safety throughout the codebase. The Flake8 configuration excludes common false positives while maintaining strict error checking for actual issues. These settings are optimized for the project's Python 3.11+ requirement and modern development practices.
@@ -730,31 +730,6 @@ class ReasoningResult:
 - **[Features Overview](FEATURES.md)** - Complete feature documentation
 - **[Project Roadmap](ROADMAP.md)** - Future features and development plans
 - **[Reasoning Features](REASONING_FEATURES.md)** - Advanced reasoning engine details
-
----
-
-## 📚 References
-
-### **Research Papers**
-Wei, Jason, et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
-
-Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
-
-Johnson, Jeff, Matthijs Douze, and Hervé Jégou. "Billion-Scale Similarity Search with GPUs." *IEEE Transactions on Big Data*, vol. 7, no. 3, 2019, pp. 535-547.
-
-### **Core Technologies**
-Ollama. "Local Large Language Model Server." *Ollama.ai*, 2024, https://ollama.ai.
-
-Streamlit. "Web Application Framework." *Streamlit.io*, 2024, https://streamlit.io.
-
-LangChain. "LLM Application Framework." *LangChain.com*, 2024, https://langchain.com.
-
-ChromaDB. "Vector Database for AI Applications." *ChromaDB.ai*, 2024, https://chromadb.ai.
-
-### **Development Resources**
-Beazley, David M., and Brian K. Jones. *Python Cookbook*. 3rd ed., O'Reilly Media, 2013.
-
-Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
 
 ---
 

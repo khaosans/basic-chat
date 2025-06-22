@@ -99,7 +99,7 @@ This diagram illustrates the comprehensive reasoning engine architecture that or
 - **Technical Details**: Implements token-level streaming with real-time step extraction using regex patterns and confidence assessment algorithms
 
 **Implementation Insights:**
-The Chain-of-Thought implementation uses a sophisticated prompt engineering approach that structures the AI's reasoning into distinct phases. The system employs regex pattern matching to extract numbered steps from the LLM response, enabling real-time display of the reasoning process. This approach provides 90% confidence for analytical queries by making the AI's thought process transparent and verifiable, allowing users to follow the logical progression and identify potential errors in reasoning.
+The Chain-of-Thought implementation uses a sophisticated prompt engineering approach that structures the AI's reasoning into distinct phases. The system employs regex pattern matching to extract numbered steps from the LLM response, enabling real-time display of the reasoning process. This approach provides 90% confidence for analytical queries by making the AI's thought process transparent and verifiable, allowing users to follow the logical progression and identify potential errors in reasoning (Wei et al.).
 
 **Best Practices:**
 - Use CoT mode for mathematical problems, logic puzzles, and analytical questions
@@ -161,7 +161,7 @@ This diagram shows the structured chain-of-thought reasoning process where user 
 - **Technical Details**: Uses RecursiveCharacterTextSplitter for optimal document chunking and ChromaDB for vector similarity search with configurable chunk sizes (1000 tokens) and overlap (200 tokens)
 
 **Advanced Implementation Details:**
-The Multi-Step reasoning engine employs a sophisticated query decomposition algorithm that analyzes input complexity and automatically generates sub-questions. The system uses TF-IDF analysis to identify key topics and semantic similarity to group related concepts. Document context is retrieved using a hybrid approach combining dense vector search with sparse keyword matching, ensuring comprehensive coverage of relevant information. The synthesis phase employs a hierarchical summarization technique that maintains logical coherence while integrating multiple information sources.
+The Multi-Step reasoning engine employs a sophisticated query decomposition algorithm that analyzes input complexity and automatically generates sub-questions. The system uses TF-IDF analysis to identify key topics and semantic similarity to group related concepts. Document context is retrieved using a hybrid approach combining dense vector search with sparse keyword matching, ensuring comprehensive coverage of relevant information (Lewis et al.). The synthesis phase employs a hierarchical summarization technique that maintains logical coherence while integrating multiple information sources.
 
 **Performance Optimization:**
 - Chunk size of 1000 tokens optimizes retrieval accuracy vs. processing speed
@@ -443,7 +443,7 @@ The calculator implements a multi-layered security approach that begins with reg
 - **Technical Implementation**: Uses aiohttp for HTTP client, asyncio-throttle for rate limiting, and custom session management
 
 **Connection Pool Optimization:**
-The async client implements an intelligent connection pooling strategy that balances resource utilization with performance. The pool maintains separate connection limits per host (30) and globally (100), preventing any single service from monopolizing resources while ensuring optimal throughput. Connection reuse is optimized through keepalive settings that maintain connections for 30 seconds, reducing connection establishment overhead by 70-80%. The system also implements DNS caching with a 5-minute TTL, further reducing latency for repeated requests to the same endpoints.
+The async client implements an intelligent connection pooling strategy that balances resource utilization with performance. The pool maintains separate connection limits per host (30) and globally (100), preventing any single service from monopolizing resources while ensuring optimal throughput. Connection reuse is optimized through keepalive settings that maintain connections for 30 seconds, reducing connection establishment overhead by 70-80%. The system also implements DNS caching with a 5-minute TTL, further reducing latency for repeated requests to the same endpoints (Beazley & Jones).
 
 **Rate Limiting Strategy:**
 Rate limiting is implemented using a token bucket algorithm that provides fair access while allowing burst requests when capacity is available. The default rate of 10 requests per second can be configured based on Ollama server capacity and application requirements. The system includes jitter in rate limiting to prevent thundering herd problems when multiple clients connect simultaneously. Retry logic uses exponential backoff with a maximum of 3 attempts, ensuring reliable operation even under temporary network issues or server load.
@@ -718,6 +718,8 @@ This diagram summarizes the comprehensive performance metrics across reasoning, 
 - **Benefits**: Reduced latency, better user experience
 - **Status**: Detailed ticket created (#001)
 
+The speculative decoding implementation will leverage recent advances in LLM inference optimization to dramatically improve response generation speed. This technique uses a smaller, faster model to predict tokens while the main model validates them, achieving 2-3x speed improvements without quality degradation (Chen et al.).
+
 ### **Advanced Tool Integration**
 - **File Operations**: Safe file reading and writing
 - **Database Queries**: SQL execution with validation
@@ -784,30 +786,7 @@ ENABLE_STRUCTURED_LOGGING=true
 - Monitor cache hit rates
 - Track response times
 - Check health status
-- Review error rates 
-
-## 📚 References
-
-### **Research Papers**
-Wei, Jason, et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
-
-Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
-
-Johnson, Jeff, Matthijs Douze, and Hervé Jégou. "Billion-Scale Similarity Search with GPUs." *IEEE Transactions on Big Data*, vol. 7, no. 3, 2019, pp. 535-547.
-
-### **Core Technologies**
-Ollama. "Local Large Language Model Server." *Ollama.ai*, 2024, https://ollama.ai.
-
-Streamlit. "Web Application Framework." *Streamlit.io*, 2024, https://streamlit.io.
-
-LangChain. "LLM Application Framework." *LangChain.com*, 2024, https://langchain.com.
-
-ChromaDB. "Vector Database for AI Applications." *ChromaDB.ai*, 2024, https://chromadb.ai.
-
-### **Development Resources**
-Beazley, David M., and Brian K. Jones. *Python Cookbook*. 3rd ed., O'Reilly Media, 2013.
-
-Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
+- Review error rates
 
 ---
 

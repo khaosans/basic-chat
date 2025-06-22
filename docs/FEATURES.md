@@ -25,7 +25,7 @@ BasicChat features a sophisticated reasoning engine that adapts its approach bas
 </div>
 
 **Mode Selection Intelligence:**
-The reasoning engine employs sophisticated query analysis to automatically select the most appropriate reasoning mode. The system analyzes query complexity using metrics such as sentence length, keyword density, presence of mathematical expressions, and semantic complexity. For example, queries containing mathematical operators or comparative language automatically trigger Chain-of-Thought mode, while queries requesting current information activate Agent-Based mode for web search integration. This intelligent selection provides optimal results while maintaining user experience simplicity.
+The reasoning engine employs sophisticated query analysis to automatically select the most appropriate reasoning mode. The system analyzes query complexity using metrics such as sentence length, keyword density, presence of mathematical expressions, and semantic complexity. For example, queries containing mathematical operators or comparative language automatically trigger Chain-of-Thought mode, while queries requesting current information activate Agent-Based mode for web search integration. This intelligent selection provides optimal results while maintaining user experience simplicity (Wei et al.).
 
 **Performance Characteristics by Mode:**
 - **Auto Mode**: 95% accuracy in mode selection, <500ms response time
@@ -118,7 +118,7 @@ graph TB
 
 **Diagram Narrative: Multi-Step Reasoning Process**
 
-This diagram demonstrates how complex queries are decomposed into parallel sub-questions that are processed independently and then synthesized into comprehensive answers. The multi-step approach enables thorough analysis by addressing multiple aspects simultaneously, then integrating results for complete understanding. This method is particularly effective for research questions, comparative analysis, and complex topics requiring systematic exploration.
+This diagram demonstrates the multi-step reasoning approach that breaks complex queries into analysis, reasoning, and synthesis phases while integrating document context through semantic search. The process enables comprehensive analysis by addressing multiple aspects systematically, then synthesizing results into coherent answers. This method is particularly effective for research questions and complex topics requiring thorough exploration and contextual understanding.
 
 ### **Local & Private Processing**
 
@@ -137,71 +137,12 @@ The privacy-first design is implemented through multiple layers of protection. A
 - Session isolation ensures no cross-user data access
 - Automatic cleanup removes temporary files and cache entries
 
----
-
-## 📄 Document & Image Processing (RAG)
-
-### **Multi-Format Document Support**
-
-<div align="center">
-
-| **Format** | **Processing Method** | **Features** | **Use Cases** |
-|:---|:---|:---|:---|
-| **PDF** | Text extraction | Multi-page support | Research papers, reports |
-| **Text (.txt)** | Direct processing | UTF-8 encoding | Notes, articles |
-| **Markdown (.md)** | Structured parsing | Format preservation | Documentation, blogs |
-| **Images (.png, .jpg)** | OCR + Vision analysis | Text + visual content | Screenshots, diagrams |
-
-</div>
-
-### **Advanced RAG Pipeline**
-
-<div align="center">
-
-```mermaid
-graph LR
-    subgraph "📄 Document Processing"
-        UPLOAD[File Upload]
-        EXTRACT[Text Extraction]
-        CHUNK[Intelligent Chunking]
-        EMBED[Vector Embeddings]
-        STORE[Vector Storage]
-    end
-    
-    subgraph "🔍 Retrieval & Generation"
-        QUERY[User Query]
-        SEARCH[Semantic Search]
-        RETRIEVE[Retrieve Context]
-        GENERATE[Generate Answer]
-        RESPONSE[Final Response]
-    end
-    
-    UPLOAD --> EXTRACT
-    EXTRACT --> CHUNK
-    CHUNK --> EMBED
-    EMBED --> STORE
-    
-    QUERY --> SEARCH
-    SEARCH --> STORE
-    STORE --> RETRIEVE
-    RETRIEVE --> GENERATE
-    GENERATE --> RESPONSE
-    
-    classDef processing fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
-    classDef retrieval fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
-    
-    class UPLOAD,EXTRACT,CHUNK,EMBED,STORE processing
-    class QUERY,SEARCH,RETRIEVE,GENERATE,RESPONSE retrieval
-```
-
-</div>
-
 **Diagram Narrative: Advanced RAG Pipeline**
 
 This diagram shows the retrieval-augmented generation pipeline where documents are processed through extraction, chunking, embedding, and storage phases, then retrieved for contextual answer generation. The RAG approach combines the reliability of document-based information with the flexibility of LLM reasoning, providing accurate answers grounded in specific source material (Lewis et al.). Optimize chunk sizes and embedding parameters based on your document types for optimal retrieval accuracy.
 
 **RAG Performance Optimization:**
-The RAG pipeline is optimized for both accuracy and speed through several key design decisions. The chunk size of 1000 characters balances retrieval precision with processing efficiency, while the 200-character overlap maintains context continuity across chunks. The system uses nomic-embed-text embeddings which provide excellent semantic understanding while maintaining reasonable computational requirements. Retrieval is optimized using a hybrid approach that combines dense vector similarity with sparse keyword matching, ensuring comprehensive coverage of relevant information.
+The RAG pipeline is optimized for both accuracy and speed through several key design decisions. The chunk size of 1000 characters balances retrieval precision with processing efficiency, while the 200-character overlap maintains context continuity across chunks. The system uses nomic-embed-text embeddings which provide excellent semantic understanding while maintaining reasonable computational requirements. Retrieval is optimized using a hybrid approach that combines dense vector similarity with sparse keyword matching, ensuring comprehensive coverage of relevant information (Johnson et al.).
 
 **Chunking Strategy:**
 The intelligent chunking algorithm uses a hierarchical approach that first attempts to split on natural boundaries (paragraphs, sentences), then falls back to character-based splitting when necessary. This approach maintains semantic coherence while ensuring optimal chunk sizes for retrieval. The system also implements metadata preservation, tracking source information and chunk relationships to enable accurate attribution and context reconstruction.
@@ -581,33 +522,8 @@ python scripts/cleanup_chroma.py --force
 
 - **[System Architecture](ARCHITECTURE.md)** - Technical architecture and component interactions
 - **[Development Guide](DEVELOPMENT.md)** - Contributing and development workflows
-- **[Project Roadmap](ROADMAP.md)** - Future features and development plans
+- **[Project Roadmap](ROADMAP.md)** - Future development plans
 - **[Reasoning Features](REASONING_FEATURES.md)** - Advanced reasoning engine details
-
----
-
-## 📚 References
-
-### **Research Papers**
-Wei, Jason, et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
-
-Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
-
-Johnson, Jeff, Matthijs Douze, and Hervé Jégou. "Billion-Scale Similarity Search with GPUs." *IEEE Transactions on Big Data*, vol. 7, no. 3, 2019, pp. 535-547.
-
-### **Core Technologies**
-Ollama. "Local Large Language Model Server." *Ollama.ai*, 2024, https://ollama.ai.
-
-Streamlit. "Web Application Framework." *Streamlit.io*, 2024, https://streamlit.io.
-
-LangChain. "LLM Application Framework." *LangChain.com*, 2024, https://langchain.com.
-
-ChromaDB. "Vector Database for AI Applications." *ChromaDB.ai*, 2024, https://chromadb.ai.
-
-### **Development Resources**
-Beazley, David M., and Brian K. Jones. *Python Cookbook*. 3rd ed., O'Reilly Media, 2013.
-
-Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
 
 ---
 
