@@ -1,74 +1,135 @@
-# Development Guide
+# 🛠️ BasicChat Development Guide
 
-This guide provides comprehensive instructions for developers contributing to BasicChat, including environment setup, testing, code quality, and project management workflows.
+> **Comprehensive development guide for contributing to BasicChat's open-source AI assistant**
 
-[← Back to README](../README.md)
+## 📋 Table of Contents
+
+- [Environment Setup](#environment-setup)
+- [Testing Framework](#testing-framework)
+- [Code Quality Standards](#code-quality-standards)
+- [Database Management](#database-management)
+- [Development Workflows](#development-workflows)
+- [Debugging & Troubleshooting](#debugging--troubleshooting)
+- [Performance Profiling](#performance-profiling)
+- [Documentation Standards](#documentation-standards)
 
 ---
 
-## 🚀 Development Environment Setup
+## 🚀 Environment Setup
 
 ### **Prerequisites**
 
-<div align="center">
+Before setting up the development environment, ensure you have the following installed:
 
-| **Requirement** | **Version** | **Purpose** | **Installation** |
-|:---|:---|:---|:---|
-| **Python** | 3.11+ | Core runtime | [python.org](https://python.org) |
-| **Git** | Latest | Version control | [git-scm.com](https://git-scm.com) |
-| **Ollama** | Latest | Local LLM server | [ollama.ai](https://ollama.ai) |
-| **Redis** | 6.0+ | Optional caching | [redis.io](https://redis.io) |
-
-</div>
+- **Python 3.11+**: Core runtime environment
+- **Git**: Version control system
+- **Docker** (optional): Containerized development
+- **Ollama**: Local LLM server
+- **Redis** (optional): Caching layer
 
 ### **Initial Setup**
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/khaosans/basic-chat-template.git
+# Clone the repository
+git clone https://github.com/your-username/basic-chat-template.git
 cd basic-chat-template
 
-# 2. Create virtual environment
+# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# 3. Install dependencies
+# Install dependencies
 pip install -r requirements.txt
 
-# 4. Install development dependencies
-pip install pytest pytest-asyncio pytest-cov black flake8 mypy
+# Install development dependencies
+pip install -r requirements-dev.txt
 
-# 5. Download required models
-ollama pull mistral
-ollama pull nomic-embed-text
-ollama pull llava  # Optional: for image processing
+# Set up pre-commit hooks
+pre-commit install
 ```
 
 ### **Environment Configuration**
 
-Create a `.env.local` file for local development:
+Create a `.env` file in the project root:
 
-```bash
+```env
 # Ollama Configuration
-OLLAMA_API_URL=http://localhost:11434/api
-DEFAULT_MODEL=mistral
-VISION_MODEL=llava
-EMBEDDING_MODEL=nomic-embed-text
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama2:7b
 
-# Performance Configuration
-ENABLE_CACHING=true
-CACHE_TTL=3600
-REQUEST_TIMEOUT=30
-MAX_RETRIES=3
-RATE_LIMIT=10
-
-# Redis Configuration (Optional)
-REDIS_ENABLED=false
+# Database Configuration
+CHROMA_DB_PATH=./chroma_db
 REDIS_URL=redis://localhost:6379
 
-# Logging Configuration
-LOG_LEVEL=INFO
-ENABLE_STRUCTURED_LOGGING=true
+# Performance Settings
+MAX_CONCURRENT_REQUESTS=10
+CACHE_TTL=3600
+
+# Development Settings
+DEBUG=True
+LOG_LEVEL=DEBUG
+```
+
+### **Development Tools Setup**
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+graph TB
+    subgraph "Development Environment"
+        PYTHON[Python 3.11+]
+        VENV[Virtual Environment]
+        DEPENDENCIES[Project Dependencies]
+        CONFIG[Environment Config]
+    end
+    
+    subgraph "Development Tools"
+        GIT[Git Version Control]
+        PRE_COMMIT[Pre-commit Hooks]
+        LINTERS[Code Linters]
+        TESTING[Testing Framework]
+    end
+    
+    subgraph "External Services"
+        OLLAMA[Ollama Server]
+        REDIS[Redis Cache]
+        CHROMADB[ChromaDB]
+        DOCKER[Docker Containers]
+    end
+    
+    subgraph "IDE Integration"
+        VS_CODE[VS Code]
+        PYCHARM[PyCharm]
+        VIM[Vim/Neovim]
+        JUPYTER[Jupyter Notebooks]
+    end
+    
+    PYTHON --> VENV
+    VENV --> DEPENDENCIES
+    DEPENDENCIES --> CONFIG
+    
+    GIT --> PRE_COMMIT
+    PRE_COMMIT --> LINTERS
+    LINTERS --> TESTING
+    
+    OLLAMA --> PYTHON
+    REDIS --> PYTHON
+    CHROMADB --> PYTHON
+    DOCKER --> PYTHON
+    
+    VS_CODE --> PYTHON
+    PYCHARM --> PYTHON
+    VIM --> PYTHON
+    JUPYTER --> PYTHON
+    
+    classDef environment fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef tools fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
+    classDef services fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
+    classDef ide fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
+    
+    class PYTHON,VENV,DEPENDENCIES,CONFIG environment
+    class GIT,PRE_COMMIT,LINTERS,TESTING tools
+    class OLLAMA,REDIS,CHROMADB,DOCKER services
+    class VS_CODE,PYCHARM,VIM,JUPYTER ide
 ```
 
 ---
@@ -77,277 +138,217 @@ ENABLE_STRUCTURED_LOGGING=true
 
 ### **Test Structure**
 
+BasicChat uses a comprehensive testing framework with multiple test categories:
+
+```
+tests/
+├── conftest.py              # Test configuration and fixtures
+├── test_app.py              # Main application tests
+├── test_basic.py            # Basic functionality tests
+├── test_reasoning.py        # Reasoning engine tests
+├── test_document_processing.py  # Document processing tests
+├── test_enhanced_tools.py   # Tool functionality tests
+├── test_enhanced_reasoning.py   # Advanced reasoning tests
+├── test_enhanced_audio.py   # Audio processing tests
+├── test_voice.py            # Voice functionality tests
+├── test_web_search.py       # Web search tests
+├── test_upload.py           # File upload tests
+└── test_document_workflow.py    # End-to-end workflow tests
+```
+
+### **Test Categories**
+
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
 graph TB
-    subgraph "🧪 Test Categories"
-        UNIT[Unit Tests]
-        INTEGRATION[Integration Tests]
-        ASYNC[Async Tests]
-        E2E[End-to-End Tests]
+    subgraph "Unit Tests"
+        COMPONENT[Component Tests]
+        FUNCTION[Function Tests]
+        UTILITY[Utility Tests]
+        MOCK[Mock Tests]
     end
     
-    subgraph "📁 Test Files"
-        BASIC[test_basic.py]
-        REASONING[test_reasoning.py]
-        DOCS[test_document_workflow.py]
-        TOOLS[test_enhanced_tools.py]
-        AUDIO[test_voice.py]
-        WEB[test_web_search.py]
+    subgraph "Integration Tests"
+        API[API Integration]
+        DATABASE[Database Integration]
+        EXTERNAL[External Services]
+        WORKFLOW[Workflow Tests]
     end
     
-    subgraph "🔧 Test Tools"
-        PYTEST[pytest]
-        COV[pytest-cov]
-        ASYNC[pytest-asyncio]
-        MOCK[unittest.mock]
+    subgraph "Performance Tests"
+        LOAD[Load Testing]
+        STRESS[Stress Testing]
+        BENCHMARK[Benchmark Tests]
+        MEMORY[Memory Tests]
     end
     
-    UNIT --> BASIC
-    UNIT --> REASONING
-    UNIT --> TOOLS
+    subgraph "End-to-End Tests"
+        USER_JOURNEY[User Journey Tests]
+        SCENARIO[Scenario Tests]
+        REGRESSION[Regression Tests]
+        ACCEPTANCE[Acceptance Tests]
+    end
     
-    INTEGRATION --> DOCS
-    INTEGRATION --> AUDIO
-    INTEGRATION --> WEB
+    COMPONENT --> API
+    FUNCTION --> DATABASE
+    UTILITY --> EXTERNAL
+    MOCK --> WORKFLOW
     
-    ASYNC --> REASONING
-    ASYNC --> WEB
+    API --> LOAD
+    DATABASE --> STRESS
+    EXTERNAL --> BENCHMARK
+    WORKFLOW --> MEMORY
     
-    E2E --> DOCS
-    E2E --> AUDIO
+    LOAD --> USER_JOURNEY
+    STRESS --> SCENARIO
+    BENCHMARK --> REGRESSION
+    MEMORY --> ACCEPTANCE
     
-    PYTEST --> UNIT
-    PYTEST --> INTEGRATION
-    PYTEST --> ASYNC
-    PYTEST --> E2E
+    classDef unit fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef integration fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
+    classDef performance fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
+    classDef e2e fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
     
-    COV --> PYTEST
-    ASYNC --> PYTEST
-    MOCK --> PYTEST
+    class COMPONENT,FUNCTION,UTILITY,MOCK unit
+    class API,DATABASE,EXTERNAL,WORKFLOW integration
+    class LOAD,STRESS,BENCHMARK,MEMORY performance
+    class USER_JOURNEY,SCENARIO,REGRESSION,ACCEPTANCE e2e
 ```
 
 ### **Running Tests**
 
 ```bash
 # Run all tests
-pytest
+python -m pytest
 
-# Run with coverage report
-pytest --cov=app --cov-report=html --cov-report=term
+# Run specific test file
+python -m pytest tests/test_reasoning.py
 
-# Run specific test categories
-pytest tests/test_basic.py                    # Basic functionality
-pytest tests/test_reasoning.py                # Reasoning engine
-pytest tests/test_document_workflow.py        # Document processing
-pytest tests/test_enhanced_tools.py           # Tool functionality
-pytest tests/test_voice.py                    # Audio features
-pytest tests/test_web_search.py               # Web search integration
+# Run tests with coverage
+python -m pytest --cov=app --cov-report=html
 
-# Run async tests only
-pytest tests/ -m "asyncio"
+# Run tests in parallel
+python -m pytest -n auto
 
-# Run with verbose output
-pytest -v
+# Run only unit tests
+python -m pytest -m "not integration"
 
-# Run with parallel execution
-pytest -n auto
+# Run only integration tests
+python -m pytest -m "integration"
 
-# Run tests matching pattern
-pytest -k "calculator"                        # Tests with "calculator" in name
-pytest -k "not slow"                          # Exclude slow tests
+# Run tests with verbose output
+python -m pytest -v
+
+# Run tests and stop on first failure
+python -m pytest -x
 ```
 
-### **Test Coverage**
+### **Test Configuration**
 
-<div align="center">
+The `pytest.ini` file configures the testing environment:
 
-| **Component** | **Coverage Target** | **Current Status** | **Test Files** |
-|:---|:---:|:---:|:---|
-| **Core Logic** | 90%+ | ✅ | `test_basic.py`, `test_reasoning.py` |
-| **Document Processing** | 85%+ | ✅ | `test_document_workflow.py` |
-| **Tools** | 80%+ | ✅ | `test_enhanced_tools.py` |
-| **Async Operations** | 75%+ | ✅ | `test_voice.py`, `test_web_search.py` |
-| **Integration** | 70%+ | ✅ | All integration tests |
-
-</div>
-
-### **Writing Tests**
-
-**Example Unit Test:**
-```python
-import pytest
-from utils.enhanced_tools import EnhancedCalculator
-
-class TestEnhancedCalculator:
-    def test_basic_arithmetic(self):
-        calc = EnhancedCalculator()
-        result = calc.calculate("2 + 3 * 4")
-        assert result.success
-        assert result.result == 14
-    
-    def test_trigonometric_functions(self):
-        calc = EnhancedCalculator()
-        result = calc.calculate("sin(pi/2)")
-        assert result.success
-        assert abs(result.result - 1.0) < 0.001
-    
-    def test_error_handling(self):
-        calc = EnhancedCalculator()
-        result = calc.calculate("invalid_expression")
-        assert not result.success
-        assert "error" in result.error.lower()
-```
-
-**Example Async Test:**
-```python
-import pytest
-import asyncio
-from utils.async_ollama import AsyncOllamaClient
-
-@pytest.mark.asyncio
-class TestAsyncOllamaClient:
-    async def test_health_check(self):
-        client = AsyncOllamaClient()
-        is_healthy = await client.health_check()
-        assert isinstance(is_healthy, bool)
-        await client.close()
-    
-    async def test_query_async(self):
-        client = AsyncOllamaClient()
-        response = await client.query_async({
-            "inputs": "Hello, world!",
-            "system": "You are a helpful assistant."
-        })
-        assert response is not None
-        await client.close()
+```ini
+[tool:pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = 
+    -v 
+    --cov=app 
+    --cov=utils 
+    --cov=config 
+    --cov=reasoning_engine 
+    --cov=web_search 
+    --cov=document_processor 
+    --cov-report=html 
+    --cov-report=term-missing
+    --cov-fail-under=80
+    --asyncio-mode=auto
+    --strict-markers
+markers =
+    slow: marks tests as slow (deselect with '-m "not slow"')
+    integration: marks tests as integration tests
+    unit: marks tests as unit tests
+    async: marks tests as async tests
+filterwarnings =
+    ignore::DeprecationWarning
+    ignore::PendingDeprecationWarning
 ```
 
 ---
 
-## ✨ Code Quality Standards
+## 📏 Code Quality Standards
 
 ### **Code Formatting**
 
+BasicChat uses **Black** for code formatting with a 100-character line width:
+
 ```bash
-# Format code with Black
-black .
+# Format all Python files
+black . --line-length 100
 
-# Check formatting without changes
-black --check .
+# Check formatting without making changes
+black . --check --line-length 100
 
-# Format specific files
-black app.py reasoning_engine.py
+# Format specific file
+black app.py --line-length 100
 ```
 
-**Black Configuration** (pyproject.toml):
-```toml
-[tool.black]
-line-length = 100
-target-version = ['py311']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-```
+### **Linting**
 
-### **Linting with Flake8**
+**Flake8** is used for code linting with strict configuration:
 
 ```bash
 # Run flake8 linting
-flake8 .
+flake8 . --max-line-length=100 --extend-ignore=E203,W503
 
-# Run with specific configuration
-flake8 --max-line-length=100 --ignore=E203,W503 .
+# Run on specific directory
+flake8 app/ --max-line-length=100
 
-# Generate report
-flake8 --format=html --htmldir=flake8-report .
+# Generate linting report
+flake8 . --max-line-length=100 --format=html --htmldir=flake8-report
 ```
 
-**Flake8 Configuration** (.flake8):
-```ini
-[flake8]
-max-line-length = 100
-ignore = E203, W503, E501
-exclude = 
-    .git,
-    __pycache__,
-    .venv,
-    venv,
-    build,
-    dist,
-    *.egg-info
-```
+### **Type Checking**
 
-### **Type Checking with MyPy**
+**MyPy** provides static type checking:
 
 ```bash
 # Run type checking
-mypy .
+mypy . --ignore-missing-imports
 
-# Run with strict mode
-mypy --strict .
+# Check specific module
+mypy app.py --ignore-missing-imports
 
-# Generate HTML report
-mypy --html-report mypy-report .
-```
-
-**MyPy Configuration** (mypy.ini):
-```ini
-[mypy]
-python_version = 3.11
-warn_return_any = True
-warn_unused_configs = True
-disallow_untyped_defs = True
-disallow_incomplete_defs = True
-check_untyped_defs = True
-disallow_untyped_decorators = True
-no_implicit_optional = True
-warn_redundant_casts = True
-warn_unused_ignores = True
-warn_no_return = True
-warn_unreachable = True
-strict_equality = True
-
-[mypy.plugins.pydantic.*]
-init_forbid_extra = True
-init_typed = True
-warn_required_dynamic_aliases = True
-warn_untyped_fields = True
+# Generate type coverage report
+mypy . --ignore-missing-imports --html-report mypy-report
 ```
 
 ### **Pre-commit Hooks**
 
-Create `.pre-commit-config.yaml`:
+Automated code quality checks using pre-commit:
+
 ```yaml
+# .pre-commit-config.yaml
 repos:
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
       - id: black
-        language_version: python3.11
         args: [--line-length=100]
   
   - repo: https://github.com/pycqa/flake8
     rev: 6.0.0
     hooks:
       - id: flake8
-        args: [--max-line-length=100, --ignore=E203,W503]
+        args: [--max-line-length=100, --extend-ignore=E203,W503]
   
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.3.0
     hooks:
       - id: mypy
-        additional_dependencies: [types-requests, types-PyYAML]
+        args: [--ignore-missing-imports]
   
   - repo: https://github.com/pycqa/isort
     rev: 5.12.0
@@ -356,200 +357,300 @@ repos:
         args: [--profile=black, --line-length=100]
 ```
 
-Install and run:
-```bash
-# Install pre-commit
-pip install pre-commit
+### **Quality Metrics**
 
-# Install hooks
-pre-commit install
-
-# Run on all files
-pre-commit run --all-files
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+graph TB
+    subgraph "Code Quality Tools"
+        BLACK[Black Formatter]
+        FLAKE8[Flake8 Linter]
+        MYPY[MyPy Type Checker]
+        ISORT[Import Sorter]
+    end
+    
+    subgraph "Quality Metrics"
+        COVERAGE[Test Coverage > 80%]
+        COMPLEXITY[Cyclomatic Complexity < 10]
+        DUPLICATION[Code Duplication < 5%]
+        MAINTAINABILITY[Maintainability Index > 70]
+    end
+    
+    subgraph "Automation"
+        PRE_COMMIT[Pre-commit Hooks]
+        CI_CD[CI/CD Pipeline]
+        CODE_REVIEW[Code Review Process]
+        QUALITY_GATES[Quality Gates]
+    end
+    
+    subgraph "Monitoring"
+        COVERAGE_REPORTS[Coverage Reports]
+        LINTING_REPORTS[Linting Reports]
+        TYPE_REPORTS[Type Reports]
+        PERFORMANCE_METRICS[Performance Metrics]
+    end
+    
+    BLACK --> COVERAGE
+    FLAKE8 --> COMPLEXITY
+    MYPY --> DUPLICATION
+    ISORT --> MAINTAINABILITY
+    
+    COVERAGE --> PRE_COMMIT
+    COMPLEXITY --> CI_CD
+    DUPLICATION --> CODE_REVIEW
+    MAINTAINABILITY --> QUALITY_GATES
+    
+    PRE_COMMIT --> COVERAGE_REPORTS
+    CI_CD --> LINTING_REPORTS
+    CODE_REVIEW --> TYPE_REPORTS
+    QUALITY_GATES --> PERFORMANCE_METRICS
+    
+    classDef tools fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef metrics fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
+    classDef automation fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
+    classDef monitoring fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
+    
+    class BLACK,FLAKE8,MYPY,ISORT tools
+    class COVERAGE,COMPLEXITY,DUPLICATION,MAINTAINABILITY metrics
+    class PRE_COMMIT,CI_CD,CODE_REVIEW,QUALITY_GATES automation
+    class COVERAGE_REPORTS,LINTING_REPORTS,TYPE_REPORTS,PERFORMANCE_METRICS monitoring
 ```
 
 ---
 
 ## 🗄️ Database Management
 
-### **ChromaDB Cleanup Utilities**
+### **ChromaDB Management**
 
-```mermaid
-graph TB
-    subgraph "🧹 Cleanup Operations"
-        STATUS[Status Check]
-        DRY_RUN[Dry Run]
-        AGE_CLEANUP[Age-based Cleanup]
-        FORCE_CLEANUP[Force Cleanup]
-    end
-    
-    subgraph "📊 Database Info"
-        DIRECTORIES[ChromaDB Directories]
-        SIZES[Directory Sizes]
-        AGES[Directory Ages]
-        FILES[File Counts]
-    end
-    
-    subgraph "🔧 Script Options"
-        --status[--status]
-        --dry-run[--dry-run]
-        --age[--age HOURS]
-        --force[--force]
-    end
-    
-    STATUS --> DIRECTORIES
-    STATUS --> SIZES
-    STATUS --> AGES
-    STATUS --> FILES
-    
-    DRY_RUN --> STATUS
-    AGE_CLEANUP --> STATUS
-    FORCE_CLEANUP --> STATUS
-    
-    --status --> STATUS
-    --dry-run --> DRY_RUN
-    --age --> AGE_CLEANUP
-    --force --> FORCE_CLEANUP
-```
+ChromaDB is used for vector storage and semantic search. The system includes comprehensive management tools.
 
-### **Database Management Commands**
+### **Cleanup Utilities**
+
+The `scripts/cleanup_chroma.py` script provides database maintenance:
 
 ```bash
 # Check database status
 python scripts/cleanup_chroma.py --status
 
-# Preview cleanup operations (safe)
+# Preview cleanup operations (dry run)
 python scripts/cleanup_chroma.py --dry-run
 
-# Clean up directories older than 24 hours
+# Clean up old directories (24+ hours)
 python scripts/cleanup_chroma.py --age 24
 
-# Force complete cleanup (⚠️ destructive)
+# Force complete cleanup
 python scripts/cleanup_chroma.py --force
 
-# Clean up specific age ranges
-python scripts/cleanup_chroma.py --age 1    # 1+ hours old
-python scripts/cleanup_chroma.py --age 168  # 1 week+ old
+# Clean specific directory
+python scripts/cleanup_chroma.py --path ./chroma_db_123456
 ```
 
 ### **Database Monitoring**
 
-```python
-# Example: Monitor database health
-from document_processor import DocumentProcessor
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+graph TB
+    subgraph "Database Operations"
+        BACKUP[Automatic Backup]
+        CLEANUP[Data Cleanup]
+        OPTIMIZATION[Performance Optimization]
+        MONITORING[Health Monitoring]
+    end
+    
+    subgraph "Maintenance Tasks"
+        INDEX_REBUILD[Index Rebuilding]
+        VACUUM[Database Vacuum]
+        STATISTICS[Statistics Update]
+        INTEGRITY[Integrity Checks]
+    end
+    
+    subgraph "Monitoring Tools"
+        SPACE_USAGE[Space Usage]
+        PERFORMANCE[Performance Metrics]
+        ERROR_TRACKING[Error Tracking]
+        HEALTH_CHECKS[Health Checks]
+    end
+    
+    subgraph "Automation"
+        SCHEDULED[Scheduled Tasks]
+        TRIGGERED[Triggered Actions]
+        ALERTS[Alert System]
+        RECOVERY[Recovery Procedures]
+    end
+    
+    BACKUP --> INDEX_REBUILD
+    CLEANUP --> VACUUM
+    OPTIMIZATION --> STATISTICS
+    MONITORING --> INTEGRITY
+    
+    INDEX_REBUILD --> SPACE_USAGE
+    VACUUM --> PERFORMANCE
+    STATISTICS --> ERROR_TRACKING
+    INTEGRITY --> HEALTH_CHECKS
+    
+    SPACE_USAGE --> SCHEDULED
+    PERFORMANCE --> TRIGGERED
+    ERROR_TRACKING --> ALERTS
+    HEALTH_CHECKS --> RECOVERY
+    
+    classDef operations fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef maintenance fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
+    classDef monitoring fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
+    classDef automation fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
+    
+    class BACKUP,CLEANUP,OPTIMIZATION,MONITORING operations
+    class INDEX_REBUILD,VACUUM,STATISTICS,INTEGRITY maintenance
+    class SPACE_USAGE,PERFORMANCE,ERROR_TRACKING,HEALTH_CHECKS monitoring
+    class SCHEDULED,TRIGGERED,ALERTS,RECOVERY automation
+```
 
-def check_database_health():
-    processor = DocumentProcessor()
-    
-    # Check processed files
-    files = processor.get_processed_files()
-    print(f"Processed files: {len(files)}")
-    
-    # Check available documents
-    docs = processor.get_available_documents()
-    print(f"Available documents: {len(docs)}")
-    
-    # Get database directories
-    from document_processor import DocumentProcessor
-    directories = DocumentProcessor.get_chroma_directories()
-    print(f"Database directories: {len(directories)}")
-    
-    return {
-        'files': len(files),
-        'documents': len(docs),
-        'directories': len(directories)
-    }
+### **Database Configuration**
+
+ChromaDB configuration in `config.py`:
+
+```python
+# ChromaDB Configuration
+CHROMA_DB_PATH = os.getenv("CHROMA_DB_PATH", "./chroma_db")
+CHROMA_COLLECTION_NAME = os.getenv("CHROMA_COLLECTION_NAME", "documents")
+CHROMA_DISTANCE_FUNCTION = os.getenv("CHROMA_DISTANCE_FUNCTION", "cosine")
+
+# Vector Database Settings
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "llama2:7b")
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
 ```
 
 ---
 
-## 🔧 Development Workflows
-
-### **Feature Development**
-
-```mermaid
-graph LR
-    subgraph "🔄 Development Cycle"
-        FEATURE[Feature Branch]
-        DEVELOP[Development]
-        TEST[Testing]
-        REVIEW[Code Review]
-        MERGE[Merge to Main]
-    end
-    
-    subgraph "🧪 Quality Gates"
-        UNIT_TESTS[Unit Tests]
-        INTEGRATION[Integration Tests]
-        LINTING[Linting]
-        TYPE_CHECK[Type Checking]
-    end
-    
-    FEATURE --> DEVELOP
-    DEVELOP --> TEST
-    TEST --> REVIEW
-    REVIEW --> MERGE
-    
-    TEST --> UNIT_TESTS
-    TEST --> INTEGRATION
-    REVIEW --> LINTING
-    REVIEW --> TYPE_CHECK
-    
-    UNIT_TESTS --> REVIEW
-    INTEGRATION --> REVIEW
-    LINTING --> REVIEW
-    TYPE_CHECK --> REVIEW
-```
+## 🔄 Development Workflows
 
 ### **Git Workflow**
 
+BasicChat follows a feature branch workflow:
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+graph TB
+    subgraph "Main Branches"
+        MAIN[Main Branch]
+        DEVELOP[Develop Branch]
+        RELEASE[Release Branch]
+        HOTFIX[Hotfix Branch]
+    end
+    
+    subgraph "Feature Development"
+        FEATURE[Feature Branch]
+        FEATURE_DEV[Feature Development]
+        CODE_REVIEW[Code Review]
+        MERGE[Merge to Develop]
+    end
+    
+    subgraph "Release Process"
+        RELEASE_PREP[Release Preparation]
+        TESTING[Release Testing]
+        DEPLOYMENT[Deployment]
+        TAG[Version Tagging]
+    end
+    
+    subgraph "Quality Assurance"
+        UNIT_TESTS[Unit Tests]
+        INTEGRATION_TESTS[Integration Tests]
+        E2E_TESTS[End-to-End Tests]
+        PERFORMANCE_TESTS[Performance Tests]
+    end
+    
+    MAIN --> DEVELOP
+    DEVELOP --> FEATURE
+    FEATURE --> FEATURE_DEV
+    FEATURE_DEV --> CODE_REVIEW
+    CODE_REVIEW --> MERGE
+    MERGE --> DEVELOP
+    
+    DEVELOP --> RELEASE_PREP
+    RELEASE_PREP --> TESTING
+    TESTING --> DEPLOYMENT
+    DEPLOYMENT --> TAG
+    TAG --> MAIN
+    
+    UNIT_TESTS --> FEATURE_DEV
+    INTEGRATION_TESTS --> CODE_REVIEW
+    E2E_TESTS --> RELEASE_PREP
+    PERFORMANCE_TESTS --> TESTING
+    
+    classDef branches fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef development fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
+    classDef release fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
+    classDef qa fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
+    
+    class MAIN,DEVELOP,RELEASE,HOTFIX branches
+    class FEATURE,FEATURE_DEV,CODE_REVIEW,MERGE development
+    class RELEASE_PREP,TESTING,DEPLOYMENT,TAG release
+    class UNIT_TESTS,INTEGRATION_TESTS,E2E_TESTS,PERFORMANCE_TESTS qa
+```
+
+### **Branch Naming Convention**
+
 ```bash
-# 1. Create feature branch
-git checkout -b feature/amazing-feature
+# Feature branches
+feature/add-web-search-integration
+feature/enhance-reasoning-engine
+feature/improve-document-processing
 
-# 2. Make changes and commit
-git add .
-git commit -m "feat: add amazing feature
+# Bug fix branches
+fix/memory-leak-in-cache
+fix/typo-in-error-message
+fix/async-request-timeout
 
-- Implement new functionality
-- Add comprehensive tests
-- Update documentation"
+# Hotfix branches
+hotfix/critical-security-vulnerability
+hotfix/database-connection-issue
+hotfix/performance-regression
 
-# 3. Push and create PR
-git push origin feature/amazing-feature
-
-# 4. After review, merge to main
-git checkout main
-git pull origin main
-git merge feature/amazing-feature
-git push origin main
-
-# 5. Clean up
-git branch -d feature/amazing-feature
+# Release branches
+release/v2.1.0
+release/v2.2.0
 ```
 
 ### **Commit Message Convention**
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
 ```bash
-# Format: <type>[optional scope]: <description>
+# Feature commits
+feat: add web search integration
+feat(reasoning): implement chain-of-thought reasoning
+feat(ui): add dark mode support
 
-# Examples:
-git commit -m "feat: add advanced calculator with step-by-step reasoning"
-git commit -m "fix(reasoning): resolve chain-of-thought parsing issue"
-git commit -m "docs(architecture): update system diagrams with Mermaid"
-git commit -m "test(tools): add comprehensive calculator test suite"
-git commit -m "refactor(caching): optimize multi-layer cache implementation"
+# Bug fix commits
+fix: resolve memory leak in cache system
+fix(auth): correct token validation logic
+fix(api): handle null response from external service
+
+# Documentation commits
+docs: update API documentation
+docs(readme): add installation instructions
+docs(architecture): add system diagram
+
+# Performance commits
+perf: optimize database queries
+perf(cache): improve cache hit ratio
+perf(ui): reduce bundle size
+
+# Refactor commits
+refactor: extract common utility functions
+refactor(reasoning): simplify mode selection logic
+refactor(tests): improve test organization
 ```
 
-**Commit Types:**
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation changes
-- `style`: Code style changes
-- `refactor`: Code refactoring
-- `test`: Test additions/changes
-- `chore`: Maintenance tasks
+### **Pull Request Process**
+
+1. **Create Feature Branch**: `git checkout -b feature/your-feature-name`
+2. **Make Changes**: Implement your feature with tests
+3. **Run Tests**: Ensure all tests pass
+4. **Code Quality**: Run linting and formatting
+5. **Create PR**: Submit pull request with detailed description
+6. **Code Review**: Address reviewer feedback
+7. **Merge**: Merge after approval and CI/CD success
 
 ---
 
@@ -557,133 +658,330 @@ git commit -m "refactor(caching): optimize multi-layer cache implementation"
 
 ### **Common Issues**
 
-<div align="center">
+#### **Ollama Connection Issues**
 
-| **Issue** | **Symptoms** | **Solution** |
-|:---|:---|:---|
-| **Ollama Connection** | Connection refused errors | Check `ollama serve` is running |
-| **Model Not Found** | Model loading errors | Run `ollama pull <model_name>` |
-| **ChromaDB Conflicts** | Database errors | Use cleanup script: `python scripts/cleanup_chroma.py --force` |
-| **Memory Issues** | Out of memory errors | Increase system memory or reduce batch sizes |
-| **Async Timeouts** | Request timeouts | Increase `REQUEST_TIMEOUT` in config |
+```bash
+# Check Ollama service status
+curl http://localhost:11434/api/tags
 
-</div>
+# Verify model availability
+ollama list
 
-### **Debug Mode**
-
-```python
-# Enable debug logging
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Enable async debug mode
-import asyncio
-asyncio.get_event_loop().set_debug(True)
-
-# Enable Streamlit debug
-import streamlit as st
-st.set_option('deprecation.showPyplotGlobalUse', False)
+# Test model response
+ollama run llama2:7b "Hello, world!"
 ```
 
-### **Performance Profiling**
+#### **ChromaDB Issues**
+
+```bash
+# Check ChromaDB status
+python -c "import chromadb; print('ChromaDB available')"
+
+# Verify database path
+ls -la ./chroma_db_*
+
+# Test database connection
+python scripts/test_chroma_connection.py
+```
+
+#### **Redis Connection Issues**
+
+```bash
+# Check Redis service
+redis-cli ping
+
+# Test Redis connection
+python -c "import redis; r = redis.Redis(); print(r.ping())"
+```
+
+### **Debugging Tools**
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'arial', 'primaryColor': '#2c3e50', 'primaryTextColor': '#2c3e50', 'primaryBorderColor': '#34495e', 'lineColor': '#34495e', 'secondaryColor': '#ecf0f1', 'tertiaryColor': '#bdc3c7'}}}%%
+graph TB
+    subgraph "Debugging Tools"
+        LOGGING[Structured Logging]
+        DEBUGGER[Python Debugger]
+        PROFILER[Performance Profiler]
+        MONITORING[System Monitoring]
+    end
+    
+    subgraph "Error Handling"
+        EXCEPTION_TRACKING[Exception Tracking]
+        ERROR_REPORTS[Error Reports]
+        STACK_TRACES[Stack Traces]
+        CONTEXT_INFO[Context Information]
+    end
+    
+    subgraph "Diagnostic Tools"
+        HEALTH_CHECKS[Health Checks]
+        DIAGNOSTICS[System Diagnostics]
+        METRICS[Performance Metrics]
+        ALERTS[Alert System]
+    end
+    
+    subgraph "Recovery Procedures"
+        AUTOMATIC_RECOVERY[Automatic Recovery]
+        MANUAL_INTERVENTION[Manual Intervention]
+        ROLLBACK[Rollback Procedures]
+        ESCALATION[Escalation Process]
+    end
+    
+    LOGGING --> EXCEPTION_TRACKING
+    DEBUGGER --> ERROR_REPORTS
+    PROFILER --> STACK_TRACES
+    MONITORING --> CONTEXT_INFO
+    
+    EXCEPTION_TRACKING --> HEALTH_CHECKS
+    ERROR_REPORTS --> DIAGNOSTICS
+    STACK_TRACES --> METRICS
+    CONTEXT_INFO --> ALERTS
+    
+    HEALTH_CHECKS --> AUTOMATIC_RECOVERY
+    DIAGNOSTICS --> MANUAL_INTERVENTION
+    METRICS --> ROLLBACK
+    ALERTS --> ESCALATION
+```
+
+### **Logging Configuration**
 
 ```python
-# Profile function performance
-import cProfile
-import pstats
+# config.py
+import structlog
 
-def profile_function(func, *args, **kwargs):
-    profiler = cProfile.Profile()
-    profiler.enable()
-    result = func(*args, **kwargs)
-    profiler.disable()
-    
-    stats = pstats.Stats(profiler)
-    stats.sort_stats('cumulative')
-    stats.print_stats(10)  # Top 10 functions
-    
-    return result
+# Structured logging configuration
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer()
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+```
 
-# Usage
-profile_function(your_function, arg1, arg2)
+---
+
+## 📊 Performance Profiling
+
+### **Profiling Tools**
+
+```bash
+# CPU profiling with cProfile
+python -m cProfile -o profile.stats app.py
+
+# Memory profiling with memory_profiler
+python -m memory_profiler app.py
+
+# Line-by-line profiling
+python -m line_profiler app.py
+
+# Async profiling
+python -m asyncio_profiler app.py
+```
+
+### **Performance Metrics**
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+graph TB
+    subgraph "Performance Metrics"
+        RESPONSE_TIME[Response Time]
+        THROUGHPUT[Throughput]
+        MEMORY_USAGE[Memory Usage]
+        CPU_USAGE[CPU Usage]
+    end
+    
+    subgraph "Profiling Tools"
+        CPU_PROFILER[CPU Profiler]
+        MEMORY_PROFILER[Memory Profiler]
+        ASYNC_PROFILER[Async Profiler]
+        LINE_PROFILER[Line Profiler]
+    end
+    
+    subgraph "Optimization"
+        BOTTLENECK_DETECTION[Bottleneck Detection]
+        CODE_OPTIMIZATION[Code Optimization]
+        CACHE_OPTIMIZATION[Cache Optimization]
+        ALGORITHM_IMPROVEMENT[Algorithm Improvement]
+    end
+    
+    subgraph "Monitoring"
+        REAL_TIME_MONITORING[Real-time Monitoring]
+        PERFORMANCE_ALERTS[Performance Alerts]
+        TREND_ANALYSIS[Trend Analysis]
+        CAPACITY_PLANNING[Capacity Planning]
+    end
+    
+    RESPONSE_TIME --> CPU_PROFILER
+    THROUGHPUT --> MEMORY_PROFILER
+    MEMORY_USAGE --> ASYNC_PROFILER
+    CPU_USAGE --> LINE_PROFILER
+    
+    CPU_PROFILER --> BOTTLENECK_DETECTION
+    MEMORY_PROFILER --> CODE_OPTIMIZATION
+    ASYNC_PROFILER --> CACHE_OPTIMIZATION
+    LINE_PROFILER --> ALGORITHM_IMPROVEMENT
+    
+    BOTTLENECK_DETECTION --> REAL_TIME_MONITORING
+    CODE_OPTIMIZATION --> PERFORMANCE_ALERTS
+    CACHE_OPTIMIZATION --> TREND_ANALYSIS
+    ALGORITHM_IMPROVEMENT --> CAPACITY_PLANNING
+    
+    classDef metrics fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef tools fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
+    classDef optimization fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
+    classDef monitoring fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
+    
+    class RESPONSE_TIME,THROUGHPUT,MEMORY_USAGE,CPU_USAGE metrics
+    class CPU_PROFILER,MEMORY_PROFILER,ASYNC_PROFILER,LINE_PROFILER tools
+    class BOTTLENECK_DETECTION,CODE_OPTIMIZATION,CACHE_OPTIMIZATION,ALGORITHM_IMPROVEMENT optimization
+    class REAL_TIME_MONITORING,PERFORMANCE_ALERTS,TREND_ANALYSIS,CAPACITY_PLANNING monitoring
+```
+
+### **Performance Benchmarks**
+
+```python
+# benchmarks/performance_test.py
+import time
+import asyncio
+from app import reasoning_engine
+
+async def benchmark_reasoning():
+    """Benchmark reasoning engine performance"""
+    start_time = time.time()
+    
+    # Test different reasoning modes
+    modes = ['auto', 'standard', 'chain_of_thought', 'multi_step', 'agent']
+    
+    for mode in modes:
+        start = time.time()
+        result = await reasoning_engine.run(
+            query="What is the capital of France?",
+            mode=mode
+        )
+        end = time.time()
+        print(f"{mode}: {end - start:.3f}s")
+    
+    total_time = time.time() - start_time
+    print(f"Total benchmark time: {total_time:.3f}s")
 ```
 
 ---
 
 ## 📚 Documentation Standards
 
-### **Code Documentation**
+### **Documentation Structure**
 
-```python
-def enhanced_calculate(expression: str) -> CalculationResult:
-    """
-    Perform enhanced mathematical calculations with step-by-step reasoning.
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+graph TB
+    subgraph "Documentation Types"
+        API_DOCS[API Documentation]
+        ARCHITECTURE[Architecture Docs]
+        USER_GUIDES[User Guides]
+        DEVELOPER_DOCS[Developer Docs]
+    end
     
-    Args:
-        expression (str): Mathematical expression to evaluate
-        
-    Returns:
-        CalculationResult: Object containing result, steps, and metadata
-        
-    Raises:
-        ValueError: If expression is invalid or unsafe
-        ZeroDivisionError: If division by zero is attempted
-        
-    Example:
-        >>> result = enhanced_calculate("2 + 3 * 4")
-        >>> print(result.result)
-        14
-        >>> print(result.steps)
-        ['2 + 3 * 4', '2 + 12', '14']
-    """
-    # Implementation here
-    pass
+    subgraph "Documentation Tools"
+        MARKDOWN[Markdown Files]
+        Mermaid[Mermaid Diagrams]
+        CODE_EXAMPLES[Code Examples]
+        INTERACTIVE[Interactive Docs]
+    end
+    
+    subgraph "Documentation Process"
+        WRITING[Documentation Writing]
+        REVIEW[Documentation Review]
+        PUBLISHING[Documentation Publishing]
+        MAINTENANCE[Documentation Maintenance]
+    end
+    
+    subgraph "Quality Assurance"
+        SPELL_CHECK[Spell Checking]
+        GRAMMAR_CHECK[Grammar Checking]
+        LINK_VALIDATION[Link Validation]
+        FORMAT_VALIDATION[Format Validation]
+    end
+    
+    API_DOCS --> MARKDOWN
+    ARCHITECTURE --> Mermaid
+    USER_GUIDES --> CODE_EXAMPLES
+    DEVELOPER_DOCS --> INTERACTIVE
+    
+    MARKDOWN --> WRITING
+    Mermaid --> REVIEW
+    CODE_EXAMPLES --> PUBLISHING
+    INTERACTIVE --> MAINTENANCE
+    
+    WRITING --> SPELL_CHECK
+    REVIEW --> GRAMMAR_CHECK
+    PUBLISHING --> LINK_VALIDATION
+    MAINTENANCE --> FORMAT_VALIDATION
+    
+    classDef types fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef tools fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
+    classDef process fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
+    classDef qa fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
+    
+    class API_DOCS,ARCHITECTURE,USER_GUIDES,DEVELOPER_DOCS types
+    class MARKDOWN,Mermaid,CODE_EXAMPLES,INTERACTIVE tools
+    class WRITING,REVIEW,PUBLISHING,MAINTENANCE process
+    class SPELL_CHECK,GRAMMAR_CHECK,LINK_VALIDATION,FORMAT_VALIDATION qa
 ```
 
-### **Architecture Documentation**
+### **Documentation Guidelines**
 
-- Use **Mermaid diagrams** for visual documentation
-- Include **sequence diagrams** for complex flows
-- Document **design patterns** and architectural decisions
-- Provide **performance characteristics** and trade-offs
+1. **Code Comments**: Use clear, concise comments explaining complex logic
+2. **Docstrings**: Follow Google-style docstrings for all functions and classes
+3. **README Files**: Maintain comprehensive README files for each module
+4. **API Documentation**: Document all public APIs with examples
+5. **Architecture Diagrams**: Use Mermaid diagrams for system architecture
+6. **Change Logs**: Maintain detailed change logs for each release
 
-### **API Documentation**
+### **Documentation Tools**
 
-```python
-@dataclass
-class ReasoningResult:
-    """
-    Result from reasoning operations with comprehensive metadata.
-    
-    Attributes:
-        content (str): Final answer/conclusion
-        reasoning_steps (List[str]): Step-by-step thought process
-        confidence (float): Confidence score (0.0 to 1.0)
-        sources (List[str]): Information sources used
-        reasoning_mode (str): Which reasoning mode was used
-        execution_time (float): Time taken for reasoning
-        success (bool): Whether operation was successful
-        error (Optional[str]): Error message if failed
-    """
-    content: str
-    reasoning_steps: List[str]
-    confidence: float
-    sources: List[str]
-    reasoning_mode: str
-    execution_time: float = 0.0
-    success: bool = True
-    error: Optional[str] = None
+```bash
+# Generate API documentation
+pydoc-markdown
+
+# Validate markdown files
+markdownlint docs/
+
+# Check for broken links
+markdown-link-check docs/
+
+# Generate documentation site
+mkdocs build
 ```
 
 ---
 
-## 🔗 Related Documentation
+## 📚 References
 
-- **[System Architecture](ARCHITECTURE.md)** - Technical architecture and component interactions
-- **[Features Overview](FEATURES.md)** - Complete feature documentation
-- **[Project Roadmap](ROADMAP.md)** - Future development plans
-- **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
+1. **Mermaid Documentation**: Knut Sveidqvist et al. *Mermaid: Markdown-inspired diagramming and charting tool*. GitHub, 2024. Available: https://mermaid.js.org/
+
+2. **Python Development**: van Rossum, Guido. *The Python Language Reference*. Python Software Foundation, 2023.
+
+3. **Testing Best Practices**: Meszaros, Gerard. *xUnit Test Patterns: Refactoring Test Code*. Addison-Wesley, 2007.
+
+4. **Code Quality**: Martin, Robert C. *Clean Code: A Handbook of Agile Software Craftsmanship*. Prentice Hall, 2008.
+
+5. **Git Workflow**: Chacon, Scott and Straub, Ben. *Pro Git*. Apress, 2014.
+
+6. **Performance Engineering**: Gregg, Brendan. *Systems Performance: Enterprise and the Cloud*. Prentice Hall, 2013.
 
 ---
+
+*This development guide provides comprehensive information for contributing to BasicChat. For additional resources, see the [Architecture Documentation](ARCHITECTURE.md) and [Features Overview](FEATURES.md).*
 
 [← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Roadmap →](ROADMAP.md) 

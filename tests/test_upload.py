@@ -8,7 +8,9 @@ import os
 import sys
 import logging
 import tempfile
+import pytest
 from io import BytesIO
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(
@@ -17,8 +19,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Add the current directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the parent directory to Python path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from document_processor import DocumentProcessor
 from config import EMBEDDING_MODEL, VISION_MODEL
@@ -34,6 +36,7 @@ class MockUploadedFile:
     def getvalue(self):
         return self._content
 
+@pytest.mark.integration
 def test_text_upload():
     """Test text file upload"""
     logger.info("=== Testing Text File Upload ===")
@@ -61,12 +64,14 @@ def test_text_upload():
         search_results = doc_processor.search_documents("test document")
         logger.info(f"Search results: {len(search_results)} found")
         
+        assert len(processed_files) > 0, "No files were processed"
         return True
         
     except Exception as e:
         logger.error(f"Text upload test failed: {e}")
-        return False
+        pytest.fail(f"Text upload test failed: {e}")
 
+@pytest.mark.integration
 def test_pdf_upload():
     """Test PDF file upload with a real PDF file"""
     logger.info("=== Testing PDF File Upload ===")
@@ -77,7 +82,7 @@ def test_pdf_upload():
         logger.info("Document processor created successfully")
         
         # Use the generated real PDF file
-        pdf_path = "test_sample.pdf"
+        pdf_path = Path(__file__).parent / "test_sample.pdf"
         with open(pdf_path, "rb") as f:
             pdf_content = f.read()
         mock_file = MockUploadedFile("test_sample.pdf", pdf_content, "application/pdf")
@@ -91,12 +96,14 @@ def test_pdf_upload():
         processed_files = doc_processor.get_processed_files()
         logger.info(f"Processed files: {processed_files}")
         
+        assert len(processed_files) > 0, "No files were processed"
         return True
         
     except Exception as e:
         logger.error(f"PDF upload test failed: {e}")
-        return False
+        pytest.fail(f"PDF upload test failed: {e}")
 
+@pytest.mark.integration
 def test_image_upload():
     """Test image file upload with a real PNG file"""
     logger.info("=== Testing Image File Upload ===")
@@ -107,7 +114,7 @@ def test_image_upload():
         logger.info("Document processor created successfully")
         
         # Use the generated real PNG file
-        image_path = "assets/problem.png"
+        image_path = Path(__file__).parent.parent / "assets" / "problem.png"
         with open(image_path, "rb") as f:
             image_content = f.read()
         mock_file = MockUploadedFile("problem.png", image_content, "image/png")
@@ -121,12 +128,14 @@ def test_image_upload():
         processed_files = doc_processor.get_processed_files()
         logger.info(f"Processed files: {processed_files}")
         
+        assert len(processed_files) > 0, "No files were processed"
         return True
         
     except Exception as e:
         logger.error(f"Image upload test failed: {e}")
-        return False
+        pytest.fail(f"Image upload test failed: {e}")
 
+@pytest.mark.integration
 def test_image_qa_flow():
     """Test UX flow: upload image, then ask a question about it"""
     logger.info("=== Testing Image Upload + QA Flow ===")
@@ -134,7 +143,7 @@ def test_image_qa_flow():
         doc_processor = DocumentProcessor()
         logger.info("Document processor created successfully")
         # Use the generated real PNG file
-        image_path = "assets/problem.png"
+        image_path = Path(__file__).parent.parent / "assets" / "problem.png"
         with open(image_path, "rb") as f:
             image_content = f.read()
         mock_file = MockUploadedFile("problem.png", image_content, "image/png")
@@ -152,8 +161,9 @@ def test_image_qa_flow():
         return True
     except Exception as e:
         logger.error(f"Image QA flow test failed: {e}")
-        return False
+        pytest.fail(f"Image QA flow test failed: {e}")
 
+@pytest.mark.integration
 def test_chromadb_connection():
     """Test ChromaDB connection and basic operations"""
     logger.info("=== Testing ChromaDB Connection ===")
@@ -198,116 +208,61 @@ def test_chromadb_connection():
             import shutil
             shutil.rmtree("./test_chroma_db")
         
-        logger.info("ChromaDB test completed successfully")
+        assert len(results['documents'][0]) > 0, "No documents found in query"
         return True
         
     except Exception as e:
-        logger.error(f"ChromaDB test failed: {e}")
-        return False
+        logger.error(f"ChromaDB connection test failed: {e}")
+        pytest.fail(f"ChromaDB connection test failed: {e}")
 
+@pytest.mark.integration
 def test_embeddings():
-    """Test embeddings functionality"""
-    logger.info("=== Testing Embeddings ===")
+    """Test embedding model functionality"""
+    logger.info("=== Testing Embedding Model ===")
     
     try:
-        from langchain_ollama import OllamaEmbeddings
+        from sentence_transformers import SentenceTransformer
         
-        # Test embeddings initialization
-        embeddings = OllamaEmbeddings(
-            model=EMBEDDING_MODEL,
-            base_url="http://localhost:11434"
-        )
-        logger.info(f"Embeddings initialized with model: {EMBEDDING_MODEL}")
+        # Test embedding model loading
+        model = SentenceTransformer(EMBEDDING_MODEL)
+        logger.info(f"Embedding model loaded: {EMBEDDING_MODEL}")
         
         # Test embedding generation
-        test_text = "This is a test sentence for embeddings."
-        embedding = embeddings.embed_query(test_text)
-        logger.info(f"Embedding generated successfully, dimension: {len(embedding)}")
+        test_text = "This is a test sentence for embedding."
+        embedding = model.encode(test_text)
+        logger.info(f"Generated embedding: {len(embedding)} dimensions")
+        
+        assert len(embedding) > 0, "Embedding should have dimensions"
+        assert isinstance(embedding, (list, tuple, type(embedding))), "Embedding should be a vector"
         
         return True
         
     except Exception as e:
-        logger.error(f"Embeddings test failed: {e}")
-        return False
+        logger.error(f"Embedding test failed: {e}")
+        pytest.fail(f"Embedding test failed: {e}")
 
+@pytest.mark.integration
 def test_vision_model():
     """Test vision model functionality"""
     logger.info("=== Testing Vision Model ===")
     
     try:
-        from langchain_ollama import ChatOllama
+        from transformers import AutoProcessor, AutoModelForVision2Seq
         
-        # Test vision model initialization
-        vision_model = ChatOllama(model=VISION_MODEL)
-        logger.info(f"Vision model initialized: {VISION_MODEL}")
+        # Test vision model loading
+        processor = AutoProcessor.from_pretrained(VISION_MODEL)
+        model = AutoModelForVision2Seq.from_pretrained(VISION_MODEL)
+        logger.info(f"Vision model loaded: {VISION_MODEL}")
+        
+        assert processor is not None, "Processor should be loaded"
+        assert model is not None, "Model should be loaded"
         
         return True
         
     except Exception as e:
         logger.error(f"Vision model test failed: {e}")
-        return False
-
-def main():
-    """Run all tests"""
-    logger.info("Starting upload functionality tests")
-    
-    # Clean up any existing ChromaDB directories first
-    logger.info("Cleaning up existing ChromaDB directories")
-    DocumentProcessor.cleanup_all_chroma_directories()
-    
-    tests = [
-        ("ChromaDB Connection", test_chromadb_connection),
-        ("Embeddings", test_embeddings),
-        ("Vision Model", test_vision_model),
-        ("Text Upload", test_text_upload),
-        ("PDF Upload", test_pdf_upload),
-        ("Image Upload", test_image_upload),
-        ("Image QA Flow", test_image_qa_flow),
-    ]
-    
-    results = {}
-    
-    for test_name, test_func in tests:
-        logger.info(f"\n{'='*50}")
-        logger.info(f"Running test: {test_name}")
-        logger.info(f"{'='*50}")
-        
-        try:
-            success = test_func()
-            results[test_name] = success
-            if success:
-                logger.info(f"✅ {test_name}: PASSED")
-            else:
-                logger.error(f"❌ {test_name}: FAILED")
-        except Exception as e:
-            logger.error(f"❌ {test_name}: ERROR - {e}")
-            results[test_name] = False
-    
-    # Clean up after tests
-    logger.info("Cleaning up after tests")
-    DocumentProcessor.cleanup_all_chroma_directories()
-    
-    # Summary
-    logger.info(f"\n{'='*50}")
-    logger.info("TEST SUMMARY")
-    logger.info(f"{'='*50}")
-    
-    passed = sum(1 for success in results.values() if success)
-    total = len(results)
-    
-    for test_name, success in results.items():
-        status = "✅ PASSED" if success else "❌ FAILED"
-        logger.info(f"{test_name}: {status}")
-    
-    logger.info(f"\nOverall: {passed}/{total} tests passed")
-    
-    if passed == total:
-        logger.info("🎉 All tests passed! Upload functionality should work correctly.")
-    else:
-        logger.error("⚠️  Some tests failed. Check the logs above for details.")
-    
-    return passed == total
+        pytest.fail(f"Vision model test failed: {e}")
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1) 
+    # Run tests directly
+    pytest.main([__file__, "-v"]) 

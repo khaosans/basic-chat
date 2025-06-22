@@ -5,6 +5,13 @@ Test script to verify document processing and vector search functionality
 
 import os
 import tempfile
+import pytest
+import sys
+from pathlib import Path
+
+# Add the parent directory to Python path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from document_processor import DocumentProcessor
 
 def create_test_document():
@@ -30,6 +37,7 @@ def create_test_document():
         f.write(content)
         return f.name
 
+@pytest.mark.integration
 def test_document_processing():
     """Test the document processing functionality"""
     print("🧪 Testing Document Processing...")
@@ -89,72 +97,74 @@ def test_document_processing():
         print(f"✅ Cleanup completed")
         
         print("\n🎉 All tests passed! Document processing is working correctly.")
+        
+        # Assertions for pytest
+        assert len(processed_files) > 0, "No files were processed"
+        assert result is not None, "Document processing should return a result"
+        
         return True
         
     except Exception as e:
         print(f"❌ Test failed: {str(e)}")
-        return False
+        pytest.fail(f"Document processing test failed: {str(e)}")
+
+# We need to import the Tool classes
+from abc import ABC, abstractmethod
+from typing import Optional, Dict, List
+from dataclasses import dataclass
+
+@dataclass
+class ToolResponse:
+    content: str
+    success: bool = True
+    error: Optional[str] = None
+
+class Tool(ABC):
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @abstractmethod
+    def description(self) -> str:
+        pass
+
+    @abstractmethod
+    def triggers(self) -> List[str]:
+        pass
+
+    @abstractmethod
+    def execute(self, input_text: str) -> ToolResponse:
+        pass
+
+class DocumentSummaryTool(Tool):
+    def __init__(self, doc_processor):
+        self.doc_processor = doc_processor
+
+    def name(self) -> str:
+        return "Document Summary"
+
+    def description(self) -> str:
+        return "Summarizes uploaded documents."
+
+    def triggers(self) -> List[str]:
+        return ["summarize document", "summarize the document", "give me a summary"]
+
+    def execute(self, input_text: str) -> ToolResponse:
+        try:
+            processed_files = self.doc_processor.get_processed_files()
+            if not processed_files:
+                return ToolResponse(content="No documents have been uploaded yet.", success=False)
+
+            summary = ""
+            for file_data in processed_files:
+                summary += f"📄 **{file_data['name']}** ({file_data['type']})\n"
+                summary += f"Size: {file_data['size']} bytes\n"
+                summary += "✅ Document processed and available for search\n\n"
+
+            return ToolResponse(content=summary)
+        except Exception as e:
+            return ToolResponse(content=f"Error summarizing document: {e}", success=False, error=str(e))
 
 if __name__ == "__main__":
-    # Import the DocumentSummaryTool from app.py
-    import sys
-    sys.path.append('.')
-    
-    # We need to import the Tool classes
-    from abc import ABC, abstractmethod
-    from typing import Optional, Dict, List
-    from dataclasses import dataclass
-    
-    @dataclass
-    class ToolResponse:
-        content: str
-        success: bool = True
-        error: Optional[str] = None
-
-    class Tool(ABC):
-        @abstractmethod
-        def name(self) -> str:
-            pass
-
-        @abstractmethod
-        def description(self) -> str:
-            pass
-
-        @abstractmethod
-        def triggers(self) -> List[str]:
-            pass
-
-        @abstractmethod
-        def execute(self, input_text: str) -> ToolResponse:
-            pass
-
-    class DocumentSummaryTool(Tool):
-        def __init__(self, doc_processor):
-            self.doc_processor = doc_processor
-
-        def name(self) -> str:
-            return "Document Summary"
-
-        def description(self) -> str:
-            return "Summarizes uploaded documents."
-
-        def triggers(self) -> List[str]:
-            return ["summarize document", "summarize the document", "give me a summary"]
-
-        def execute(self, input_text: str) -> ToolResponse:
-            try:
-                processed_files = self.doc_processor.get_processed_files()
-                if not processed_files:
-                    return ToolResponse(content="No documents have been uploaded yet.", success=False)
-
-                summary = ""
-                for file_data in processed_files:
-                    summary += f"📄 **{file_data['name']}** ({file_data['type']})\n"
-                    summary += f"Size: {file_data['size']} bytes\n"
-                    summary += "✅ Document processed and available for search\n\n"
-
-                return ToolResponse(content=summary)
-            except Exception as e:
-                return ToolResponse(content=f"Error summarizing document: {e}", success=False, error=str(e))
-    
-    test_document_processing() 
+    # Run tests directly
+    pytest.main([__file__, "-v"]) 

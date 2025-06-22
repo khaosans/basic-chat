@@ -12,7 +12,7 @@ import os
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import text_to_speech, get_audio_html
+from app import text_to_speech, get_professional_audio_html
 
 class TestVoiceFunctionality:
     """Test class for voice functionality"""
@@ -102,14 +102,14 @@ class TestVoiceFunctionality:
         # Should return None for whitespace-only text
         assert audio_file is None
     
-    def test_get_audio_html_creates_valid_html(self):
-        """Test that get_audio_html creates valid HTML"""
+    def test_get_professional_audio_html_creates_valid_html(self):
+        """Test that get_professional_audio_html creates valid HTML"""
         # Create a test audio file
         test_text = "Test audio content"
         audio_file = text_to_speech(test_text)
         
         # Generate HTML
-        html = get_audio_html(audio_file)
+        html = get_professional_audio_html(audio_file)
         
         # Check that HTML contains expected elements
         assert html is not None
@@ -119,20 +119,20 @@ class TestVoiceFunctionality:
         assert 'data:audio/mp3;base64,' in html
         assert '</audio>' in html
     
-    def test_get_audio_html_file_not_found(self):
+    def test_get_professional_audio_html_file_not_found(self):
         """Test handling of non-existent file"""
         non_existent_file = "temp_nonexistent_file.mp3"
         
         # Should handle gracefully and return error message
-        html = get_audio_html(non_existent_file)
+        html = get_professional_audio_html(non_existent_file)
         
         # Should return an error message
         assert html is not None
         assert "Audio file not found" in html
     
-    def test_get_audio_html_none_file(self):
+    def test_get_professional_audio_html_none_file(self):
         """Test handling of None file path"""
-        html = get_audio_html(None)
+        html = get_professional_audio_html(None)
         
         # Should return a message about no audio available
         assert html is not None
@@ -148,7 +148,7 @@ class TestVoiceFunctionality:
         assert os.path.exists(audio_file)
         
         # Step 2: Generate HTML
-        html = get_audio_html(audio_file)
+        html = get_professional_audio_html(audio_file)
         assert html is not None
         assert '<audio' in html
         
