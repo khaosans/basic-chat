@@ -126,6 +126,10 @@ graph TB
     MOCK --> PYTEST
 ```
 
+**Diagram Narrative: Testing Framework Structure**
+
+This diagram illustrates the comprehensive testing framework that organizes tests by category (unit, integration, async, end-to-end) and maps them to specific test files and tools. The framework provides 80%+ test coverage through systematic testing of core logic, document processing, tools, and async operations, ensuring code quality and reliability. Use this structure to understand test organization, run specific test categories, and maintain comprehensive coverage as the codebase evolves.
+
 ### **Running Tests**
 
 ```bash
@@ -412,6 +416,10 @@ graph TB
     --force --> FORCE_CLEANUP
 ```
 
+**Diagram Narrative: Database Cleanup Operations**
+
+This diagram shows the ChromaDB cleanup utility architecture that provides status checking, dry-run capabilities, age-based cleanup, and force cleanup operations. The comprehensive management approach enables efficient database maintenance through configurable cleanup strategies while providing safety through dry-run previews and status monitoring. Use these tools regularly to manage database size, prevent storage issues, and maintain optimal system performance through automated cleanup processes.
+
 ### **Database Management Commands**
 
 ```bash
@@ -499,6 +507,10 @@ graph LR
     LINTING --> REVIEW
     TYPE_CHECK --> REVIEW
 ```
+
+**Diagram Narrative: Development Workflow**
+
+This diagram illustrates the complete development cycle from feature branching through testing, review, and merge, with quality gates ensuring code quality at each stage. The workflow integrates unit tests, integration tests, linting, and type checking as mandatory quality gates, ensuring that only high-quality code reaches production. Follow this workflow for all feature development to maintain code quality, enable effective collaboration, and ensure reliable deployments.
 
 ### **Git Workflow**
 

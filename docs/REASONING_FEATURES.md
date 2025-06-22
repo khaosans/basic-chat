@@ -83,6 +83,10 @@ graph TB
 
 </div>
 
+**Diagram Narrative: Reasoning Engine Architecture**
+
+This diagram illustrates the comprehensive reasoning engine architecture that orchestrates multiple reasoning strategies, tool integrations, and performance optimizations. The system processes user queries through different reasoning modes (chain-of-thought, multi-step, agent-based, and auto) while integrating specialized tools and maintaining high performance through caching and async processing. The modular design enables easy extension of reasoning capabilities and tool integration, supporting the system's evolution toward more sophisticated AI assistance.
+
 ### 1. **Chain-of-Thought (CoT) Reasoning**
 - **Implementation**: `ReasoningChain` class
 - **Model**: Uses Mistral by default with async support
@@ -133,6 +137,10 @@ graph LR
 ```
 
 </div>
+
+**Diagram Narrative: Chain-of-Thought Process**
+
+This diagram shows the structured chain-of-thought reasoning process where user questions flow through sequential thought steps before reaching final answers. The approach separates thinking and answer sections, providing transparency into the reasoning process while generating confidence scores for response quality. This methodology, based on Wei et al. (2022) research, significantly improves reasoning accuracy by making the AI's thought process explicit and verifiable.
 
 ### 2. **Multi-Step Reasoning**
 - **Implementation**: `MultiStepReasoning` class
@@ -191,6 +199,10 @@ graph TB
 ```
 
 </div>
+
+**Diagram Narrative: Multi-Step Reasoning Process**
+
+This diagram demonstrates the multi-step reasoning approach that breaks complex queries into analysis, reasoning, and synthesis phases while integrating document context through semantic search. The process enables comprehensive analysis by addressing multiple aspects systematically, then synthesizing results into coherent answers. This method is particularly effective for research questions and complex topics requiring thorough exploration and contextual understanding.
 
 ### 3. **Agent-Based Reasoning**
 - **Implementation**: `ReasoningAgent` class
@@ -267,6 +279,10 @@ graph TB
 
 </div>
 
+**Diagram Narrative: Agent-Based Execution**
+
+This diagram illustrates the agent-based reasoning process where user queries trigger thought processes, tool selection, and execution with performance optimizations. The agent intelligently selects from available tools (calculator, web search, time tools, document tools) while applying rate limiting, caching, and retry logic for reliable operation. The approach provides 95% confidence for tool-based tasks by combining intelligent tool selection with robust error handling and performance monitoring.
+
 ### 4. **Enhanced Document Processing**
 - **Implementation**: `ReasoningDocumentProcessor` class
 - **Features**:
@@ -276,8 +292,6 @@ graph TB
   - Vector store integration using ChromaDB with nomic-embed-text embeddings
   - **Performance**: Async embedding generation with caching and batch processing
 - **Technical Details**: Supports PDF, TXT, MD, and image formats with OCR capabilities using Tesseract and Unstructured library
-
-## 🛠️ **Enhanced Tools & Utilities**
 
 <div align="center">
 
@@ -353,6 +367,10 @@ graph TB
 
 </div>
 
+**Diagram Narrative: Enhanced Tools Architecture**
+
+This diagram shows the comprehensive tool ecosystem organized by mathematical, time, web, and document processing capabilities, all supported by performance optimizations. Each tool category provides specialized functionality with safety features, error handling, and performance optimizations, while the async architecture ensures efficient resource utilization. The modular design enables easy addition of new tools while maintaining consistent interfaces and safety standards across all capabilities.
+
 ### 1. **Enhanced Calculator (`utils/enhanced_tools.py`)**
 - **Safe Mathematical Operations**:
   - Basic arithmetic (+, -, *, /, **) with operator precedence handling
@@ -371,77 +389,6 @@ graph TB
   - Error messages with actionable guidance and suggestions
   - Result formatting with configurable precision control
 - **Technical Implementation**: Uses Python's `compile()` and `eval()` with restricted globals and locals dictionaries
-
-### 2. **Advanced Time Tools (`utils/enhanced_tools.py`)**
-- **Multi-timezone Support**:
-  - Current time in any timezone using pytz library
-  - Time conversion between timezones with daylight saving time handling
-  - Time difference calculations with precise duration formatting
-  - Unix timestamp conversion with timezone awareness
-- **Features**:
-  - 500+ timezone support including historical timezone data
-  - Automatic timezone normalization and validation
-  - Formatted time output with multiple format options
-  - Error handling for invalid timezones with fallback suggestions
-- **Usage Examples**:
-  - "What time is it in Tokyo?" - Returns current JST with formatted output
-  - "Convert 3 PM EST to UTC" - Handles DST transitions automatically
-  - "Time difference between New York and London" - Calculates precise duration
-- **Technical Implementation**: Uses pytz library for timezone database and datetime for time manipulation
-
-### 3. **Web Search Integration (`web_search.py`)**
-- **DuckDuckGo Integration**:
-  - No API key required using duckduckgo-search library
-  - Real-time search results with configurable result count
-  - Formatted output with clickable links and snippets
-  - Caching for performance with 5-minute TTL
-- **Features**:
-  - Retry logic with exponential backoff (3 attempts, 2-second base delay)
-  - Rate limiting protection with random jitter
-  - Fallback results on failure with informative messages
-  - Configurable result count (default: 5 results)
-- **Performance**:
-  - 5-minute cache duration with automatic cleanup
-  - 3 retry attempts with progressive delays
-  - Graceful error handling with user-friendly fallbacks
-- **Technical Implementation**: Uses duckduckgo-search library with custom caching layer and error handling
-
-### 4. **Async Ollama Client (`utils/async_ollama.py`)**
-- **High-Performance Architecture**:
-  - Connection pooling with aiohttp (100 total connections, 30 per host)
-  - Rate limiting with asyncio-throttle (configurable rate and period)
-  - Concurrent request handling with async/await patterns
-  - Automatic session management with connection reuse
-- **Features**:
-  - Async/await support throughout with proper resource cleanup
-  - Streaming response support with chunked processing
-  - Health monitoring with connection testing
-  - Model information retrieval with caching
-- **Performance Optimizations**:
-  - Connection reuse with keepalive (30-second timeout)
-  - DNS caching with 5-minute TTL
-  - Configurable timeouts (30s total, 5s connect)
-  - Automatic retry with exponential backoff
-- **Technical Implementation**: Uses aiohttp for HTTP client, asyncio-throttle for rate limiting, and custom session management
-
-### 5. **Smart Caching System (`utils/caching.py`)**
-- **Multi-layer Caching**:
-  - Redis primary cache for distributed environments
-  - Memory fallback cache using TTLCache for local storage
-  - Automatic failover with health checking
-  - Configurable TTL and size limits with LRU eviction
-- **Features**:
-  - Hash-based cache keys using MD5 with parameter inclusion
-  - Parameter-aware caching with temperature and model consideration
-  - Cache statistics and monitoring with hit rate tracking
-  - Graceful degradation with fallback mechanisms
-- **Performance**:
-  - 70-85% cache hit rate for repeated queries
-  - 50-80% response time improvement
-  - Configurable cache policies with environment variables
-- **Technical Implementation**: Uses redis-py for Redis operations and cachetools for in-memory caching
-
-## 🚀 Performance Enhancements (Week 1)
 
 <div align="center">
 
@@ -510,24 +457,15 @@ graph TB
 
 </div>
 
+**Diagram Narrative: Performance Enhancement Architecture**
+
+This diagram illustrates the comprehensive performance enhancement strategy combining async architecture, smart caching, configuration management, and monitoring systems. The multi-layered approach provides 50-80% faster response times through intelligent caching, connection pooling, and rate limiting while maintaining system reliability through health monitoring and alert systems. The architecture enables fine-tuning of performance parameters based on workload characteristics and system requirements.
+
 ### 1. **Async Architecture**
 - **Connection Pooling**: Efficient HTTP connection reuse with aiohttp
 - **Rate Limiting**: Intelligent request throttling (configurable: 10 req/sec default)
 - **Retry Logic**: Exponential backoff for failed requests
 - **Health Monitoring**: Real-time service availability checks
-
-### 2. **Smart Caching System**
-- **Multi-layer Caching**: Redis primary + memory fallback
-- **Response Caching**: Intelligent caching of LLM responses
-- **Cache Key Generation**: Hash-based keys with parameter inclusion
-- **TTL Management**: Configurable expiration times (default: 1 hour)
-- **Cache Statistics**: Real-time performance metrics
-
-### 3. **Configuration Management**
-- **Environment-based**: Easy configuration via environment variables
-- **Validation**: Type-safe configuration with validation
-- **Performance Tuning**: Adjustable rate limits, timeouts, and cache settings
-- **Centralized**: Single source of truth for all settings
 
 ## 🎨 UI/UX Features
 
@@ -762,6 +700,10 @@ graph TB
 ```
 
 </div>
+
+**Diagram Narrative: Performance Metrics Overview**
+
+This diagram summarizes the comprehensive performance metrics across reasoning, tools, system, and cache categories, showing how each component contributes to overall system performance. The metrics demonstrate high confidence rates (90-95%) for reasoning operations, excellent accuracy (99-100%) for tools, significant performance improvements (50-80% faster response times), and efficient caching (70-85% hit rates). These metrics validate the design choices and provide benchmarks for performance optimization and system monitoring.
 
 ### Reasoning Performance
 - **Chain-of-Thought**: 90% confidence for analytical queries

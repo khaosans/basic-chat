@@ -86,6 +86,10 @@ graph TB
     CONFIDENCE --> FALLBACK
 ```
 
+**Diagram Narrative: Enhanced Reasoning Architecture**
+
+This diagram illustrates the advanced reasoning enhancements that will enable multi-model orchestration, ensemble methods, adaptive reasoning, and context awareness. The architecture supports intelligent model selection, response synthesis, confidence scoring, and fallback mechanisms to provide superior reasoning capabilities. This approach will enable the system to combine the strengths of different LLMs while maintaining reliability through comprehensive fallback strategies and confidence-based decision making.
+
 **Features:**
 - **Multi-Model Orchestration**: Combine strengths of different LLMs
 - **Ensemble Reasoning**: Aggregate responses from multiple models
@@ -119,6 +123,10 @@ graph LR
     LOADER --> VALIDATOR
     VALIDATOR --> EXECUTOR
 ```
+
+**Diagram Narrative: Tool Ecosystem Architecture**
+
+This diagram shows the comprehensive tool ecosystem architecture that organizes tools into core, plugin, custom, and external categories with a robust plugin system for extensibility. The architecture provides a unified tool registry, plugin loader, validator, and executor that enables easy addition of new capabilities while maintaining security and performance standards. This design supports the evolution toward a rich ecosystem of community-contributed tools while ensuring quality and safety through validation and execution controls.
 
 **New Tools:**
 - **File Operations**: Read, write, and manipulate local files
@@ -175,6 +183,10 @@ graph TB
     ORGANIZE --> TAGS
 ```
 
+**Diagram Narrative: Conversation Management System**
+
+This diagram illustrates the comprehensive conversation management system that provides save, search, export, and organization capabilities with secure local storage and backup systems. The system enables semantic and keyword search through conversation history while providing multiple export formats and organizational tools like tagging and categorization. The architecture ensures data privacy through local storage and encryption while providing backup and optional sync capabilities for data protection and accessibility.
+
 **Features:**
 - **Conversation Persistence**: Save and restore chat sessions
 - **Semantic Search**: Find conversations by content meaning
@@ -205,6 +217,10 @@ graph LR
     GESTURES --> ANIMATIONS
     OFFLINE --> ACCESSIBILITY
 ```
+
+**Diagram Narrative: Mobile-First Design Architecture**
+
+This diagram shows the mobile-first design approach that prioritizes responsive design, touch optimization, gesture support, and offline capabilities while enhancing the overall UI/UX. The architecture supports dark mode, custom themes, smooth animations, and accessibility features to provide an optimal experience across all devices and user preferences. This design ensures the application works seamlessly on mobile devices while maintaining the full functionality available on desktop platforms.
 
 ---
 
@@ -257,6 +273,10 @@ graph TB
     SSO --> MONITORING
 ```
 
+**Diagram Narrative: API Architecture**
+
+This diagram illustrates the comprehensive API architecture that provides REST, GraphQL, WebSocket, and gRPC interfaces with multiple authentication methods and enterprise features. The architecture supports API keys, JWT tokens, OAuth 2.0, and single sign-on while providing rate limiting, versioning, auto-documentation, and usage monitoring. This design enables seamless integration with enterprise systems while maintaining security and providing comprehensive monitoring and management capabilities.
+
 **API Capabilities:**
 - **RESTful Endpoints**: Standard HTTP API for integration
 - **GraphQL Support**: Flexible query language for complex data
@@ -301,6 +321,10 @@ graph LR
     BACKUP --> ALERTING
 ```
 
+**Diagram Narrative: Enterprise Features Architecture**
+
+This diagram shows the enterprise-grade features including user management, role-based access, audit logging, and compliance capabilities with comprehensive security and scalability features. The architecture provides single sign-on, multi-factor authentication, end-to-end encryption, and enterprise backup while supporting load balancing, auto scaling, monitoring, and alerting. This design enables deployment in enterprise environments with full compliance, security, and scalability support.
+
 ---
 
 ## 🎯 Feature Priorities
@@ -318,6 +342,10 @@ graph LR
 | **REST API** | High | High | Q3 2025 |
 
 </div>
+
+**Diagram Narrative: Success Metrics Framework**
+
+This diagram illustrates the comprehensive success metrics framework that measures performance, security, and scalability across multiple dimensions. The framework tracks response times, throughput, uptime, and cache hit rates for performance while monitoring vulnerabilities, compliance, security audits, and encryption for security. The scalability metrics measure concurrent users, storage capacity, model support, and tool integration to ensure the system meets enterprise requirements and user expectations.
 
 ### **Medium Priority** 🔶
 
@@ -389,34 +417,9 @@ graph TB
 
 </div>
 
----
+**Diagram Narrative: Community and Ecosystem Strategy**
 
-## 🤝 Community & Ecosystem
-
-### **Open Source Strategy**
-
-```mermaid
-graph LR
-    subgraph "🌍 Community"
-        CONTRIBUTORS[Contributors]
-        PLUGINS[Community Plugins]
-        DOCUMENTATION[Documentation]
-        EXAMPLES[Code Examples]
-    end
-    
-    subgraph "🔧 Ecosystem"
-        INTEGRATIONS[Third-party Integrations]
-        TOOLS[Community Tools]
-        TEMPLATES[Project Templates]
-        TUTORIALS[Tutorials & Guides]
-    end
-    
-    CONTRIBUTORS --> PLUGINS
-    PLUGINS --> INTEGRATIONS
-    DOCUMENTATION --> TOOLS
-    EXAMPLES --> TEMPLATES
-    INTEGRATIONS --> TUTORIALS
-```
+This diagram shows the community and ecosystem strategy that fosters open source contributions, plugin development, documentation, and code examples while building integrations, tools, templates, and tutorials. The approach creates a vibrant ecosystem where contributors can develop plugins, third-party integrations can flourish, and users can access comprehensive resources and examples. This strategy supports the project's growth through community engagement and ecosystem development while maintaining quality and security standards.
 
 ### **Partnership Opportunities**
 

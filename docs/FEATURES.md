@@ -54,6 +54,10 @@ graph LR
 
 </div>
 
+**Diagram Narrative: Chain-of-Thought Reasoning Process**
+
+This diagram illustrates how complex queries are solved through sequential logical steps, showing the progression from user question through three thought stages to final answer. The chain-of-thought approach improves reasoning accuracy by making the AI's thought process explicit and verifiable, following the methodology established by Wei et al. (2022). Use this mode for analytical questions, mathematical problems, and logic puzzles where step-by-step reasoning enhances understanding.
+
 **Example:**
 ```
 User: "If I have 5 apples and give 2 to my friend, then buy 3 more, how many do I have?"
@@ -101,6 +105,10 @@ graph TB
 ```
 
 </div>
+
+**Diagram Narrative: Multi-Step Reasoning Process**
+
+This diagram demonstrates how complex queries are decomposed into parallel sub-questions that are processed independently and then synthesized into comprehensive answers. The multi-step approach enables thorough analysis by addressing multiple aspects simultaneously, then integrating results for complete understanding. This method is particularly effective for research questions, comparative analysis, and complex topics requiring systematic exploration.
 
 ### **Local & Private Processing**
 
@@ -168,6 +176,10 @@ graph LR
 
 </div>
 
+**Diagram Narrative: Advanced RAG Pipeline**
+
+This diagram shows the retrieval-augmented generation pipeline where documents are processed through extraction, chunking, embedding, and storage phases, then retrieved for contextual answer generation. The RAG approach combines the reliability of document-based information with the flexibility of LLM reasoning, providing accurate answers grounded in specific source material (Lewis et al.). Optimize chunk sizes and embedding parameters based on your document types for optimal retrieval accuracy.
+
 ### **Intelligent Text Chunking**
 
 - **Recursive Splitting**: Maintains semantic coherence
@@ -194,6 +206,10 @@ graph TB
     DESC --> CHUNK
     TEXT --> CHUNK
 ```
+
+**Diagram Narrative: Vision Model Integration**
+
+This diagram illustrates how images are processed through vision models to extract both textual and visual information, enabling comprehensive understanding of image content for RAG applications. The dual-output approach combines OCR capabilities with visual description generation, ensuring complete content analysis regardless of image type. Ensure the vision model (llava) is properly installed and configured for optimal image processing performance and accuracy.
 
 **Capabilities:**
 - **Text Recognition**: OCR for text within images
@@ -263,6 +279,10 @@ graph TD
     INFO --> UTC
 ```
 
+**Diagram Narrative: Time Tool Capabilities**
+
+This diagram shows the comprehensive time management capabilities across multiple timezone systems, with each function supporting global time operations. The time tools provide conversion, difference calculation, and information access for any timezone, using the pytz library for accurate timezone handling. Use these tools for scheduling, timezone conversions, and duration calculations, ensuring proper timezone specification for accurate results.
+
 **Features:**
 - **Timezone Conversion**: Convert between any timezones
 - **Time Difference**: Calculate duration between times
@@ -291,6 +311,10 @@ sequenceDiagram
     end
     BasicChat-->>User: Formatted results
 ```
+
+**Diagram Narrative: Web Search Integration Flow**
+
+This diagram demonstrates how web search is integrated with intelligent caching to optimize performance while maintaining access to current information. The caching strategy provides 70-85% hit rates for repeated queries while ensuring fresh results when needed, balancing performance with information currency. Monitor cache hit rates and adjust TTL settings based on your information freshness requirements and search patterns.
 
 **Capabilities:**
 - **Real-time Results**: Current information and news
@@ -325,6 +349,10 @@ graph TB
     CACHE --> HIT_RATE
     STREAM --> RESPONSE
 ```
+
+**Diagram Narrative: Async Architecture Performance**
+
+This diagram summarizes the performance optimization strategy through async processing, connection pooling, and multi-layer caching, showing how each feature contributes to measurable improvements. The multi-faceted approach provides 50-80% faster response times and 10x throughput improvement while maintaining system reliability and user experience quality. Tune configuration parameters based on your usage patterns and server capacity for optimal performance.
 
 ### **Multi-Layer Caching Strategy**
 
@@ -371,6 +399,10 @@ graph LR
     RETRY --> POOL
     HEALTH --> POOL
 ```
+
+**Diagram Narrative: Connection Pooling Architecture**
+
+This diagram illustrates the connection management strategy for optimizing network performance and reliability through pooling, rate limiting, and retry mechanisms. The comprehensive approach provides 10x throughput improvement while maintaining reliability through health monitoring and retry logic, with configurable parameters balancing speed and stability. Adjust connection pool settings based on your server capacity and expected load to optimize performance and resource utilization.
 
 ### **Modern UI/UX**
 
@@ -422,6 +454,10 @@ graph TB
     CLEANUP --> CLEAN
 ```
 
+**Diagram Narrative: Data Privacy and Security Model**
+
+This diagram clarifies how data is protected at every stage through local processing, validation, encryption, and automatic cleanup, ensuring complete data sovereignty. The privacy-first design follows OWASP recommendations for robust security while maintaining system functionality and user experience. Regularly review and update security configurations, monitor for potential vulnerabilities, and ensure encryption keys are properly managed for optimal security posture.
+
 ### **Security Features**
 
 - **Input Validation**: Comprehensive sanitization of all inputs
@@ -461,6 +497,10 @@ graph TB
     BACKUP --> CHROMA
     OPTIMIZE --> CHROMA
 ```
+
+**Diagram Narrative: ChromaDB Vector Store Management**
+
+This diagram shows how vector storage and management tools work together to provide efficient document retrieval and storage capabilities. The comprehensive management approach ensures reliable vector database operations while providing tools for maintenance, monitoring, and optimization through cleanup scripts, backup systems, and health checks. Use the cleanup script regularly to manage database size, monitor status for health issues, and perform backups to ensure data integrity and system reliability.
 
 ### **Database Utilities**
 

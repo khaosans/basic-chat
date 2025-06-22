@@ -77,6 +77,10 @@ graph TB
     class OLLAMA,DDG external
 ```
 
+**Diagram Narrative: System Architecture Overview**
+
+This diagram illustrates how user input flows through each architectural layer, ensuring privacy and modularity. It separates the user interface, core logic, services, storage, and external integrations to clarify responsibilities and enhance security. All processing is local-first, following best practices for privacy and extensibility (Wei et al.).
+
 ## 🧩 Core Components
 
 ### 1. **Reasoning Engine** (`reasoning_engine.py`)
@@ -127,6 +131,10 @@ classDiagram
     ReasoningEngine --> AutoReasoning
 ```
 
+**Diagram Narrative: Reasoning Engine Class Structure**
+
+This class diagram explains the flexible, extensible design of the reasoning engine, where the main orchestrator delegates to agent, chain, multi-step, or auto classes. The use of the Strategy pattern allows for easy addition of new reasoning modes, supporting future extensibility (Wei et al.).
+
 ### 2. **Document Processor** (`document_processor.py`)
 Manages the complete document lifecycle with advanced RAG capabilities.
 
@@ -171,6 +179,10 @@ graph LR
     class IMG,OCR,DESC image
 ```
 
+**Diagram Narrative: Document Processing Pipeline**
+
+This diagram shows how documents and images are processed for retrieval-augmented generation (RAG). Text and images are extracted, chunked, embedded, and stored for semantic search, with a dual pipeline ensuring both formats are handled efficiently (Lewis et al.).
+
 ### 3. **Async Ollama Client** (`utils/async_ollama.py`)
 High-performance client for Ollama API with advanced connection management.
 
@@ -206,6 +218,10 @@ sequenceDiagram
     
     Client->>Pool: Return Connection
 ```
+
+**Diagram Narrative: Async Ollama Client Request Flow**
+
+This sequence diagram visualizes high-performance request handling, where connection pooling, rate limiting, and caching optimize LLM calls. The client checks the pool, rate, and cache before making a request or returning a cached result, ensuring efficient and reliable interactions.
 
 ### 4. **Tool Registry** (`utils/enhanced_tools.py`)
 Extensible tool system providing specialized capabilities.
@@ -243,6 +259,10 @@ graph TD
     WEB --> SEARCH
     DOC --> SUMMARY
 ```
+
+**Diagram Narrative: Tool Registry Architecture**
+
+This diagram shows how tools are organized for extensibility, with a central registry managing calculators, time, web, and document tools. Tools are registered and called via a unified interface, making it easy to add new capabilities as the system evolves.
 
 ## 🔄 Data Flow Architecture
 
@@ -282,6 +302,10 @@ sequenceDiagram
     UI-->>User: Display Result
 ```
 
+**Diagram Narrative: Standard Query Processing Flow**
+
+This sequence diagram demonstrates the end-to-end flow for user queries, showing how the UI, engine, tools, LLM, and cache interact to answer questions. Queries are processed, cached, and routed through tools or LLMs as needed, then results are returned to the user.
+
 ### Document Analysis (RAG) Flow
 
 ```mermaid
@@ -313,6 +337,10 @@ sequenceDiagram
     RE-->>UI: Return Answer
     UI-->>User: Display Answer
 ```
+
+**Diagram Narrative: Document Analysis RAG Flow**
+
+This diagram explains how document context is used to answer questions by processing, embedding, and searching documents for relevant information. The RAG approach combines retrieval and LLM reasoning to provide grounded, context-aware answers (Lewis et al.).
 
 ## 🚀 Performance Architecture
 
@@ -352,6 +380,10 @@ graph TB
     L3 --> TTL
 ```
 
+**Diagram Narrative: Multi-Layer Caching Strategy**
+
+This diagram summarizes the caching strategy for speed and efficiency, layering memory, Redis, and disk caches to optimize performance. Query keys are checked in each layer, and hit rates are tracked to ensure fast, reliable responses.
+
 ### Async Processing Pipeline
 
 ```mermaid
@@ -382,6 +414,10 @@ graph LR
     LIMITER --> RETRY
     RETRY --> RESP
 ```
+
+**Diagram Narrative: Async Processing Pipeline**
+
+This diagram shows how asynchronous workers and connection pooling boost throughput by distributing requests, pooling resources, and applying rate limits. The async and pooling design enables the system to handle high loads efficiently (Beazley & Jones).
 
 ## 🔒 Security & Privacy Architecture
 
@@ -422,6 +458,10 @@ graph TB
     STORE --> CLEANUP
     CLEANUP --> CLEAN
 ```
+
+**Diagram Narrative: Data Privacy and Security Model**
+
+This diagram clarifies how data is protected at every stage, with local processing, validation, encryption, and cleanup ensuring privacy. Data flows through secure, local-only layers, following OWASP recommendations for robust security.
 
 ## 🏗️ Technology Stack
 
@@ -477,6 +517,10 @@ graph TB
     STREAMLIT --> PYTZ
 ```
 
+**Diagram Narrative: Technology Stack Architecture**
+
+This diagram presents the main technologies and their roles, showing how Python, Streamlit, LangChain, ChromaDB, Ollama, and supporting tools are layered for privacy, performance, and extensibility. Each technology is integrated to support the system's goals and future growth.
+
 ## 📈 Scalability Considerations
 
 ### Horizontal Scaling
@@ -523,12 +567,16 @@ graph TB
     FAILOVER --> LB
 ```
 
+**Diagram Narrative: Horizontal Scaling Architecture**
+
+This diagram explains how the system scales to support more users, with a load balancer, multiple app instances, and shared services providing redundancy and reliability. Stateless design and clustering enable seamless horizontal scaling for enterprise use.
+
 ## 🔗 Related Documentation
 
 - **[Features Overview](FEATURES.md)** - Detailed feature documentation
 - **[Development Guide](DEVELOPMENT.md)** - Contributing and development workflows
 - **[Roadmap](ROADMAP.md)** - Future development plans
-- **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
+- **[Reasoning Features](REASONING_FEATURES.md)** - Advanced reasoning engine details
 
 ## 📚 References
 
@@ -541,7 +589,7 @@ graph TB
 ### Research Papers
 - **Chain-of-Thought Reasoning**: Wei et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
 - **Retrieval-Augmented Generation**: Lewis et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
-- **Vector Similarity Search**: Johnson et al. "Billion-Scale Similarity Search with GPUs." *arXiv preprint arXiv:1908.10396*, 2019.
+- **Vector Similarity Search**: Johnson et al. "Billion-Scale Similarity Search with GPUs." *IEEE Transactions on Big Data* 7.3 (2019): 535-547.
 
 ---
 
