@@ -14,59 +14,66 @@ BasicChat is built on a **layered microservices architecture** that prioritizes 
 
 ```mermaid
 graph TB
-    subgraph "🎨 Presentation Layer"
-        UI[Streamlit Web Interface]
+    subgraph "🎨 User Interface"
+        UI[Web Interface]
         AUDIO[Audio Processing]
     end
     
-    subgraph "🧠 Application Layer"
+    subgraph "🧠 Core Logic"
         RE[Reasoning Engine]
         DP[Document Processor]
         TR[Tool Registry]
     end
     
-    subgraph "🔧 Service Layer"
-        AO[Async Ollama Client]
-        VS[Vector Store Service]
-        CS[Caching Service]
-        WS[Web Search Service]
+    subgraph "⚡ Services"
+        AO[Ollama Client]
+        VS[Vector Store]
+        CS[Cache Service]
+        WS[Web Search]
     end
     
-    subgraph "🗄️ Data Layer"
-        CHROMA[ChromaDB Vector Store]
-        CACHE[Redis/Memory Cache]
+    subgraph "🗄️ Storage"
+        CHROMA[Vector Database]
+        CACHE[Memory Cache]
         FILES[File Storage]
     end
     
-    subgraph "🌐 External Services"
-        OLLAMA[Ollama LLM Server]
-        DDG[DuckDuckGo Search]
+    subgraph "🌐 External"
+        OLLAMA[LLM Server]
+        DDG[Search Engine]
     end
     
+    %% User Interface Connections
     UI --> RE
     UI --> DP
     AUDIO --> RE
+    
+    %% Core Logic Connections
     RE --> AO
     RE --> TR
     DP --> VS
-    TR --> WS
+    
+    %% Service Connections
     AO --> OLLAMA
     VS --> CHROMA
     CS --> CACHE
     WS --> DDG
+    
+    %% Storage Connections
     CHROMA --> FILES
     CACHE --> FILES
     
-    classDef presentation fill:#E1F5FE,stroke:#01579B,stroke-width:2px
-    classDef application fill:#F3E5F5,stroke:#4A148C,stroke-width:2px
-    classDef service fill:#E8F5E8,stroke:#1B5E20,stroke-width:2px
-    classDef data fill:#FFF3E0,stroke:#E65100,stroke-width:2px
-    classDef external fill:#FCE4EC,stroke:#880E4F,stroke-width:2px
+    %% Styling
+    classDef ui fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef core fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef service fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef storage fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef external fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
     
-    class UI,AUDIO presentation
-    class RE,DP,TR application
+    class UI,AUDIO ui
+    class RE,DP,TR core
     class AO,VS,CS,WS service
-    class CHROMA,CACHE,FILES data
+    class CHROMA,CACHE,FILES storage
     class OLLAMA,DDG external
 ```
 
@@ -184,6 +191,8 @@ Extensible tool system providing specialized capabilities.
 
 ### **Async Processing Pipeline**
 
+<div align="center">
+
 ```mermaid
 graph LR
     subgraph "⚡ Async Processing"
@@ -212,7 +221,15 @@ graph LR
     POOL --> LIMITER
     LIMITER --> RETRY
     RETRY --> RESP
+    
+    classDef processing fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef pool fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    
+    class REQ,WORKER1,WORKER2,WORKER3,RESP processing
+    class POOL,LIMITER,RETRY,HEALTH pool
 ```
+
+</div>
 
 **Performance Metrics:**
 - **Throughput**: 100+ requests per second
@@ -225,6 +242,8 @@ graph LR
 ## 🔒 Security & Privacy
 
 ### **Data Privacy Model**
+
+<div align="center">
 
 ```mermaid
 graph TB
@@ -260,7 +279,17 @@ graph TB
     STORE --> ENCRYPT
     STORE --> CLEANUP
     CLEANUP --> CLEAN
+    
+    classDef privacy fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef security fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef flow fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    
+    class LOCAL,NO_EXTERNAL,ENCRYPT,CLEANUP privacy
+    class VALIDATION,SANITIZATION,RATE_LIMIT,ERROR_HANDLING security
+    class USER,PROCESS,STORE,CLEAN flow
 ```
+
+</div>
 
 **Security Features:**
 - **Complete Local Processing**: No data sent to external services
@@ -491,7 +520,7 @@ class AppConfig:
 - **[Features Overview](FEATURES.md)** - Complete feature documentation
 - **[Development Guide](DEVELOPMENT.md)** - Contributing and development workflows
 - **[Project Roadmap](ROADMAP.md)** - Future development plans
-- **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
+- **[Reasoning Features](REASONING_FEATURES.md)** - Advanced reasoning engine details
 
 ---
 

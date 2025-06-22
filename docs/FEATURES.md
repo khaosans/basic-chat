@@ -25,6 +25,9 @@ BasicChat features a sophisticated reasoning engine that can adapt its approach 
 </div>
 
 #### **Chain-of-Thought Reasoning**
+
+<div align="center">
+
 ```mermaid
 graph LR
     subgraph "🧠 Chain-of-Thought Process"
@@ -40,10 +43,16 @@ graph LR
     T2 --> T3
     T3 --> A
     
-    style Q fill:#E3F2FD
-    style A fill:#E8F5E8
-    style T1,T2,T3 fill:#FFF3E0
+    classDef question fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef thoughts fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef answer fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    
+    class Q question
+    class T1,T2,T3 thoughts
+    class A answer
 ```
+
+</div>
 
 **Example:**
 ```
@@ -57,6 +66,9 @@ Chain-of-Thought:
 ```
 
 #### **Multi-Step Reasoning**
+
+<div align="center">
+
 ```mermaid
 graph TB
     subgraph "🔄 Multi-Step Process"
@@ -76,7 +88,19 @@ graph TB
     SQ2 --> SYNTH
     SQ3 --> SYNTH
     SYNTH --> FINAL
+    
+    classDef question fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef subquestions fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef synthesis fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef final fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    
+    class Q question
+    class SQ1,SQ2,SQ3 subquestions
+    class SYNTH synthesis
+    class FINAL final
 ```
+
+</div>
 
 ### **Local & Private Processing**
 
@@ -104,6 +128,8 @@ graph TB
 
 ### **Advanced RAG Pipeline**
 
+<div align="center">
+
 ```mermaid
 graph LR
     subgraph "📄 Document Processing"
@@ -111,7 +137,7 @@ graph LR
         EXTRACT[Text Extraction]
         CHUNK[Intelligent Chunking]
         EMBED[Vector Embeddings]
-        STORE[ChromaDB Storage]
+        STORE[Vector Storage]
     end
     
     subgraph "🔍 Retrieval & Generation"
@@ -132,7 +158,15 @@ graph LR
     STORE --> RETRIEVE
     RETRIEVE --> GENERATE
     GENERATE --> RESPONSE
+    
+    classDef processing fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef retrieval fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    
+    class UPLOAD,EXTRACT,CHUNK,EMBED,STORE processing
+    class QUERY,SEARCH,RETRIEVE,GENERATE,RESPONSE retrieval
 ```
+
+</div>
 
 ### **Intelligent Text Chunking**
 
@@ -458,7 +492,7 @@ python scripts/cleanup_chroma.py --force
 - **[System Architecture](ARCHITECTURE.md)** - Technical architecture and component interactions
 - **[Development Guide](DEVELOPMENT.md)** - Contributing and development workflows
 - **[Project Roadmap](ROADMAP.md)** - Future features and development plans
-- **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
+- **[Reasoning Features](REASONING_FEATURES.md)** - Advanced reasoning engine details
 
 ---
 

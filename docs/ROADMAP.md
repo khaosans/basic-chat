@@ -28,11 +28,11 @@ BasicChat aims to become the **premier local AI assistant** for privacy-consciou
 
 | **Milestone** | **Status** | **Completion** | **Key Achievements** |
 |:---|:---:|:---:|:---|
-| **Core Architecture** | ✅ | Q4 2024 | Layered microservices design |
-| **Reasoning Engine** | ✅ | Q4 2024 | 5 reasoning modes implemented |
-| **Document Processing** | ✅ | Q4 2024 | Multi-format RAG pipeline |
-| **Performance Optimization** | ✅ | Q4 2024 | Async architecture + caching |
-| **Security & Privacy** | ✅ | Q4 2024 | Local-only processing |
+| **Core Architecture** | ✅ | — | Layered microservices design |
+| **Reasoning Engine** | ✅ | — | 5 reasoning modes implemented |
+| **Document Processing** | ✅ | — | Multi-format RAG pipeline |
+| **Performance Optimization** | ✅ | — | Async architecture + caching |
+| **Security & Privacy** | ✅ | — | Local-only processing |
 
 </div>
 
@@ -51,10 +51,10 @@ BasicChat aims to become the **premier local AI assistant** for privacy-consciou
 
 | **Milestone** | **Priority** | **Target** | **Description** |
 |:---|:---:|:---:|:---|
-| **Advanced Reasoning** | 🔥 High | Q1 2025 | Multi-model reasoning |
-| **Tool Ecosystem** | 🔥 High | Q1 2025 | Plugin architecture |
-| **Voice Integration** | 🔶 Medium | Q2 2025 | Speech-to-text & TTS |
-| **Proactive Assistance** | 🔶 Medium | Q2 2025 | Context-aware suggestions |
+| **Advanced Reasoning** | 🔥 High | — | Multi-model reasoning |
+| **Tool Ecosystem** | 🔥 High | — | Plugin architecture |
+| **Voice Integration** | 🔶 Medium | — | Speech-to-text & TTS |
+| **Proactive Assistance** | 🔶 Medium | — | Context-aware suggestions |
 
 </div>
 
@@ -480,7 +480,7 @@ graph LR
 - **[System Architecture](ARCHITECTURE.md)** - Technical architecture and component interactions
 - **[Features Overview](FEATURES.md)** - Complete feature documentation
 - **[Development Guide](DEVELOPMENT.md)** - Contributing and development workflows
-- **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
+- **[Reasoning Features](REASONING_FEATURES.md)** - Advanced reasoning engine details
 
 ---
 

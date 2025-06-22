@@ -12,67 +12,68 @@ BasicChat follows a **layered microservices architecture** with clear separation
 
 ```mermaid
 graph TB
-    subgraph "🎨 Presentation Layer"
-        UI[Streamlit Web Interface]
+    subgraph "🎨 User Interface"
+        UI[Web Interface]
         AUDIO[Audio Processing]
     end
     
-    subgraph "🧠 Application Layer"
+    subgraph "🧠 Core Logic"
         RE[Reasoning Engine]
         DP[Document Processor]
         TR[Tool Registry]
     end
     
-    subgraph "🔧 Service Layer"
-        AO[Async Ollama Client]
-        VS[Vector Store Service]
-        CS[Caching Service]
-        WS[Web Search Service]
+    subgraph "⚡ Services"
+        AO[Ollama Client]
+        VS[Vector Store]
+        CS[Cache Service]
+        WS[Web Search]
     end
     
-    subgraph "🗄️ Data Layer"
-        CHROMA[ChromaDB Vector Store]
-        CACHE[Redis/Memory Cache]
+    subgraph "🗄️ Storage"
+        CHROMA[Vector Database]
+        CACHE[Memory Cache]
         FILES[File Storage]
     end
     
-    subgraph "🌐 External Services"
-        OLLAMA[Ollama LLM Server]
-        DDG[DuckDuckGo Search]
+    subgraph "🌐 External"
+        OLLAMA[LLM Server]
+        DDG[Search Engine]
     end
     
-    %% Presentation Layer Connections
+    %% User Interface Connections
     UI --> RE
     UI --> DP
     AUDIO --> RE
     
-    %% Application Layer Connections
+    %% Core Logic Connections
     RE --> AO
     RE --> VS
     RE --> TR
     DP --> VS
     TR --> WS
     
-    %% Service Layer Connections
+    %% Service Connections
     AO --> OLLAMA
     VS --> CHROMA
     CS --> CACHE
     WS --> DDG
     
-    %% Data Layer Connections
+    %% Storage Connections
     CHROMA --> FILES
     CACHE --> FILES
     
-    classDef presentation fill:#E1F5FE,stroke:#01579B,stroke-width:2px
-    classDef application fill:#F3E5F5,stroke:#4A148C,stroke-width:2px
-    classDef service fill:#E8F5E8,stroke:#1B5E20,stroke-width:2px
-    classDef data fill:#FFF3E0,stroke:#E65100,stroke-width:2px
-    classDef external fill:#FCE4EC,stroke:#880E4F,stroke-width:2px
+    %% Styling
+    classDef ui fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef core fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef service fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef storage fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef external fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
     
-    class UI,AUDIO presentation
-    class RE,DP,TR application
+    class UI,AUDIO ui
+    class RE,DP,TR core
     class AO,VS,CS,WS service
-    class CHROMA,CACHE,FILES data
+    class CHROMA,CACHE,FILES storage
     class OLLAMA,DDG external
 ```
 
@@ -138,7 +139,7 @@ Manages the complete document lifecycle with advanced RAG capabilities.
 
 ```mermaid
 graph LR
-    subgraph "📄 Document Processing Pipeline"
+    subgraph "📄 Document Processing"
         UPLOAD[File Upload]
         EXTRACT[Text Extraction]
         CHUNK[Text Chunking]
@@ -147,21 +148,27 @@ graph LR
         SEARCH[Semantic Search]
     end
     
-    UPLOAD --> EXTRACT
-    EXTRACT --> CHUNK
-    CHUNK --> EMBED
-    EMBED --> STORE
-    STORE --> SEARCH
-    
     subgraph "🖼️ Image Processing"
         IMG[Image Upload]
         OCR[Vision Model OCR]
         DESC[Description Generation]
     end
     
+    UPLOAD --> EXTRACT
+    EXTRACT --> CHUNK
+    CHUNK --> EMBED
+    EMBED --> STORE
+    STORE --> SEARCH
+    
     IMG --> OCR
     OCR --> DESC
     DESC --> CHUNK
+    
+    classDef pipeline fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef image fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    
+    class UPLOAD,EXTRACT,CHUNK,EMBED,STORE,SEARCH pipeline
+    class IMG,OCR,DESC image
 ```
 
 ### 3. **Async Ollama Client** (`utils/async_ollama.py`)

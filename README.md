@@ -129,51 +129,58 @@ streamlit run app.py
 
 ```mermaid
 graph TB
-    subgraph "🎨 Presentation Layer"
-        UI[Streamlit Web Interface]
+    subgraph "🎨 User Interface"
+        UI[Web Interface]
         AUDIO[Audio Processing]
     end
     
-    subgraph "🧠 Application Layer"
+    subgraph "🧠 Core Logic"
         RE[Reasoning Engine]
         DP[Document Processor]
         TR[Tool Registry]
     end
     
-    subgraph "🔧 Service Layer"
-        AO[Async Ollama Client]
-        VS[Vector Store Service]
-        CS[Caching Service]
+    subgraph "⚡ Services"
+        AO[Ollama Client]
+        VS[Vector Store]
+        CS[Cache Service]
     end
     
-    subgraph "🗄️ Data Layer"
-        CHROMA[ChromaDB Vector Store]
-        CACHE[Redis/Memory Cache]
+    subgraph "🗄️ Storage"
+        CHROMA[Vector Database]
+        CACHE[Memory Cache]
     end
     
     subgraph "🌐 External"
-        OLLAMA[Ollama LLM Server]
+        OLLAMA[LLM Server]
     end
     
+    %% User Interface Connections
     UI --> RE
     UI --> DP
+    AUDIO --> RE
+    
+    %% Core Logic Connections
     RE --> AO
     RE --> TR
     DP --> VS
+    
+    %% Service Connections
     AO --> OLLAMA
     VS --> CHROMA
     CS --> CACHE
     
-    classDef presentation fill:#E1F5FE,stroke:#01579B,stroke-width:2px
-    classDef application fill:#F3E5F5,stroke:#4A148C,stroke-width:2px
-    classDef service fill:#E8F5E8,stroke:#1B5E20,stroke-width:2px
-    classDef data fill:#FFF3E0,stroke:#E65100,stroke-width:2px
-    classDef external fill:#FCE4EC,stroke:#880E4F,stroke-width:2px
+    %% Styling
+    classDef ui fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef core fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef service fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef storage fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef external fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
     
-    class UI,AUDIO presentation
-    class RE,DP,TR application
+    class UI,AUDIO ui
+    class RE,DP,TR core
     class AO,VS,CS service
-    class CHROMA,CACHE data
+    class CHROMA,CACHE storage
     class OLLAMA external
 ```
 
@@ -192,6 +199,7 @@ graph TB
 | **System Architecture** | Technical architecture and component interactions | [🏗️](docs/ARCHITECTURE.md) |
 | **Development Guide** | Contributing and development workflows | [🛠️](docs/DEVELOPMENT.md) |
 | **Project Roadmap** | Future features and development plans | [🗺️](docs/ROADMAP.md) |
+| **Reasoning Features** | Advanced reasoning engine details | [🧠](docs/REASONING_FEATURES.md) |
 
 </div>
 

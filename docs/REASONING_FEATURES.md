@@ -1,6 +1,87 @@
 # Reasoning Capabilities - Feature Summary
 
-## 🧠 Core Features
+## �� Core Features
+
+### **Reasoning Engine Architecture**
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🎯 User Input"
+        QUERY[User Query]
+        MODE[Reasoning Mode]
+        CONTEXT[Document Context]
+    end
+    
+    subgraph "🧠 Reasoning Engine"
+        COT[Chain-of-Thought]
+        MULTI[Multi-Step]
+        AGENT[Agent-Based]
+        AUTO[Auto Mode]
+    end
+    
+    subgraph "🛠️ Tool Integration"
+        CALC[Calculator]
+        TIME[Time Tools]
+        SEARCH[Web Search]
+        DOCS[Document Tools]
+    end
+    
+    subgraph "⚡ Performance"
+        CACHE[Smart Caching]
+        ASYNC[Async Processing]
+        POOL[Connection Pool]
+    end
+    
+    subgraph "📊 Output"
+        RESULT[Final Answer]
+        STEPS[Reasoning Steps]
+        CONFIDENCE[Confidence Score]
+    end
+    
+    QUERY --> COT
+    QUERY --> MULTI
+    QUERY --> AGENT
+    QUERY --> AUTO
+    
+    MODE --> COT
+    MODE --> MULTI
+    MODE --> AGENT
+    MODE --> AUTO
+    
+    CONTEXT --> COT
+    CONTEXT --> MULTI
+    CONTEXT --> AGENT
+    CONTEXT --> AUTO
+    
+    COT --> CALC
+    MULTI --> DOCS
+    AGENT --> SEARCH
+    AGENT --> TIME
+    
+    CALC --> CACHE
+    SEARCH --> ASYNC
+    DOCS --> POOL
+    
+    CACHE --> RESULT
+    ASYNC --> STEPS
+    POOL --> CONFIDENCE
+    
+    classDef input fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef engine fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef tools fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef performance fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef output fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
+    
+    class QUERY,MODE,CONTEXT input
+    class COT,MULTI,AGENT,AUTO engine
+    class CALC,TIME,SEARCH,DOCS tools
+    class CACHE,ASYNC,POOL performance
+    class RESULT,STEPS,CONFIDENCE output
+```
+
+</div>
 
 ### 1. **Chain-of-Thought (CoT) Reasoning**
 - **Implementation**: `ReasoningChain` class
@@ -15,6 +96,44 @@
 - **Research Basis**: Based on Wei et al. (2022) research showing that explicit step-by-step reasoning significantly improves large language model performance on complex reasoning tasks
 - **Technical Details**: Implements token-level streaming with real-time step extraction using regex patterns and confidence assessment algorithms
 
+<div align="center">
+
+```mermaid
+graph LR
+    subgraph "🧠 Chain-of-Thought Process"
+        Q[User Question]
+        T1[Thought 1]
+        T2[Thought 2]
+        T3[Thought 3]
+        A[Final Answer]
+    end
+    
+    subgraph "📊 Output Format"
+        THINKING[THINKING Section]
+        ANSWER[ANSWER Section]
+        CONFIDENCE[Confidence Score]
+    end
+    
+    Q --> T1
+    T1 --> T2
+    T2 --> T3
+    T3 --> A
+    
+    T1 --> THINKING
+    T2 --> THINKING
+    T3 --> THINKING
+    A --> ANSWER
+    A --> CONFIDENCE
+    
+    classDef process fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef output fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    
+    class Q,T1,T2,T3,A process
+    class THINKING,ANSWER,CONFIDENCE output
+```
+
+</div>
+
 ### 2. **Multi-Step Reasoning**
 - **Implementation**: `MultiStepReasoning` class
 - **Features**:
@@ -25,6 +144,53 @@
   - Progressive output display with streaming updates
   - **Performance**: Optimized with connection pooling and async document retrieval
 - **Technical Details**: Uses RecursiveCharacterTextSplitter for optimal document chunking and ChromaDB for vector similarity search with configurable chunk sizes (1000 tokens) and overlap (200 tokens)
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🔄 Multi-Step Process"
+        Q[Original Question]
+        ANALYSIS[Analysis Phase]
+        REASONING[Reasoning Phase]
+        SYNTHESIS[Synthesis Phase]
+    end
+    
+    subgraph "📄 Document Integration"
+        SEARCH[Semantic Search]
+        CHUNKS[Document Chunks]
+        CONTEXT[Context Retrieval]
+    end
+    
+    subgraph "📊 Output Structure"
+        ANALYSIS_OUT[Analysis Results]
+        STEPS_OUT[Step-by-Step]
+        FINAL[Final Answer]
+    end
+    
+    Q --> ANALYSIS
+    ANALYSIS --> REASONING
+    REASONING --> SYNTHESIS
+    
+    Q --> SEARCH
+    SEARCH --> CHUNKS
+    CHUNKS --> CONTEXT
+    CONTEXT --> REASONING
+    
+    ANALYSIS --> ANALYSIS_OUT
+    REASONING --> STEPS_OUT
+    SYNTHESIS --> FINAL
+    
+    classDef process fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef docs fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef output fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    
+    class Q,ANALYSIS,REASONING,SYNTHESIS process
+    class SEARCH,CHUNKS,CONTEXT docs
+    class ANALYSIS_OUT,STEPS_OUT,FINAL output
+```
+
+</div>
 
 ### 3. **Agent-Based Reasoning**
 - **Implementation**: `ReasoningAgent` class
@@ -39,6 +205,68 @@
   - **Performance**: Rate-limited tool usage with configurable throttling (10 requests/second default)
 - **Technical Details**: Implements tool registry pattern with trigger-based tool selection and result aggregation
 
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🤖 Agent Execution"
+        QUERY[User Query]
+        THOUGHT[Thought Process]
+        TOOL_SELECT[Tool Selection]
+        EXECUTION[Tool Execution]
+        RESULT[Tool Result]
+    end
+    
+    subgraph "🛠️ Available Tools"
+        CALC[Calculator]
+        SEARCH[Web Search]
+        TIME[Time Tools]
+        DOCS[Document Tools]
+    end
+    
+    subgraph "⚡ Performance"
+        RATE_LIMIT[Rate Limiting]
+        CACHE[Tool Caching]
+        RETRY[Retry Logic]
+    end
+    
+    subgraph "📊 Output"
+        FINAL_ANSWER[Final Answer]
+        TOOL_STEPS[Tool Steps]
+        CONFIDENCE[Confidence]
+    end
+    
+    QUERY --> THOUGHT
+    THOUGHT --> TOOL_SELECT
+    TOOL_SELECT --> EXECUTION
+    EXECUTION --> RESULT
+    
+    TOOL_SELECT --> CALC
+    TOOL_SELECT --> SEARCH
+    TOOL_SELECT --> TIME
+    TOOL_SELECT --> DOCS
+    
+    EXECUTION --> RATE_LIMIT
+    EXECUTION --> CACHE
+    EXECUTION --> RETRY
+    
+    RESULT --> FINAL_ANSWER
+    RESULT --> TOOL_STEPS
+    RESULT --> CONFIDENCE
+    
+    classDef agent fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef tools fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef performance fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef output fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
+    
+    class QUERY,THOUGHT,TOOL_SELECT,EXECUTION,RESULT agent
+    class CALC,SEARCH,TIME,DOCS tools
+    class RATE_LIMIT,CACHE,RETRY performance
+    class FINAL_ANSWER,TOOL_STEPS,CONFIDENCE output
+```
+
+</div>
+
 ### 4. **Enhanced Document Processing**
 - **Implementation**: `ReasoningDocumentProcessor` class
 - **Features**:
@@ -50,6 +278,80 @@
 - **Technical Details**: Supports PDF, TXT, MD, and image formats with OCR capabilities using Tesseract and Unstructured library
 
 ## 🛠️ **Enhanced Tools & Utilities**
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🧮 Mathematical Tools"
+        CALC[Enhanced Calculator]
+        MATH[Math Operations]
+        SAFETY[Safety Features]
+        STEPS[Step-by-Step]
+    end
+    
+    subgraph "🕐 Time Tools"
+        TIME[Time Tools]
+        TZ[Timezone Support]
+        CONV[Conversions]
+        DIFF[Time Differences]
+    end
+    
+    subgraph "🌐 Web Tools"
+        SEARCH[Web Search]
+        DDG[DuckDuckGo]
+        CACHE[Search Cache]
+        RETRY[Retry Logic]
+    end
+    
+    subgraph "📄 Document Tools"
+        DOCS[Document Processing]
+        OCR[OCR Support]
+        VECTOR[Vector Storage]
+        RAG[RAG Pipeline]
+    end
+    
+    subgraph "⚡ Performance"
+        ASYNC[Async Client]
+        POOL[Connection Pool]
+        RATE[Rate Limiting]
+        HEALTH[Health Checks]
+    end
+    
+    CALC --> MATH
+    CALC --> SAFETY
+    CALC --> STEPS
+    
+    TIME --> TZ
+    TIME --> CONV
+    TIME --> DIFF
+    
+    SEARCH --> DDG
+    SEARCH --> CACHE
+    SEARCH --> RETRY
+    
+    DOCS --> OCR
+    DOCS --> VECTOR
+    DOCS --> RAG
+    
+    ASYNC --> POOL
+    ASYNC --> RATE
+    ASYNC --> HEALTH
+    
+    classDef math fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef time fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef web fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef docs fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef perf fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
+    
+    class CALC,MATH,SAFETY,STEPS math
+    class TIME,TZ,CONV,DIFF time
+    class SEARCH,DDG,CACHE,RETRY web
+    class DOCS,OCR,VECTOR,RAG docs
+    class ASYNC,POOL,RATE,HEALTH perf
+```
+
+</div>
 
 ### 1. **Enhanced Calculator (`utils/enhanced_tools.py`)**
 - **Safe Mathematical Operations**:
@@ -140,6 +442,73 @@
 - **Technical Implementation**: Uses redis-py for Redis operations and cachetools for in-memory caching
 
 ## 🚀 Performance Enhancements (Week 1)
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "⚡ Async Architecture"
+        REQUEST[User Request]
+        ASYNC[Async Processing]
+        POOL[Connection Pool]
+        RATE[Rate Limiting]
+        RETRY[Retry Logic]
+    end
+    
+    subgraph "💾 Smart Caching"
+        REDIS[Redis Cache]
+        MEMORY[Memory Cache]
+        FALLBACK[Fallback Logic]
+        TTL[TTL Management]
+        STATS[Cache Statistics]
+    end
+    
+    subgraph "⚙️ Configuration"
+        ENV[Environment Vars]
+        VALIDATION[Type Validation]
+        CENTRAL[Central Config]
+        TUNING[Performance Tuning]
+    end
+    
+    subgraph "📊 Monitoring"
+        HEALTH[Health Checks]
+        METRICS[Performance Metrics]
+        ALERTS[Alert System]
+        LOGS[Structured Logs]
+    end
+    
+    REQUEST --> ASYNC
+    ASYNC --> POOL
+    ASYNC --> RATE
+    ASYNC --> RETRY
+    
+    ASYNC --> REDIS
+    REDIS --> MEMORY
+    MEMORY --> FALLBACK
+    FALLBACK --> TTL
+    TTL --> STATS
+    
+    ENV --> VALIDATION
+    VALIDATION --> CENTRAL
+    CENTRAL --> TUNING
+    
+    POOL --> HEALTH
+    RATE --> METRICS
+    RETRY --> ALERTS
+    STATS --> LOGS
+    
+    classDef async fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef cache fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef config fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef monitor fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    
+    class REQUEST,ASYNC,POOL,RATE,RETRY async
+    class REDIS,MEMORY,FALLBACK,TTL,STATS cache
+    class ENV,VALIDATION,CENTRAL,TUNING config
+    class HEALTH,METRICS,ALERTS,LOGS monitor
+```
+
+</div>
 
 ### 1. **Async Architecture**
 - **Connection Pooling**: Efficient HTTP connection reuse with aiohttp
@@ -338,6 +707,61 @@ results = search_web("latest AI developments 2024", max_results=3)
 ```
 
 ## 📊 Performance Metrics
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🧠 Reasoning Performance"
+        COT_PERF[Chain-of-Thought<br/>90% Confidence]
+        MULTI_PERF[Multi-Step<br/>85% Confidence]
+        AGENT_PERF[Agent-Based<br/>95% Confidence]
+        SEARCH_PERF[Web Search<br/>90% Accuracy]
+    end
+    
+    subgraph "🛠️ Tool Performance"
+        CALC_PERF[Calculator<br/>99% Accuracy]
+        TIME_PERF[Time Tools<br/>100% Accuracy]
+        WEB_PERF[Web Search<br/>85% Success]
+        ASYNC_PERF[Async Client<br/>3x Faster]
+    end
+    
+    subgraph "⚡ System Performance"
+        RESPONSE[Response Time<br/>50-80% Faster]
+        THROUGHPUT[Throughput<br/>10x Improvement]
+        RELIABILITY[Reliability<br/>99.9% Uptime]
+        MEMORY[Memory Usage<br/>60% Reduction]
+    end
+    
+    subgraph "💾 Cache Performance"
+        HIT_RATE[Cache Hit Rate<br/>70-85%]
+        TTL_EFF[TTL Efficiency<br/>Optimal]
+        MEM_USAGE[Memory Usage<br/>Configurable]
+        FALLBACK[Fallback Success<br/>100%]
+    end
+    
+    COT_PERF --> RESPONSE
+    MULTI_PERF --> THROUGHPUT
+    AGENT_PERF --> RELIABILITY
+    SEARCH_PERF --> MEMORY
+    
+    CALC_PERF --> HIT_RATE
+    TIME_PERF --> TTL_EFF
+    WEB_PERF --> MEM_USAGE
+    ASYNC_PERF --> FALLBACK
+    
+    classDef reasoning fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef tools fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef system fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef cache fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    
+    class COT_PERF,MULTI_PERF,AGENT_PERF,SEARCH_PERF reasoning
+    class CALC_PERF,TIME_PERF,WEB_PERF,ASYNC_PERF tools
+    class RESPONSE,THROUGHPUT,RELIABILITY,MEMORY system
+    class HIT_RATE,TTL_EFF,MEM_USAGE,FALLBACK cache
+```
+
+</div>
 
 ### Reasoning Performance
 - **Chain-of-Thought**: 90% confidence for analytical queries

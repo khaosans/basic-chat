@@ -681,8 +681,8 @@ class ReasoningResult:
 
 - **[System Architecture](ARCHITECTURE.md)** - Technical architecture and component interactions
 - **[Features Overview](FEATURES.md)** - Complete feature documentation
-- **[Project Roadmap](ROADMAP.md)** - Future development plans
-- **[Reasoning Features](../REASONING_FEATURES.md)** - Advanced reasoning engine details
+- **[Project Roadmap](ROADMAP.md)** - Future features and development plans
+- **[Reasoning Features](REASONING_FEATURES.md)** - Advanced reasoning engine details
 
 ---
 
