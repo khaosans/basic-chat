@@ -34,14 +34,7 @@ jobs:
         
     - name: Run unit tests
       run: |
-        pytest tests/ -m "not slow" --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov=web_search --cov-report=term-missing --cov-report=xml
-        
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
+        pytest tests/ -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov=web_search --cov-report=term-missing
         
     - name: Run basic functionality test
       run: |
