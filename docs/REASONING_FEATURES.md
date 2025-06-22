@@ -8,33 +8,33 @@
 
 ```mermaid
 graph TB
-    subgraph "🎯 User Input"
+    subgraph "User Input"
         QUERY[User Query]
         MODE[Reasoning Mode]
         CONTEXT[Document Context]
     end
     
-    subgraph "🧠 Reasoning Engine"
+    subgraph "Reasoning Engine"
         COT[Chain-of-Thought]
         MULTI[Multi-Step]
         AGENT[Agent-Based]
         AUTO[Auto Mode]
     end
     
-    subgraph "🛠️ Tool Integration"
+    subgraph "Tool Integration"
         CALC[Calculator]
         TIME[Time Tools]
         SEARCH[Web Search]
         DOCS[Document Tools]
     end
     
-    subgraph "⚡ Performance"
+    subgraph "Performance"
         CACHE[Smart Caching]
         ASYNC[Async Processing]
         POOL[Connection Pool]
     end
     
-    subgraph "📊 Output"
+    subgraph "Output"
         RESULT[Final Answer]
         STEPS[Reasoning Steps]
         CONFIDENCE[Confidence Score]
