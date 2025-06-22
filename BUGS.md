@@ -112,4 +112,29 @@ Some PNG files are not being processed correctly by the OCR system. This appears
 3. Add fallback to alternative OCR engines
 
 ### Technical Notes
-Related to Tesseract OCR limitations with certain PNG formats. 
+Related to Tesseract OCR limitations with certain PNG formats.
+
+## 📚 References
+
+### **Core Technologies**
+Ollama. "Local Large Language Model Server." *Ollama.ai*, 2024, https://ollama.ai.
+
+Streamlit. "Web Application Framework." *Streamlit.io*, 2024, https://streamlit.io.
+
+LangChain. "LLM Application Framework." *LangChain.com*, 2024, https://langchain.com.
+
+ChromaDB. "Vector Database for AI Applications." *ChromaDB.ai*, 2024, https://chromadb.ai.
+
+### **OCR & Image Processing**
+Tesseract. "Optical Character Recognition Engine." *GitHub*, 2024, https://github.com/tesseract-ocr/tesseract.
+
+Pillow. "Python Imaging Library." *Python-Pillow.org*, 2024, https://python-pillow.org.
+
+### **Development Resources**
+Beazley, David M., and Brian K. Jones. *Python Cookbook*. 3rd ed., O'Reilly Media, 2013.
+
+Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
+
+---
+
+[← Back to README](README.md) | [Architecture →](docs/ARCHITECTURE.md) | [Features →](docs/FEATURES.md) | [Development →](docs/DEVELOPMENT.md) 

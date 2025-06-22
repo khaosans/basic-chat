@@ -204,15 +204,31 @@ class PerformanceMonitor:
 
 ## 📚 **Research & References**
 
-### **Papers & Implementations**
-- [Speculative Decoding: Accelerating LLM Inference via Speculative Sampling](https://arxiv.org/abs/2302.01318)
-- [Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads](https://arxiv.org/abs/2401.10774)
-- [Lookahead Decoding: An LLM Inference Algorithm to Unify Efficiency and Quality](https://arxiv.org/abs/2402.02030)
+### **Research Papers**
+Chen, Charlie, et al. "Speculative Decoding: Accelerating LLM Inference via Speculative Sampling." *arXiv preprint arXiv:2302.01318*, 2023.
+
+Cai, Tianle, et al. "Medusa: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads." *arXiv preprint arXiv:2401.10774*, 2024.
+
+Fu, Yichao, et al. "Lookahead Decoding: An LLM Inference Algorithm to Unify Efficiency and Quality." *arXiv preprint arXiv:2402.02030*, 2024.
 
 ### **Open Source Implementations**
-- [vLLM Speculative Decoding](https://github.com/vllm-project/vllm)
-- [Transformers Speculative Decoding](https://github.com/huggingface/transformers)
-- [Ollama Speculative Decoding](https://github.com/ollama/ollama)
+vLLM Project. "vLLM: High-Performance LLM Inference and Serving." *GitHub*, 2024, https://github.com/vllm-project/vllm.
+
+Hugging Face. "Transformers: State-of-the-art Machine Learning." *GitHub*, 2024, https://github.com/huggingface/transformers.
+
+Ollama. "Local Large Language Model Server." *GitHub*, 2024, https://github.com/ollama/ollama.
+
+### **Core Technologies**
+Ollama. "Local Large Language Model Server." *Ollama.ai*, 2024, https://ollama.ai.
+
+Streamlit. "Web Application Framework." *Streamlit.io*, 2024, https://streamlit.io.
+
+LangChain. "LLM Application Framework." *LangChain.com*, 2024, https://langchain.com.
+
+### **Development Resources**
+Beazley, David M., and Brian K. Jones. *Python Cookbook*. 3rd ed., O'Reilly Media, 2013.
+
+Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
 
 ## 🎯 **Acceptance Criteria**
 
