@@ -21,72 +21,57 @@
 BasicChat follows a **layered microservices architecture** designed for modularity, scalability, and privacy. The system operates entirely locally while maintaining enterprise-grade capabilities.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
-    subgraph "Presentation Layer"
+    subgraph "User Interface"
         UI[Streamlit UI]
         API[REST API]
-        WS[WebSocket]
     end
     
-    subgraph "Application Layer"
+    subgraph "Core Services"
         RE[Reasoning Engine]
         DP[Document Processor]
         TM[Tool Manager]
-        CM[Cache Manager]
     end
     
-    subgraph "Service Layer"
+    subgraph "AI Services"
         LLM[LLM Service]
         EMB[Embedding Service]
         VISION[Vision Service]
-        AUDIO[Audio Service]
     end
     
-    subgraph "Data Layer"
+    subgraph "Data Storage"
         VDB[Vector Database]
         CACHE[Cache Store]
         FILES[File Storage]
-        LOGS[Log Storage]
-    end
-    
-    subgraph "External Layer"
-        OLLAMA[Ollama Models]
-        CHROMADB[ChromaDB]
-        REDIS[Redis Cache]
-        FILESYSTEM[File System]
     end
     
     UI --> RE
     API --> RE
-    WS --> RE
     
     RE --> LLM
     RE --> EMB
     RE --> VISION
-    RE --> AUDIO
     
     DP --> VDB
     TM --> CACHE
-    CM --> CACHE
     
-    LLM --> OLLAMA
-    EMB --> CHROMADB
+    LLM --> OLLAMA[Ollama Models]
+    EMB --> CHROMADB[ChromaDB]
     VDB --> CHROMADB
-    CACHE --> REDIS
-    FILES --> FILESYSTEM
+    CACHE --> REDIS[Redis Cache]
     
-    classDef presentation fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef application fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef service fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
+    classDef ui fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef core fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
+    classDef ai fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
     classDef data fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
     classDef external fill:#fef2f2,stroke:#dc2626,stroke-width:2px,color:#1f2937
     
-    class UI,API,WS presentation
-    class RE,DP,TM,CM application
-    class LLM,EMB,VISION,AUDIO service
-    class VDB,CACHE,FILES,LOGS data
-    class OLLAMA,CHROMADB,REDIS,FILESYSTEM external
+    class UI,API ui
+    class RE,DP,TM core
+    class LLM,EMB,VISION ai
+    class VDB,CACHE,FILES data
+    class OLLAMA,CHROMADB,REDIS external
 ```
 
 **Architecture Principles:**
@@ -184,26 +169,19 @@ Extensible plugin architecture for BasicChat's functionality.
 Multi-layer caching system for optimal performance:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
     subgraph "Cache Layers"
-        L1[L1: Memory Cache]
-        L2[L2: Redis Cache]
-        L3[L3: Disk Cache]
+        L1[Memory Cache]
+        L2[Redis Cache]
+        L3[Disk Cache]
     end
     
     subgraph "Cache Types"
         RESPONSE[Response Cache]
         EMBEDDING[Embedding Cache]
-        TOOL[Tool Result Cache]
+        TOOL[Tool Cache]
         SESSION[Session Cache]
-    end
-    
-    subgraph "Cache Policies"
-        TTL[Time-to-Live]
-        LRU[LRU Eviction]
-        SIZE[Size Limits]
-        INVALIDATION[Smart Invalidation]
     end
     
     L1 --> RESPONSE
@@ -211,18 +189,11 @@ graph TB
     L2 --> TOOL
     L3 --> SESSION
     
-    RESPONSE --> TTL
-    EMBEDDING --> LRU
-    TOOL --> SIZE
-    SESSION --> INVALIDATION
-    
     classDef layers fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
     classDef types fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef policies fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
     
     class L1,L2,L3 layers
     class RESPONSE,EMBEDDING,TOOL,SESSION types
-    class TTL,LRU,SIZE,INVALIDATION policies
 ```
 
 **Performance Metrics:**
@@ -349,46 +320,41 @@ graph TB
 Secure data handling throughout the processing pipeline:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
     subgraph "Data Input"
         VALIDATION[Input Validation]
         SANITIZATION[Data Sanitization]
         ENCRYPTION[Data Encryption]
-        ISOLATION[Process Isolation]
     end
     
     subgraph "Processing"
-        SECURE_PROCESSING[Secure Processing]
-        MEMORY_PROTECTION[Memory Protection]
-        TEMP_CLEANUP[Temporary Data Cleanup]
-        ACCESS_CONTROL[Access Control]
+        SECURE[Secure Processing]
+        MEMORY[Memory Protection]
+        ACCESS[Access Control]
     end
     
     subgraph "Storage"
-        ENCRYPTED_STORAGE[Encrypted Storage]
-        BACKUP_ENCRYPTION[Backup Encryption]
-        KEY_MANAGEMENT[Key Management]
-        DATA_RETENTION[Data Retention Policies]
+        ENCRYPTED[Encrypted Storage]
+        BACKUP[Backup Encryption]
+        RETENTION[Data Retention]
     end
     
-    VALIDATION --> SECURE_PROCESSING
-    SANITIZATION --> MEMORY_PROTECTION
-    ENCRYPTION --> TEMP_CLEANUP
-    ISOLATION --> ACCESS_CONTROL
+    VALIDATION --> SECURE
+    SANITIZATION --> MEMORY
+    ENCRYPTION --> ACCESS
     
-    SECURE_PROCESSING --> ENCRYPTED_STORAGE
-    MEMORY_PROTECTION --> BACKUP_ENCRYPTION
-    TEMP_CLEANUP --> KEY_MANAGEMENT
-    ACCESS_CONTROL --> DATA_RETENTION
+    SECURE --> ENCRYPTED
+    MEMORY --> BACKUP
+    ACCESS --> RETENTION
     
     classDef input fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
     classDef processing fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
     classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
     
-    class VALIDATION,SANITIZATION,ENCRYPTION,ISOLATION input
-    class SECURE_PROCESSING,MEMORY_PROTECTION,TEMP_CLEANUP,ACCESS_CONTROL processing
-    class ENCRYPTED_STORAGE,BACKUP_ENCRYPTION,KEY_MANAGEMENT,DATA_RETENTION storage
+    class VALIDATION,SANITIZATION,ENCRYPTION input
+    class SECURE,MEMORY,ACCESS processing
+    class ENCRYPTED,BACKUP,RETENTION storage
 ```
 
 ---
@@ -445,62 +411,30 @@ python scripts/cleanup_chroma.py --force       # Force cleanup
 
 ### **Core Technologies**
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
-graph TB
-    subgraph "Frontend"
-        STREAMLIT[Streamlit]
-        REACT[React Components]
-        CSS[Custom CSS]
-        JS[JavaScript]
-    end
-    
-    subgraph "Backend"
-        PYTHON[Python 3.12]
-        ASYNC[AsyncIO]
-        FASTAPI[FastAPI]
-        PYDANTIC[Pydantic]
-    end
-    
-    subgraph "AI/ML"
-        LANGCHAIN[LangChain]
-        OLLAMA[Ollama]
-        CHROMADB[ChromaDB]
-        SENTENCE_TRANSFORMERS[Sentence Transformers]
-    end
-    
-    subgraph "Infrastructure"
-        REDIS[Redis]
-        DOCKER[Docker]
-        KUBERNETES[Kubernetes]
-        MONITORING[Prometheus/Grafana]
-    end
-    
-    STREAMLIT --> PYTHON
-    REACT --> FASTAPI
-    CSS --> PYDANTIC
-    JS --> ASYNC
-    
-    PYTHON --> LANGCHAIN
-    ASYNC --> OLLAMA
-    FASTAPI --> CHROMADB
-    PYDANTIC --> SENTENCE_TRANSFORMERS
-    
-    LANGCHAIN --> REDIS
-    OLLAMA --> DOCKER
-    CHROMADB --> KUBERNETES
-    SENTENCE_TRANSFORMERS --> MONITORING
-    
-    classDef frontend fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef backend fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef aiml fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    classDef infrastructure fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
-    
-    class STREAMLIT,REACT,CSS,JS frontend
-    class PYTHON,ASYNC,FASTAPI,PYDANTIC backend
-    class LANGCHAIN,OLLAMA,CHROMADB,SENTENCE_TRANSFORMERS aiml
-    class REDIS,DOCKER,KUBERNETES,MONITORING infrastructure
-```
+BasicChat is built on modern, scalable technologies:
+
+**Frontend:**
+- **Streamlit**: Primary web interface with real-time updates
+- **React Components**: Interactive UI elements
+- **Custom CSS/JS**: Styling and functionality
+
+**Backend:**
+- **Python 3.12**: Core runtime environment
+- **AsyncIO**: Asynchronous processing
+- **FastAPI**: High-performance web framework
+- **Pydantic**: Data validation and serialization
+
+**AI/ML:**
+- **LangChain**: AI orchestration framework
+- **Ollama**: Local LLM inference engine
+- **ChromaDB**: Vector database for embeddings
+- **Sentence Transformers**: Text embedding models
+
+**Infrastructure:**
+- **Redis**: High-performance caching
+- **Docker**: Containerization
+- **Kubernetes**: Orchestration (optional)
+- **Prometheus/Grafana**: Monitoring
 
 ### **Key Libraries**
 

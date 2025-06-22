@@ -21,72 +21,57 @@
 BasicChat is built on a **layered microservices architecture** that prioritizes modularity, performance, and privacy. The system is designed to run entirely locally while maintaining enterprise-grade capabilities.
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
-    subgraph "Presentation Layer"
+    subgraph "User Interface"
         UI[Streamlit UI]
         API[REST API]
-        WS[WebSocket]
     end
     
-    subgraph "Application Layer"
+    subgraph "Core Services"
         RE[Reasoning Engine]
         DP[Document Processor]
         TM[Tool Manager]
-        CM[Cache Manager]
     end
     
-    subgraph "Service Layer"
+    subgraph "AI Services"
         LLM[LLM Service]
         EMB[Embedding Service]
         VISION[Vision Service]
-        AUDIO[Audio Service]
     end
     
-    subgraph "Data Layer"
+    subgraph "Data Storage"
         VDB[Vector Database]
         CACHE[Cache Store]
         FILES[File Storage]
-        LOGS[Log Storage]
-    end
-    
-    subgraph "External Layer"
-        OLLAMA[Ollama Models]
-        CHROMADB[ChromaDB]
-        REDIS[Redis Cache]
-        FILESYSTEM[File System]
     end
     
     UI --> RE
     API --> RE
-    WS --> RE
     
     RE --> LLM
     RE --> EMB
     RE --> VISION
-    RE --> AUDIO
     
     DP --> VDB
     TM --> CACHE
-    CM --> CACHE
     
-    LLM --> OLLAMA
-    EMB --> CHROMADB
+    LLM --> OLLAMA[Ollama Models]
+    EMB --> CHROMADB[ChromaDB]
     VDB --> CHROMADB
-    CACHE --> REDIS
-    FILES --> FILESYSTEM
+    CACHE --> REDIS[Redis Cache]
     
-    classDef presentation fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef application fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef service fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
+    classDef ui fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef core fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
+    classDef ai fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
     classDef data fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
     classDef external fill:#fef2f2,stroke:#dc2626,stroke-width:2px,color:#1f2937
     
-    class UI,API,WS presentation
-    class RE,DP,TM,CM application
-    class LLM,EMB,VISION,AUDIO service
-    class VDB,CACHE,FILES,LOGS data
-    class OLLAMA,CHROMADB,REDIS,FILESYSTEM external
+    class UI,API ui
+    class RE,DP,TM core
+    class LLM,EMB,VISION ai
+    class VDB,CACHE,FILES data
+    class OLLAMA,CHROMADB,REDIS external
 ```
 
 ---
@@ -100,7 +85,6 @@ The presentation layer handles all user interactions and provides multiple inter
 **Components:**
 - **Streamlit UI**: Primary web interface with real-time updates
 - **REST API**: Programmatic access for integrations
-- **WebSocket**: Real-time communication for streaming responses
 
 ### **2. Application Layer**
 
@@ -110,7 +94,6 @@ The application layer contains the core business logic and orchestrates interact
 - **Reasoning Engine**: Multi-modal reasoning with 5 different modes
 - **Document Processor**: Advanced RAG pipeline with intelligent chunking
 - **Tool Manager**: Plugin architecture for extensible functionality
-- **Cache Manager**: Multi-layer caching for performance optimization
 
 ### **3. Service Layer**
 
@@ -120,7 +103,6 @@ The service layer provides specialized services for different types of AI proces
 - **LLM Service**: Language model interactions and management
 - **Embedding Service**: Vector embeddings for semantic search
 - **Vision Service**: Image processing and analysis
-- **Audio Service**: Speech-to-text and text-to-speech capabilities
 
 ### **4. Data Layer**
 
@@ -130,7 +112,6 @@ The data layer manages all data persistence and retrieval operations.
 - **Vector Database**: ChromaDB for semantic search and document storage
 - **Cache Store**: Redis for high-performance caching
 - **File Storage**: Local file system for document and media storage
-- **Log Storage**: Structured logging for monitoring and debugging
 
 ### **5. External Layer**
 
@@ -140,7 +121,6 @@ The external layer interfaces with external systems and services.
 - **Ollama Models**: Local LLM inference engine
 - **ChromaDB**: Vector database for embeddings
 - **Redis**: In-memory cache for performance
-- **File System**: Local storage for all data
 
 ---
 
@@ -211,55 +191,16 @@ graph TB
 
 The document processor provides advanced RAG capabilities with intelligent document handling.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
-graph TB
-    subgraph "Document Input"
-        PDF[PDF Files]
-        TXT[Text Files]
-        IMG[Image Files]
-        DOC[Word Documents]
-    end
-    
-    subgraph "Processing Pipeline"
-        PARSER[Document Parser]
-        SPLITTER[Text Splitter]
-        EMBEDDER[Embedding Generator]
-        STORER[Vector Store]
-    end
-    
-    subgraph "RAG System"
-        QUERY[Query Processing]
-        RETRIEVER[Semantic Retrieval]
-        RERANKER[Re-ranking]
-        CONTEXT[Context Assembly]
-    end
-    
-    PDF --> PARSER
-    TXT --> PARSER
-    IMG --> PARSER
-    DOC --> PARSER
-    
-    PARSER --> SPLITTER
-    SPLITTER --> EMBEDDER
-    EMBEDDER --> STORER
-    
-    QUERY --> RETRIEVER
-    RETRIEVER --> STORER
-    RETRIEVER --> RERANKER
-    RERANKER --> CONTEXT
-    
-    classDef input fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef pipeline fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef rag fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    
-    class PDF,TXT,IMG,DOC input
-    class PARSER,SPLITTER,EMBEDDER,STORER pipeline
-    class QUERY,RETRIEVER,RERANKER,CONTEXT rag
-```
+**Processing Pipeline:**
+1. **Document Upload**: Multi-format file acceptance (PDF, TXT, Images, Word)
+2. **Text Extraction**: OCR for images, parsing for documents
+3. **Intelligent Chunking**: Semantic-aware text splitting (1000 chars with 200 overlap)
+4. **Vector Embeddings**: Generation using local models
+5. **Storage**: ChromaDB vector database storage
+6. **Retrieval**: Semantic search with context assembly
 
 **Features:**
-- **Multi-Format Support**: PDF, TXT, Images, Word documents
+- **Multi-Format Support**: PDF, TXT, Images, Word documents, Markdown
 - **Intelligent Chunking**: Semantic-aware text splitting
 - **Advanced RAG**: Multi-stage retrieval with re-ranking
 - **Vector Storage**: ChromaDB integration for efficient search
@@ -267,53 +208,6 @@ graph TB
 ### **Async Ollama Client**
 
 The async Ollama client provides high-performance, non-blocking communication with local LLMs.
-
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
-graph TB
-    subgraph "Client Architecture"
-        CONNECTOR[HTTP Connector]
-        THROTTLER[Request Throttler]
-        POOL[Connection Pool]
-        CACHE[Response Cache]
-    end
-    
-    subgraph "Request Handling"
-        VALIDATOR[Request Validator]
-        SERIALIZER[Request Serializer]
-        SENDER[Request Sender]
-        PARSER[Response Parser]
-    end
-    
-    subgraph "Ollama Integration"
-        GENERATE[Generate Endpoint]
-        CHAT[Chat Endpoint]
-        EMBED[Embed Endpoint]
-        STREAM[Stream Endpoint]
-    end
-    
-    CONNECTOR --> VALIDATOR
-    THROTTLER --> SERIALIZER
-    POOL --> SENDER
-    CACHE --> PARSER
-    
-    VALIDATOR --> SERIALIZER
-    SERIALIZER --> SENDER
-    SENDER --> PARSER
-    
-    SENDER --> GENERATE
-    SENDER --> CHAT
-    SENDER --> EMBED
-    SENDER --> STREAM
-    
-    classDef client fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef handling fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef integration fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    
-    class CONNECTOR,THROTTLER,POOL,CACHE client
-    class VALIDATOR,SERIALIZER,SENDER,PARSER handling
-    class GENERATE,CHAT,EMBED,STREAM integration
-```
 
 **Features:**
 - **Async Processing**: Non-blocking request handling
@@ -326,58 +220,17 @@ graph TB
 
 The tool registry manages the extensible plugin architecture for BasicChat.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
-graph TB
-    subgraph "Tool Categories"
-        CORE[Core Tools]
-        ENHANCED[Enhanced Tools]
-        PLUGINS[Plugin Tools]
-        CUSTOM[Custom Tools]
-    end
-    
-    subgraph "Registry System"
-        REGISTRY[Tool Registry]
-        LOADER[Plugin Loader]
-        VALIDATOR[Tool Validator]
-        EXECUTOR[Tool Executor]
-    end
-    
-    subgraph "Built-in Tools"
-        CALC[Enhanced Calculator]
-        TIME[Time Tools]
-        WEB[Web Search]
-        AUDIO[Audio Tools]
-    end
-    
-    CORE --> REGISTRY
-    ENHANCED --> REGISTRY
-    PLUGINS --> LOADER
-    CUSTOM --> VALIDATOR
-    
-    REGISTRY --> EXECUTOR
-    LOADER --> VALIDATOR
-    VALIDATOR --> EXECUTOR
-    
-    CALC --> CORE
-    TIME --> ENHANCED
-    WEB --> ENHANCED
-    AUDIO --> ENHANCED
-    
-    classDef categories fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef system fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef tools fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    
-    class CORE,ENHANCED,PLUGINS,CUSTOM categories
-    class REGISTRY,LOADER,VALIDATOR,EXECUTOR system
-    class CALC,TIME,WEB,AUDIO tools
-```
+**Built-in Tools:**
+- **Enhanced Calculator**: Advanced mathematical operations with step-by-step reasoning
+- **Time Tools**: Timezone-aware time calculations and conversions
+- **Web Search**: Real-time information retrieval via DuckDuckGo
+- **Audio Tools**: Text-to-speech and speech-to-text capabilities
 
-**Features:**
-- **Plugin Architecture**: Extensible tool system
-- **Built-in Tools**: Enhanced calculator, time tools, web search
-- **Custom Tools**: User-defined tool creation
-- **Tool Validation**: Safety and compatibility checking
+**Plugin Architecture:**
+- **Tool Registration**: Automatic discovery and registration
+- **Validation**: Safety and compatibility checking
+- **Execution**: Secure tool execution with error handling
+- **Extensibility**: Custom tool creation and integration
 
 ---
 
@@ -460,26 +313,19 @@ sequenceDiagram
 ### **Caching Strategy**
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
     subgraph "Cache Layers"
-        L1[L1: Memory Cache]
-        L2[L2: Redis Cache]
-        L3[L3: Disk Cache]
+        L1[Memory Cache]
+        L2[Redis Cache]
+        L3[Disk Cache]
     end
     
     subgraph "Cache Types"
         RESPONSE[Response Cache]
         EMBEDDING[Embedding Cache]
-        TOOL[Tool Result Cache]
+        TOOL[Tool Cache]
         SESSION[Session Cache]
-    end
-    
-    subgraph "Cache Policies"
-        TTL[Time-to-Live]
-        LRU[LRU Eviction]
-        SIZE[Size Limits]
-        INVALIDATION[Smart Invalidation]
     end
     
     L1 --> RESPONSE
@@ -487,18 +333,11 @@ graph TB
     L2 --> TOOL
     L3 --> SESSION
     
-    RESPONSE --> TTL
-    EMBEDDING --> LRU
-    TOOL --> SIZE
-    SESSION --> INVALIDATION
-    
     classDef layers fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
     classDef types fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef policies fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
     
     class L1,L2,L3 layers
     class RESPONSE,EMBEDDING,TOOL,SESSION types
-    class TTL,LRU,SIZE,INVALIDATION policies
 ```
 
 **Performance Features:**
@@ -510,48 +349,13 @@ graph TB
 
 ### **Async Architecture**
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
-graph TB
-    subgraph "Async Components"
-        ASYNC_LLM[Async LLM Client]
-        ASYNC_EMB[Async Embedding]
-        ASYNC_TOOLS[Async Tool Execution]
-        ASYNC_CACHE[Async Cache Operations]
-    end
-    
-    subgraph "Concurrency Management"
-        THREAD_POOL[Thread Pool]
-        ASYNC_QUEUE[Async Queue]
-        SEMAPHORE[Semaphore Control]
-        TIMEOUT[Timeout Handling]
-    end
-    
-    subgraph "Performance Monitoring"
-        METRICS[Performance Metrics]
-        PROFILING[Code Profiling]
-        MONITORING[System Monitoring]
-        ALERTING[Performance Alerts]
-    end
-    
-    ASYNC_LLM --> THREAD_POOL
-    ASYNC_EMB --> ASYNC_QUEUE
-    ASYNC_TOOLS --> SEMAPHORE
-    ASYNC_CACHE --> TIMEOUT
-    
-    THREAD_POOL --> METRICS
-    ASYNC_QUEUE --> PROFILING
-    SEMAPHORE --> MONITORING
-    TIMEOUT --> ALERTING
-    
-    classDef components fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef management fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef monitoring fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    
-    class ASYNC_LLM,ASYNC_EMB,ASYNC_TOOLS,ASYNC_CACHE components
-    class THREAD_POOL,ASYNC_QUEUE,SEMAPHORE,TIMEOUT management
-    class METRICS,PROFILING,MONITORING,ALERTING monitoring
-```
+The system uses non-blocking asynchronous processing for responsive user experience.
+
+**Key Features:**
+- **Async Components**: LLM client, embedding, tools, cache operations
+- **Concurrency Management**: Thread pools, async queues, semaphores
+- **Performance Monitoring**: Real-time metrics, profiling, alerts
+- **Error Recovery**: Automatic retry and fallback mechanisms
 
 ---
 
@@ -560,46 +364,32 @@ graph TB
 ### **Privacy Architecture**
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
-    subgraph "Data Privacy"
-        LOCAL_ONLY[Local-Only Processing]
+    subgraph "Privacy Features"
+        LOCAL[Local Processing]
         NO_TELEMETRY[No Telemetry]
-        ENCRYPTED_STORAGE[Encrypted Storage]
-        DATA_ISOLATION[Data Isolation]
+        ENCRYPTED[Encrypted Storage]
+        ISOLATION[Data Isolation]
     end
     
     subgraph "Security Measures"
-        INPUT_VALIDATION[Input Validation]
+        VALIDATION[Input Validation]
         SANITIZATION[Data Sanitization]
-        ACCESS_CONTROL[Access Control]
-        AUDIT_LOGGING[Audit Logging]
+        ACCESS[Access Control]
+        AUDIT[Audit Logging]
     end
     
-    subgraph "Compliance"
-        GDPR[GDPR Compliance]
-        CCPA[CCPA Compliance]
-        HIPAA[HIPAA Ready]
-        SOC2[SOC2 Framework]
-    end
-    
-    LOCAL_ONLY --> INPUT_VALIDATION
+    LOCAL --> VALIDATION
     NO_TELEMETRY --> SANITIZATION
-    ENCRYPTED_STORAGE --> ACCESS_CONTROL
-    DATA_ISOLATION --> AUDIT_LOGGING
-    
-    INPUT_VALIDATION --> GDPR
-    SANITIZATION --> CCPA
-    ACCESS_CONTROL --> HIPAA
-    AUDIT_LOGGING --> SOC2
+    ENCRYPTED --> ACCESS
+    ISOLATION --> AUDIT
     
     classDef privacy fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
     classDef security fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef compliance fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
     
-    class LOCAL_ONLY,NO_TELEMETRY,ENCRYPTED_STORAGE,DATA_ISOLATION privacy
-    class INPUT_VALIDATION,SANITIZATION,ACCESS_CONTROL,AUDIT_LOGGING security
-    class GDPR,CCPA,HIPAA,SOC2 compliance
+    class LOCAL,NO_TELEMETRY,ENCRYPTED,ISOLATION privacy
+    class VALIDATION,SANITIZATION,ACCESS,AUDIT security
 ```
 
 **Security Features:**
@@ -612,48 +402,14 @@ graph TB
 
 ### **Data Flow Security**
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
-graph TB
-    subgraph "Data Input"
-        VALIDATION[Input Validation]
-        SANITIZATION[Data Sanitization]
-        ENCRYPTION[Data Encryption]
-        ISOLATION[Process Isolation]
-    end
-    
-    subgraph "Processing"
-        SECURE_PROCESSING[Secure Processing]
-        MEMORY_PROTECTION[Memory Protection]
-        TEMP_CLEANUP[Temporary Data Cleanup]
-        ACCESS_CONTROL[Access Control]
-    end
-    
-    subgraph "Storage"
-        ENCRYPTED_STORAGE[Encrypted Storage]
-        BACKUP_ENCRYPTION[Backup Encryption]
-        KEY_MANAGEMENT[Key Management]
-        DATA_RETENTION[Data Retention Policies]
-    end
-    
-    VALIDATION --> SECURE_PROCESSING
-    SANITIZATION --> MEMORY_PROTECTION
-    ENCRYPTION --> TEMP_CLEANUP
-    ISOLATION --> ACCESS_CONTROL
-    
-    SECURE_PROCESSING --> ENCRYPTED_STORAGE
-    MEMORY_PROTECTION --> BACKUP_ENCRYPTION
-    TEMP_CLEANUP --> KEY_MANAGEMENT
-    ACCESS_CONTROL --> DATA_RETENTION
-    
-    classDef input fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef processing fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    
-    class VALIDATION,SANITIZATION,ENCRYPTION,ISOLATION input
-    class SECURE_PROCESSING,MEMORY_PROTECTION,TEMP_CLEANUP,ACCESS_CONTROL processing
-    class ENCRYPTED_STORAGE,BACKUP_ENCRYPTION,KEY_MANAGEMENT,DATA_RETENTION storage
-```
+Secure data handling throughout the processing pipeline ensures complete privacy and security.
+
+**Security Measures:**
+- **Input Validation**: Comprehensive input sanitization and validation
+- **Process Isolation**: Secure processing with memory protection
+- **Encrypted Storage**: All data encrypted at rest and in transit
+- **Access Control**: Role-based permissions and authentication
+- **Audit Trail**: Complete logging of all data operations
 
 ---
 
@@ -662,50 +418,44 @@ graph TB
 ### **Horizontal Scaling**
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
     subgraph "Load Balancing"
         LB[Load Balancer]
-        HEALTH_CHECK[Health Checks]
-        AUTO_SCALING[Auto Scaling]
-        TRAFFIC_ROUTING[Traffic Routing]
+        HEALTH[Health Checks]
+        SCALING[Auto Scaling]
     end
     
     subgraph "Service Instances"
         INSTANCE1[Instance 1]
         INSTANCE2[Instance 2]
         INSTANCE3[Instance 3]
-        INSTANCE_N[Instance N]
     end
     
     subgraph "Shared Resources"
-        SHARED_DB[Shared Database]
-        SHARED_CACHE[Shared Cache]
-        SHARED_STORAGE[Shared Storage]
-        MESSAGE_QUEUE[Message Queue]
+        DB[Shared Database]
+        CACHE[Shared Cache]
+        STORAGE[Shared Storage]
     end
     
-    LB --> HEALTH_CHECK
-    HEALTH_CHECK --> AUTO_SCALING
-    AUTO_SCALING --> TRAFFIC_ROUTING
+    LB --> HEALTH
+    HEALTH --> SCALING
     
-    TRAFFIC_ROUTING --> INSTANCE1
-    TRAFFIC_ROUTING --> INSTANCE2
-    TRAFFIC_ROUTING --> INSTANCE3
-    TRAFFIC_ROUTING --> INSTANCE_N
+    SCALING --> INSTANCE1
+    SCALING --> INSTANCE2
+    SCALING --> INSTANCE3
     
-    INSTANCE1 --> SHARED_DB
-    INSTANCE2 --> SHARED_CACHE
-    INSTANCE3 --> SHARED_STORAGE
-    INSTANCE_N --> MESSAGE_QUEUE
+    INSTANCE1 --> DB
+    INSTANCE2 --> CACHE
+    INSTANCE3 --> STORAGE
     
     classDef loadbalancing fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
     classDef instances fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
     classDef resources fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
     
-    class LB,HEALTH_CHECK,AUTO_SCALING,TRAFFIC_ROUTING loadbalancing
-    class INSTANCE1,INSTANCE2,INSTANCE3,INSTANCE_N instances
-    class SHARED_DB,SHARED_CACHE,SHARED_STORAGE,MESSAGE_QUEUE resources
+    class LB,HEALTH,SCALING loadbalancing
+    class INSTANCE1,INSTANCE2,INSTANCE3 instances
+    class DB,CACHE,STORAGE resources
 ```
 
 **Scaling Features:**
@@ -717,48 +467,12 @@ graph TB
 
 ### **Vertical Scaling**
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
-graph TB
-    subgraph "Resource Optimization"
-        CPU_OPT[CPU Optimization]
-        MEMORY_OPT[Memory Optimization]
-        GPU_ACCEL[GPU Acceleration]
-        STORAGE_OPT[Storage Optimization]
-    end
-    
-    subgraph "Performance Tuning"
-        CACHE_TUNING[Cache Tuning]
-        DB_TUNING[Database Tuning]
-        NETWORK_TUNING[Network Tuning]
-        APP_TUNING[Application Tuning]
-    end
-    
-    subgraph "Monitoring"
-        RESOURCE_MON[Resource Monitoring]
-        PERFORMANCE_MON[Performance Monitoring]
-        BOTTLENECK_DET[Bottleneck Detection]
-        OPTIMIZATION_REC[Optimization Recommendations]
-    end
-    
-    CPU_OPT --> CACHE_TUNING
-    MEMORY_OPT --> DB_TUNING
-    GPU_ACCEL --> NETWORK_TUNING
-    STORAGE_OPT --> APP_TUNING
-    
-    CACHE_TUNING --> RESOURCE_MON
-    DB_TUNING --> PERFORMANCE_MON
-    NETWORK_TUNING --> BOTTLENECK_DET
-    APP_TUNING --> OPTIMIZATION_REC
-    
-    classDef optimization fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef tuning fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef monitoring fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    
-    class CPU_OPT,MEMORY_OPT,GPU_ACCEL,STORAGE_OPT optimization
-    class CACHE_TUNING,DB_TUNING,NETWORK_TUNING,APP_TUNING tuning
-    class RESOURCE_MON,PERFORMANCE_MON,BOTTLENECK_DET,OPTIMIZATION_REC monitoring
-```
+The system supports vertical scaling through resource optimization and performance tuning.
+
+**Optimization Areas:**
+- **Resource Optimization**: CPU, memory, GPU, storage tuning
+- **Performance Tuning**: Cache, database, network, application optimization
+- **Monitoring**: Resource monitoring, bottleneck detection, optimization recommendations
 
 ---
 
@@ -766,62 +480,30 @@ graph TB
 
 ### **Core Technologies**
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
-graph TB
-    subgraph "Frontend"
-        STREAMLIT[Streamlit]
-        REACT[React Components]
-        CSS[Custom CSS]
-        JS[JavaScript]
-    end
-    
-    subgraph "Backend"
-        PYTHON[Python 3.12]
-        ASYNC[AsyncIO]
-        FASTAPI[FastAPI]
-        PYDANTIC[Pydantic]
-    end
-    
-    subgraph "AI/ML"
-        LANGCHAIN[LangChain]
-        OLLAMA[Ollama]
-        CHROMADB[ChromaDB]
-        SENTENCE_TRANSFORMERS[Sentence Transformers]
-    end
-    
-    subgraph "Infrastructure"
-        REDIS[Redis]
-        DOCKER[Docker]
-        KUBERNETES[Kubernetes]
-        MONITORING[Prometheus/Grafana]
-    end
-    
-    STREAMLIT --> PYTHON
-    REACT --> FASTAPI
-    CSS --> PYDANTIC
-    JS --> ASYNC
-    
-    PYTHON --> LANGCHAIN
-    ASYNC --> OLLAMA
-    FASTAPI --> CHROMADB
-    PYDANTIC --> SENTENCE_TRANSFORMERS
-    
-    LANGCHAIN --> REDIS
-    OLLAMA --> DOCKER
-    CHROMADB --> KUBERNETES
-    SENTENCE_TRANSFORMERS --> MONITORING
-    
-    classDef frontend fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef backend fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef aiml fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    classDef infrastructure fill:#fef2f2,stroke:#dc2626,stroke-width:2px,color:#1f2937
-    
-    class STREAMLIT,REACT,CSS,JS frontend
-    class PYTHON,ASYNC,FASTAPI,PYDANTIC backend
-    class LANGCHAIN,OLLAMA,CHROMADB,SENTENCE_TRANSFORMERS aiml
-    class REDIS,DOCKER,KUBERNETES,MONITORING infrastructure
-```
+BasicChat is built on modern, scalable technologies:
+
+**Frontend:**
+- **Streamlit**: Primary web interface
+- **React Components**: Interactive UI elements
+- **Custom CSS/JS**: Styling and functionality
+
+**Backend:**
+- **Python 3.12**: Core runtime environment
+- **AsyncIO**: Asynchronous processing
+- **FastAPI**: High-performance web framework
+- **Pydantic**: Data validation and serialization
+
+**AI/ML:**
+- **LangChain**: AI orchestration framework
+- **Ollama**: Local LLM inference engine
+- **ChromaDB**: Vector database for embeddings
+- **Sentence Transformers**: Text embedding models
+
+**Infrastructure:**
+- **Redis**: High-performance caching
+- **Docker**: Containerization
+- **Kubernetes**: Orchestration (optional)
+- **Prometheus/Grafana**: Monitoring
 
 ### **Key Libraries**
 

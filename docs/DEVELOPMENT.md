@@ -73,13 +73,12 @@ LOG_LEVEL=DEBUG
 ### **Development Tools Setup**
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
     subgraph "Development Environment"
         PYTHON[Python 3.11+]
         VENV[Virtual Environment]
         DEPENDENCIES[Project Dependencies]
-        CONFIG[Environment Config]
     end
     
     subgraph "Development Tools"
@@ -93,19 +92,10 @@ graph TB
         OLLAMA[Ollama Server]
         REDIS[Redis Cache]
         CHROMADB[ChromaDB]
-        DOCKER[Docker Containers]
-    end
-    
-    subgraph "IDE Integration"
-        VS_CODE[VS Code]
-        PYCHARM[PyCharm]
-        VIM[Vim/Neovim]
-        JUPYTER[Jupyter Notebooks]
     end
     
     PYTHON --> VENV
     VENV --> DEPENDENCIES
-    DEPENDENCIES --> CONFIG
     
     GIT --> PRE_COMMIT
     PRE_COMMIT --> LINTERS
@@ -114,22 +104,14 @@ graph TB
     OLLAMA --> PYTHON
     REDIS --> PYTHON
     CHROMADB --> PYTHON
-    DOCKER --> PYTHON
-    
-    VS_CODE --> PYTHON
-    PYCHARM --> PYTHON
-    VIM --> PYTHON
-    JUPYTER --> PYTHON
     
     classDef environment fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
     classDef tools fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
     classDef services fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    classDef ide fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
     
-    class PYTHON,VENV,DEPENDENCIES,CONFIG environment
+    class PYTHON,VENV,DEPENDENCIES environment
     class GIT,PRE_COMMIT,LINTERS,TESTING tools
-    class OLLAMA,REDIS,CHROMADB,DOCKER services
-    class VS_CODE,PYCHARM,VIM,JUPYTER ide
+    class OLLAMA,REDIS,CHROMADB services
 ```
 
 ---
@@ -159,60 +141,32 @@ tests/
 ### **Test Categories**
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
-    subgraph "Unit Tests"
-        COMPONENT[Component Tests]
-        FUNCTION[Function Tests]
-        UTILITY[Utility Tests]
-        MOCK[Mock Tests]
+    subgraph "Test Types"
+        UNIT[Unit Tests]
+        INTEGRATION[Integration Tests]
+        PERFORMANCE[Performance Tests]
+        E2E[End-to-End Tests]
     end
     
-    subgraph "Integration Tests"
-        API[API Integration]
-        DATABASE[Database Integration]
-        EXTERNAL[External Services]
+    subgraph "Test Coverage"
+        COMPONENTS[Component Tests]
+        API[API Tests]
         WORKFLOW[Workflow Tests]
+        USER[User Journey Tests]
     end
     
-    subgraph "Performance Tests"
-        LOAD[Load Testing]
-        STRESS[Stress Testing]
-        BENCHMARK[Benchmark Tests]
-        MEMORY[Memory Tests]
-    end
+    UNIT --> COMPONENTS
+    INTEGRATION --> API
+    PERFORMANCE --> WORKFLOW
+    E2E --> USER
     
-    subgraph "End-to-End Tests"
-        USER_JOURNEY[User Journey Tests]
-        SCENARIO[Scenario Tests]
-        REGRESSION[Regression Tests]
-        ACCEPTANCE[Acceptance Tests]
-    end
+    classDef types fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
+    classDef coverage fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
     
-    COMPONENT --> API
-    FUNCTION --> DATABASE
-    UTILITY --> EXTERNAL
-    MOCK --> WORKFLOW
-    
-    API --> LOAD
-    DATABASE --> STRESS
-    EXTERNAL --> BENCHMARK
-    WORKFLOW --> MEMORY
-    
-    LOAD --> USER_JOURNEY
-    STRESS --> SCENARIO
-    BENCHMARK --> REGRESSION
-    MEMORY --> ACCEPTANCE
-    
-    classDef unit fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef integration fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef performance fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    classDef e2e fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
-    
-    class COMPONENT,FUNCTION,UTILITY,MOCK unit
-    class API,DATABASE,EXTERNAL,WORKFLOW integration
-    class LOAD,STRESS,BENCHMARK,MEMORY performance
-    class USER_JOURNEY,SCENARIO,REGRESSION,ACCEPTANCE e2e
+    class UNIT,INTEGRATION,PERFORMANCE,E2E types
+    class COMPONENTS,API,WORKFLOW,USER coverage
 ```
 
 ### **Running Tests**
@@ -360,7 +314,7 @@ repos:
 ### **Quality Metrics**
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
     subgraph "Code Quality Tools"
         BLACK[Black Formatter]
@@ -376,44 +330,16 @@ graph TB
         MAINTAINABILITY[Maintainability Index > 70]
     end
     
-    subgraph "Automation"
-        PRE_COMMIT[Pre-commit Hooks]
-        CI_CD[CI/CD Pipeline]
-        CODE_REVIEW[Code Review Process]
-        QUALITY_GATES[Quality Gates]
-    end
-    
-    subgraph "Monitoring"
-        COVERAGE_REPORTS[Coverage Reports]
-        LINTING_REPORTS[Linting Reports]
-        TYPE_REPORTS[Type Reports]
-        PERFORMANCE_METRICS[Performance Metrics]
-    end
-    
     BLACK --> COVERAGE
     FLAKE8 --> COMPLEXITY
     MYPY --> DUPLICATION
     ISORT --> MAINTAINABILITY
     
-    COVERAGE --> PRE_COMMIT
-    COMPLEXITY --> CI_CD
-    DUPLICATION --> CODE_REVIEW
-    MAINTAINABILITY --> QUALITY_GATES
-    
-    PRE_COMMIT --> COVERAGE_REPORTS
-    CI_CD --> LINTING_REPORTS
-    CODE_REVIEW --> TYPE_REPORTS
-    QUALITY_GATES --> PERFORMANCE_METRICS
-    
     classDef tools fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
     classDef metrics fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef automation fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    classDef monitoring fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
     
     class BLACK,FLAKE8,MYPY,ISORT tools
     class COVERAGE,COMPLEXITY,DUPLICATION,MAINTAINABILITY metrics
-    class PRE_COMMIT,CI_CD,CODE_REVIEW,QUALITY_GATES automation
-    class COVERAGE_REPORTS,LINTING_REPORTS,TYPE_REPORTS,PERFORMANCE_METRICS monitoring
 ```
 
 ---
@@ -448,20 +374,13 @@ python scripts/cleanup_chroma.py --path ./chroma_db_123456
 ### **Database Monitoring**
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb'}}}%%
 graph TB
     subgraph "Database Operations"
         BACKUP[Automatic Backup]
         CLEANUP[Data Cleanup]
         OPTIMIZATION[Performance Optimization]
         MONITORING[Health Monitoring]
-    end
-    
-    subgraph "Maintenance Tasks"
-        INDEX_REBUILD[Index Rebuilding]
-        VACUUM[Database Vacuum]
-        STATISTICS[Statistics Update]
-        INTEGRITY[Integrity Checks]
     end
     
     subgraph "Monitoring Tools"
@@ -471,37 +390,16 @@ graph TB
         HEALTH_CHECKS[Health Checks]
     end
     
-    subgraph "Automation"
-        SCHEDULED[Scheduled Tasks]
-        TRIGGERED[Triggered Actions]
-        ALERTS[Alert System]
-        RECOVERY[Recovery Procedures]
-    end
-    
-    BACKUP --> INDEX_REBUILD
-    CLEANUP --> VACUUM
-    OPTIMIZATION --> STATISTICS
-    MONITORING --> INTEGRITY
-    
-    INDEX_REBUILD --> SPACE_USAGE
-    VACUUM --> PERFORMANCE
-    STATISTICS --> ERROR_TRACKING
-    INTEGRITY --> HEALTH_CHECKS
-    
-    SPACE_USAGE --> SCHEDULED
-    PERFORMANCE --> TRIGGERED
-    ERROR_TRACKING --> ALERTS
-    HEALTH_CHECKS --> RECOVERY
+    BACKUP --> SPACE_USAGE
+    CLEANUP --> PERFORMANCE
+    OPTIMIZATION --> ERROR_TRACKING
+    MONITORING --> HEALTH_CHECKS
     
     classDef operations fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef maintenance fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef monitoring fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    classDef automation fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
+    classDef monitoring fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
     
     class BACKUP,CLEANUP,OPTIMIZATION,MONITORING operations
-    class INDEX_REBUILD,VACUUM,STATISTICS,INTEGRITY maintenance
     class SPACE_USAGE,PERFORMANCE,ERROR_TRACKING,HEALTH_CHECKS monitoring
-    class SCHEDULED,TRIGGERED,ALERTS,RECOVERY automation
 ```
 
 ### **Database Configuration**
@@ -526,67 +424,14 @@ CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "200"))
 
 ### **Git Workflow**
 
-BasicChat follows a feature branch workflow:
+BasicChat follows a feature branch workflow with automated quality checks.
 
-```mermaid
-%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '16px', 'fontFamily': 'Arial, sans-serif', 'primaryColor': '#1e3a8a', 'primaryTextColor': '#1f2937', 'primaryBorderColor': '#374151', 'lineColor': '#6b7280', 'secondaryColor': '#f3f4f6', 'tertiaryColor': '#e5e7eb', 'edgeLabelBackground': '#f9fafb'}}}%%
-graph TB
-    subgraph "Main Branches"
-        MAIN[Main Branch]
-        DEVELOP[Develop Branch]
-        RELEASE[Release Branch]
-        HOTFIX[Hotfix Branch]
-    end
-    
-    subgraph "Feature Development"
-        FEATURE[Feature Branch]
-        FEATURE_DEV[Feature Development]
-        CODE_REVIEW[Code Review]
-        MERGE[Merge to Develop]
-    end
-    
-    subgraph "Release Process"
-        RELEASE_PREP[Release Preparation]
-        TESTING[Release Testing]
-        DEPLOYMENT[Deployment]
-        TAG[Version Tagging]
-    end
-    
-    subgraph "Quality Assurance"
-        UNIT_TESTS[Unit Tests]
-        INTEGRATION_TESTS[Integration Tests]
-        E2E_TESTS[End-to-End Tests]
-        PERFORMANCE_TESTS[Performance Tests]
-    end
-    
-    MAIN --> DEVELOP
-    DEVELOP --> FEATURE
-    FEATURE --> FEATURE_DEV
-    FEATURE_DEV --> CODE_REVIEW
-    CODE_REVIEW --> MERGE
-    MERGE --> DEVELOP
-    
-    DEVELOP --> RELEASE_PREP
-    RELEASE_PREP --> TESTING
-    TESTING --> DEPLOYMENT
-    DEPLOYMENT --> TAG
-    TAG --> MAIN
-    
-    UNIT_TESTS --> FEATURE_DEV
-    INTEGRATION_TESTS --> CODE_REVIEW
-    E2E_TESTS --> RELEASE_PREP
-    PERFORMANCE_TESTS --> TESTING
-    
-    classDef branches fill:#dbeafe,stroke:#1e3a8a,stroke-width:2px,color:#1f2937
-    classDef development fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#1f2937
-    classDef release fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#1f2937
-    classDef qa fill:#f3e8ff,stroke:#7c3aed,stroke-width:2px,color:#1f2937
-    
-    class MAIN,DEVELOP,RELEASE,HOTFIX branches
-    class FEATURE,FEATURE_DEV,CODE_REVIEW,MERGE development
-    class RELEASE_PREP,TESTING,DEPLOYMENT,TAG release
-    class UNIT_TESTS,INTEGRATION_TESTS,E2E_TESTS,PERFORMANCE_TESTS qa
-```
+**Workflow Steps:**
+1. **Feature Development**: Create feature branch from develop
+2. **Code Review**: Automated checks and manual review
+3. **Testing**: Unit, integration, and performance tests
+4. **Merge**: Merge to develop after approval
+5. **Release**: Create release branch for production
 
 ### **Branch Naming Convention**
 
