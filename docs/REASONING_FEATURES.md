@@ -1,6 +1,6 @@
 # Reasoning Capabilities - Feature Summary
 
-## �� Core Features
+## Core Features
 
 ### **Reasoning Engine Architecture**
 
