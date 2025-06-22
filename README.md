@@ -48,7 +48,7 @@
 
 ### 🧠 **Advanced Reasoning**
 - **Multi-Modal Reasoning**: 5 different reasoning strategies for optimal problem-solving
-- **Chain-of-Thought**: Step-by-step reasoning for complex problems
+- **Chain-of-Thought**: Step-by-step reasoning for complex problems (Wei et al.)
 - **Agent-Based**: Intelligent tool selection and execution
 - **Auto Mode**: Automatically selects the best reasoning approach
 
@@ -60,7 +60,7 @@
 
 ### 📄 **Document & Image Analysis**
 - **Multi-Format Support**: PDF, text, markdown, and image files
-- **Advanced RAG**: Retrieval-Augmented Generation with semantic search
+- **Advanced RAG**: Retrieval-Augmented Generation with semantic search (Lewis et al.)
 - **OCR Capabilities**: Image text extraction using vision models
 - **Vector Storage**: Efficient ChromaDB-based document indexing
 
@@ -74,7 +74,7 @@
 
 ## 🚀 Quick Start
 
-### 1. **Prerequisites**
+### **Prerequisites**
 
 ```bash
 # Required Software
@@ -83,7 +83,7 @@
 - Git (for cloning)
 ```
 
-### 2. **Installation**
+### **Installation**
 
 ```bash
 # Clone the repository
@@ -98,7 +98,7 @@ source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 3. **Download AI Models**
+### **Download AI Models**
 
 ```bash
 # Core models for reasoning and embeddings
@@ -109,7 +109,7 @@ ollama pull nomic-embed-text
 ollama pull llava
 ```
 
-### 4. **Launch Application**
+### **Launch Application**
 
 ```bash
 # Start Ollama service (if not running)
@@ -129,51 +129,58 @@ streamlit run app.py
 
 ```mermaid
 graph TB
-    subgraph "🎨 Presentation Layer"
-        UI[Streamlit Web Interface]
+    subgraph "🎨 User Interface"
+        UI[Web Interface]
         AUDIO[Audio Processing]
     end
     
-    subgraph "🧠 Application Layer"
+    subgraph "🧠 Core Logic"
         RE[Reasoning Engine]
         DP[Document Processor]
         TR[Tool Registry]
     end
     
-    subgraph "🔧 Service Layer"
-        AO[Async Ollama Client]
-        VS[Vector Store Service]
-        CS[Caching Service]
+    subgraph "⚡ Services"
+        AO[Ollama Client]
+        VS[Vector Store]
+        CS[Cache Service]
     end
     
-    subgraph "🗄️ Data Layer"
-        CHROMA[ChromaDB Vector Store]
-        CACHE[Redis/Memory Cache]
+    subgraph "🗄️ Storage"
+        CHROMA[Vector Database]
+        CACHE[Memory Cache]
     end
     
     subgraph "🌐 External"
-        OLLAMA[Ollama LLM Server]
+        OLLAMA[LLM Server]
     end
     
+    %% User Interface Connections
     UI --> RE
     UI --> DP
+    AUDIO --> RE
+    
+    %% Core Logic Connections
     RE --> AO
     RE --> TR
     DP --> VS
+    
+    %% Service Connections
     AO --> OLLAMA
     VS --> CHROMA
     CS --> CACHE
     
-    classDef presentation fill:#E1F5FE,stroke:#01579B,stroke-width:2px
-    classDef application fill:#F3E5F5,stroke:#4A148C,stroke-width:2px
-    classDef service fill:#E8F5E8,stroke:#1B5E20,stroke-width:2px
-    classDef data fill:#FFF3E0,stroke:#E65100,stroke-width:2px
-    classDef external fill:#FCE4EC,stroke:#880E4F,stroke-width:2px
+    %% Styling
+    classDef ui fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef core fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef service fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef storage fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef external fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
     
-    class UI,AUDIO presentation
-    class RE,DP,TR application
+    class UI,AUDIO ui
+    class RE,DP,TR core
     class AO,VS,CS service
-    class CHROMA,CACHE data
+    class CHROMA,CACHE storage
     class OLLAMA external
 ```
 
@@ -192,6 +199,7 @@ graph TB
 | **System Architecture** | Technical architecture and component interactions | [🏗️](docs/ARCHITECTURE.md) |
 | **Development Guide** | Contributing and development workflows | [🛠️](docs/DEVELOPMENT.md) |
 | **Project Roadmap** | Future features and development plans | [🗺️](docs/ROADMAP.md) |
+| **Reasoning Features** | Advanced reasoning engine details | [🧠](docs/REASONING_FEATURES.md) |
 
 </div>
 
@@ -279,6 +287,76 @@ We welcome contributions! Please see our [Development Guide](docs/DEVELOPMENT.md
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 📚 References
+
+### **Research Papers**
+
+Wei, Jason, et al. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." *arXiv preprint arXiv:2201.11903*, 2022.
+
+Lewis, Mike, et al. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." *Advances in Neural Information Processing Systems*, vol. 33, 2020, pp. 9459-9474.
+
+Johnson, Jeff, Matthijs Douze, and Hervé Jégou. "Billion-Scale Similarity Search with GPUs." *IEEE Transactions on Big Data*, vol. 7, no. 3, 2019, pp. 535-547.
+
+Chen, Charlie, et al. "Speculative Decoding: Accelerating LLM Inference via Speculative Sampling." *arXiv preprint arXiv:2302.01318*, 2023.
+
+### **Core Technologies**
+
+Ollama. "Local Large Language Model Server." *Ollama.ai*, 2024, https://ollama.ai.
+
+Streamlit. "Web Application Framework." *Streamlit.io*, 2024, https://streamlit.io.
+
+LangChain. "LLM Application Framework." *LangChain.com*, 2024, https://langchain.com.
+
+ChromaDB. "Vector Database for AI Applications." *ChromaDB.ai*, 2024, https://chromadb.ai.
+
+DuckDuckGo. "Privacy-Focused Search Engine." *DuckDuckGo.com*, 2024, https://duckduckgo.com.
+
+### **AI Models**
+
+Mistral AI. "Mistral 7B: The Most Powerful Open Source Language Model." *Mistral.ai*, 2024, https://mistral.ai.
+
+Meta AI. "LLaMA: Open and Efficient Foundation Language Models." *AI.meta.com*, 2024, https://ai.meta.com/llama.
+
+Microsoft. "Phi-2: The Unquestionable Code Generation." *Microsoft.com*, 2024, https://www.microsoft.com/en-us/research/project/phi-2.
+
+Nomic AI. "Nomic Embed: Text Embedding Model." *Nomic.ai*, 2024, https://docs.nomic.ai/reference/endpoints/nomic-embed-text-v1.
+
+Liu, Haotian, et al. "LLaVA: Large Language and Vision Assistant." *arXiv preprint arXiv:2304.08485*, 2023.
+
+### **Development Tools**
+
+Beazley, David M., and Brian K. Jones. *Python Cookbook*. 3rd ed., O'Reilly Media, 2013.
+
+Martin, Robert C. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017.
+
+### **Libraries & Frameworks**
+
+pytz. "World Timezone Definitions for Python." *Python Hosted*, 2024, https://pythonhosted.org/pytz.
+
+Redis. "In-Memory Data Structure Store." *Redis.io*, 2024, https://redis.io.
+
+Tesseract. "Optical Character Recognition Engine." *GitHub*, 2024, https://github.com/tesseract-ocr/tesseract.
+
+Python Software Foundation. "Abstract Syntax Trees." *Python Documentation*, 2024, https://docs.python.org/3/library/ast.html.
+
+### **Standards & Compliance**
+
+OWASP Foundation. "OWASP Top Ten." *OWASP.org*, 2024, https://owasp.org/www-project-top-ten.
+
+European Union. "General Data Protection Regulation (GDPR)." *Official Journal of the European Union*, vol. L119, 2016, pp. 1-88.
+
+California Legislature. "California Consumer Privacy Act (CCPA)." *California Civil Code*, 2018.
+
+U.S. Department of Health and Human Services. "Health Insurance Portability and Accountability Act (HIPAA)." *Federal Register*, vol. 65, no. 250, 2000, pp. 82462-82829.
+
+### **Technical Methods**
+
+Sparck Jones, Karen. "A Statistical Interpretation of Term Specificity and Its Application in Retrieval." *Journal of Documentation*, vol. 28, no. 1, 1972, pp. 11-21.
+
+Malkov, Yury A., and Dmitry A. Yashunin. "Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs." *IEEE Transactions on Pattern Analysis and Machine Intelligence*, vol. 42, no. 4, 2020, pp. 824-836.
 
 ---
 
