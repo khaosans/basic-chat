@@ -26,6 +26,7 @@ EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")
 # --- Reasoning Engine Configuration ---
 # Defines the list of available reasoning modes in the UI.
 REASONING_MODES: List[str] = [
+    "Auto",
     "Standard",
     "Chain-of-Thought",
     "Multi-Step",
@@ -34,7 +35,7 @@ REASONING_MODES: List[str] = [
 
 # Sets the default reasoning mode for the application.
 # Must be one of the values from REASONING_MODES.
-DEFAULT_REASONING_MODE = os.environ.get("DEFAULT_REASONING_MODE", "Chain-of-Thought")
+DEFAULT_REASONING_MODE = os.environ.get("DEFAULT_REASONING_MODE", "Auto")
 if DEFAULT_REASONING_MODE not in REASONING_MODES:
     raise ValueError(f"Invalid DEFAULT_REASONING_MODE: '{DEFAULT_REASONING_MODE}'. "
                      f"Must be one of {REASONING_MODES}")
