@@ -32,6 +32,7 @@ from reasoning_engine import (
     ReasoningAgent, 
     ReasoningChain, 
     MultiStepReasoning, 
+    AutoReasoning,
     ReasoningResult
 )
 
@@ -488,33 +489,49 @@ def create_enhanced_audio_button(content: str, message_key: str):
         
         # Handle different states with clean, minimal UI
         if audio_state["status"] == "idle":
-            # Clean, professional generate button
-            col1, col2, col3 = st.columns([1, 2, 1])
-            with col2:
+            # Small button positioned towards the right
+            col1, col2, col3 = st.columns([3, 1, 0.5])
+            with col3:
                 if st.button(
-                    "🎵 Generate Audio",
+                    "🔊",
                     key=f"audio_btn_{message_key}",
                     help="Click to generate audio version of this message",
-                    use_container_width=True
+                    use_container_width=False
                 ):
-                    # Generate audio immediately with spinner
-                    try:
-                        with st.spinner("Generating audio..."):
-                            audio_file = text_to_speech(content)
-                            if audio_file:
-                                audio_state["audio_file"] = audio_file
-                                audio_state["status"] = "ready"
-                                audio_state["had_error"] = False  # Clear error flag on success
-                            else:
-                                audio_state["status"] = "error"
-                                audio_state["error_message"] = "No content available for voice generation"
-                                audio_state["had_error"] = True  # Set error flag
-                    except Exception as e:
-                        audio_state["status"] = "error"
-                        audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
-                        audio_state["had_error"] = True  # Set error flag
-                    
+                    # Set loading state immediately
+                    audio_state["status"] = "loading"
                     st.rerun()
+        
+        elif audio_state["status"] == "loading":
+            # Show loading state with disabled button
+            col1, col2, col3 = st.columns([3, 1, 0.5])
+            with col3:
+                # Disabled button with loading indicator
+                st.button(
+                    "⏳",
+                    key=f"audio_btn_{message_key}",
+                    help="Generating audio...",
+                    use_container_width=False,
+                    disabled=True
+                )
+            
+            # Generate audio in the background
+            try:
+                audio_file = text_to_speech(content)
+                if audio_file:
+                    audio_state["audio_file"] = audio_file
+                    audio_state["status"] = "ready"
+                    audio_state["had_error"] = False  # Clear error flag on success
+                else:
+                    audio_state["status"] = "error"
+                    audio_state["error_message"] = "No content available for voice generation"
+                    audio_state["had_error"] = True  # Set error flag
+            except Exception as e:
+                audio_state["status"] = "error"
+                audio_state["error_message"] = f"Failed to generate audio: {str(e)}"
+                audio_state["had_error"] = True  # Set error flag
+            
+            st.rerun()
         
         elif audio_state["status"] == "ready":
             # Clean audio player with minimal controls
@@ -641,6 +658,20 @@ def enhanced_chat_interface(doc_processor):
     # Sidebar Configuration
     with st.sidebar:
         st.header("✨ Configuration")
+        
+        # Reasoning Mode Selection
+        reasoning_mode = st.selectbox(
+            "🧠 Reasoning Mode",
+            options=REASONING_MODES,
+            index=REASONING_MODES.index(st.session_state.reasoning_mode),
+            help="Choose how the AI should approach your questions"
+        )
+        
+        # Update session state if mode changed
+        if reasoning_mode != st.session_state.reasoning_mode:
+            st.session_state.reasoning_mode = reasoning_mode
+            st.rerun()
+        
         st.info(f"""
         - **Active Model**: `{st.session_state.selected_model}`
         - **Reasoning Mode**: `{st.session_state.reasoning_mode}`
@@ -657,6 +688,37 @@ def enhanced_chat_interface(doc_processor):
             help="Upload a document to chat with it.",
             key="document_uploader"
         )
+
+        # Handle file upload processing
+        if uploaded_file and uploaded_file.file_id != st.session_state.get("processed_file_id"):
+            logger.info(f"Processing new document: {uploaded_file.name}")
+            
+            try:
+                # Process the uploaded file
+                doc_processor.process_file(uploaded_file)
+                
+                # Update session state to mark as processed
+                st.session_state.processed_file_id = uploaded_file.file_id
+                
+                # Show success message
+                st.success(f"✅ Document '{uploaded_file.name}' processed successfully!")
+                
+            except Exception as e:
+                logger.error(f"Error processing document '{uploaded_file.name}': {str(e)}")
+                logger.error(f"Full traceback: {traceback.format_exc()}")
+                logger.error(f"File details - Name: {uploaded_file.name}, Type: {uploaded_file.type}, Size: {len(uploaded_file.getvalue())} bytes")
+                
+                # Log additional diagnostic information
+                try:
+                    logger.info(f"Document processor state: {len(doc_processor.processed_files)} processed files")
+                    logger.info(f"ChromaDB client status: {doc_processor.client is not None}")
+                    logger.info(f"Embeddings model: {doc_processor.embeddings.model}")
+                except Exception as diag_error:
+                    logger.error(f"Error during diagnostics: {diag_error}")
+                
+                st.error(f"❌ Error processing document: {str(e)}")
+                # Also mark as processed on error to prevent reprocessing loop
+                st.session_state.processed_file_id = uploaded_file.file_id
 
         processed_files = doc_processor.get_processed_files()
         if processed_files:
@@ -700,7 +762,12 @@ def enhanced_chat_interface(doc_processor):
 
     # Chat input
     if prompt := st.chat_input("Type a message..."):
+        # Add user message to session state immediately
         st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Display the user message immediately
+        with st.chat_message("user"):
+            st.write(prompt)
         
         # Process response based on reasoning mode
         with st.chat_message("assistant"):
@@ -729,51 +796,51 @@ def enhanced_chat_interface(doc_processor):
                         if st.session_state.reasoning_mode == "Chain-of-Thought":
                             result = reasoning_chain.execute_reasoning(question=prompt, context=context)
                             
-                            with st.expander("💭 Thought Process", expanded=True):
-                                # Stream the thought process
-                                thought_placeholder = st.empty()
-                                full_thought_process = ""
-                                for step in result.reasoning_steps:
-                                    full_thought_process += f"- {step}\n"
-                                    thought_placeholder.markdown(full_thought_process)
-                                    time.sleep(0.5)  # Simulate streaming for smooth UX
+                            with st.expander("💭 Thought Process", expanded=False):
+                                # Display the thought process
+                                st.markdown(result.thought_process)
                             
                             # Show final answer separately
                             st.markdown("### 📝 Final Answer")
-                            st.markdown(result.content)
-                            st.session_state.messages.append({"role": "assistant", "content": result.content})
+                            st.markdown(result.final_answer)
+                            st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
                             
                         elif st.session_state.reasoning_mode == "Multi-Step":
                             result = multi_step.step_by_step_reasoning(query=prompt, context=context)
                             
-                            with st.expander("🔍 Analysis & Planning", expanded=True):
-                                # Stream the analysis phase
-                                analysis_placeholder = st.empty()
-                                full_analysis = ""
-                                for step in result.reasoning_steps:
-                                    full_analysis += f"- {step}\n"
-                                    analysis_placeholder.markdown(full_analysis)
-                                    time.sleep(0.5)
+                            with st.expander("🔍 Analysis & Planning", expanded=False):
+                                # Display the analysis phase
+                                st.markdown(result.thought_process)
                             
                             st.markdown("### 📝 Final Answer")
-                            st.markdown(result.content)
-                            st.session_state.messages.append({"role": "assistant", "content": result.content})
+                            st.markdown(result.final_answer)
+                            st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
                             
                         elif st.session_state.reasoning_mode == "Agent-Based":
                             result = reasoning_agent.run(query=prompt, context=context)
                             
-                            with st.expander("🤖 Agent Actions", expanded=True):
-                                # Stream agent actions
-                                action_placeholder = st.empty()
-                                full_actions = ""
-                                for step in result.reasoning_steps:
-                                    full_actions += f"- {step}\n"
-                                    action_placeholder.markdown(full_actions)
-                                    time.sleep(0.5)
+                            with st.expander("🤖 Agent Actions", expanded=False):
+                                # Display agent actions
+                                st.markdown(result.thought_process)
                             
                             st.markdown("### 📝 Final Answer")
-                            st.markdown(result.content)
-                            st.session_state.messages.append({"role": "assistant", "content": result.content})
+                            st.markdown(result.final_answer)
+                            st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
+                            
+                        elif st.session_state.reasoning_mode == "Auto":
+                            auto_reasoning = AutoReasoning(selected_model)
+                            result = auto_reasoning.auto_reason(query=prompt, context=context)
+                            
+                            # Show which mode was auto-selected
+                            st.info(f"🤖 Auto-selected: **{result.reasoning_mode}** reasoning")
+                            
+                            with st.expander("💭 Thought Process", expanded=False):
+                                # Display the thought process
+                                st.markdown(result.thought_process)
+                            
+                            st.markdown("### 📝 Final Answer")
+                            st.markdown(result.final_answer)
+                            st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
                             
                         else:  # Standard mode
                             # Note: The standard mode now also benefits from context
@@ -791,8 +858,10 @@ def enhanced_chat_interface(doc_processor):
                         if response := ollama_chat.query({"inputs": prompt}):
                             st.write(response)
                             st.session_state.messages.append({"role": "assistant", "content": response})
-
-        st.rerun()
+        
+        # Add audio button for the assistant's response
+        if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
+            create_enhanced_audio_button(st.session_state.messages[-1]["content"], hash(st.session_state.messages[-1]["content"]))
 
 # Main Function
 def main():
@@ -829,42 +898,6 @@ def main():
         st.session_state.processed_file_id = None
         
     doc_processor = st.session_state.doc_processor
-
-    # Handle document upload logic
-    uploaded_file = st.session_state.get("document_uploader")
-    
-    if uploaded_file and uploaded_file.file_id != st.session_state.processed_file_id:
-        logger.info(f"Processing new document: {uploaded_file.name}")
-        
-        try:
-            # Process the uploaded file
-            doc_processor.process_file(uploaded_file)
-            
-            # Update session state to mark as processed
-            st.session_state.processed_file_id = uploaded_file.file_id
-            
-            # Show success message
-            st.success(f"✅ Document '{uploaded_file.name}' processed successfully!")
-            
-            # Clear the uploader to prevent reprocessing
-            st.session_state.document_uploader = None
-            
-        except Exception as e:
-            logger.error(f"Error processing document '{uploaded_file.name}': {str(e)}")
-            logger.error(f"Full traceback: {traceback.format_exc()}")
-            logger.error(f"File details - Name: {uploaded_file.name}, Type: {uploaded_file.type}, Size: {len(uploaded_file.getvalue())} bytes")
-            
-            # Log additional diagnostic information
-            try:
-                logger.info(f"Document processor state: {len(doc_processor.processed_files)} processed files")
-                logger.info(f"ChromaDB client status: {doc_processor.client is not None}")
-                logger.info(f"Embeddings model: {doc_processor.embeddings.model}")
-            except Exception as diag_error:
-                logger.error(f"Error during diagnostics: {diag_error}")
-            
-            st.error(f"❌ Error processing document: {str(e)}")
-            # Also mark as processed on error to prevent reprocessing loop
-            st.session_state.processed_file_id = uploaded_file.file_id
 
     # Enhanced chat interface
     enhanced_chat_interface(doc_processor)
