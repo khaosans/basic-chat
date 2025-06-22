@@ -618,5 +618,15 @@ def cleanup_on_signal(signum, frame):
 
 # Register cleanup handlers
 atexit.register(cleanup_on_exit)
-signal.signal(signal.SIGINT, cleanup_on_signal)
-signal.signal(signal.SIGTERM, cleanup_on_signal)
+
+# Only register signal handlers if we're in the main thread
+try:
+    import threading
+    if threading.current_thread() is threading.main_thread():
+        signal.signal(signal.SIGINT, cleanup_on_signal)
+        signal.signal(signal.SIGTERM, cleanup_on_signal)
+    else:
+        logger.info("Not in main thread, skipping signal handler registration")
+except Exception as e:
+    logger.warning(f"Could not register signal handlers: {e}")
+    # Continue without signal handlers - this is fine for Streamlit

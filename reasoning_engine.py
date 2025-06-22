@@ -32,14 +32,18 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ReasoningResult:
-    """Result from reasoning operations"""
-    content: str  # Final answer/conclusion
-    reasoning_steps: List[str]  # Step-by-step thought process
+    """Result from reasoning operations with clear separation of thought process and final answer"""
+    content: str  # Final answer/conclusion (clean, direct response)
+    reasoning_steps: List[str]  # Step-by-step thought process (internal reasoning)
+    thought_process: str  # Formatted thought process for display
+    final_answer: str  # Clean final answer for display
     confidence: float
     sources: List[str]
+    reasoning_mode: str  # Which reasoning mode was used
     intermediate_thoughts: List[str] = None  # For storing intermediate reasoning steps
     success: bool = True
     error: Optional[str] = None
+    execution_time: float = 0.0  # Time taken for reasoning
 
 class ReasoningAgent:
     """Enhanced agent with reasoning capabilities"""
@@ -304,12 +308,15 @@ class ReasoningAgent:
             logger.error(f"Web search failed for query '{query}': {e}")
             return f"Web search failed: {str(e)}. Please try again later."
     
-    def run(self, query: str, context: str = "") -> ReasoningResult:
+    def run(self, query: str, context: str = "", stream_callback=None) -> ReasoningResult:
         """Execute agent-based reasoning"""
         logger.info(f"Running agent-based reasoning for query: '{query}'")
         logger.debug(f"Context length: {len(context)} characters")
         
         try:
+            if stream_callback:
+                stream_callback("🤖 **Agent-Based Reasoning**\nInitializing agent with tools and memory...\n")
+            
             # Run the agent with the query and context
             response = self.agent.invoke({
                 "input": query,
@@ -317,18 +324,41 @@ class ReasoningAgent:
                 "chat_history": self.memory.chat_memory.messages if hasattr(self.memory, 'chat_memory') else []
             })
             
+            if stream_callback:
+                stream_callback("🔍 **Agent Execution Complete**\nAnalyzing agent's thought process and actions...\n")
+            
             # Extract steps from the agent's thought process
             steps = []
             if hasattr(response, 'intermediate_steps'):
-                for step in response.intermediate_steps:
+                if stream_callback:
+                    stream_callback(f"📊 **Found {len(response.intermediate_steps)} intermediate steps**\n")
+                
+                for i, step in enumerate(response.intermediate_steps, 1):
                     if isinstance(step, tuple) and len(step) >= 2:
                         action, observation = step
-                        steps.append(f"🤔 Thought: {action.log}")
-                        steps.append(f"🔍 Action: Used {action.tool}")
-                        steps.append(f"📝 Result: {observation}")
+                        step_text = f"🤔 Thought: {action.log}"
+                        steps.append(step_text)
+                        
+                        if stream_callback:
+                            stream_callback(f"**Step {i}:** {step_text}\n")
+                        
+                        action_text = f"🔍 Action: Used {action.tool}"
+                        steps.append(action_text)
+                        
+                        if stream_callback:
+                            stream_callback(f"**Action {i}:** {action_text}\n")
+                        
+                        result_text = f"📝 Result: {observation[:200]}..." if len(observation) > 200 else f"📝 Result: {observation}"
+                        steps.append(result_text)
+                        
+                        if stream_callback:
+                            stream_callback(f"**Result {i}:** {result_text}\n\n")
             
             # If no intermediate steps, try to extract from the output
             if not steps:
+                if stream_callback:
+                    stream_callback("⚠️ **No intermediate steps found**\nExtracting information from agent output...\n")
+                
                 output = response["output"] if isinstance(response, dict) else str(response)
                 # Try to parse the output for any structured information
                 if "Thought:" in output:
@@ -336,28 +366,50 @@ class ReasoningAgent:
                     for line in lines:
                         if line.strip() and any(keyword in line for keyword in ['Thought:', 'Action:', 'Result:', 'Observation:']):
                             steps.append(line.strip())
+                            if stream_callback:
+                                stream_callback(f"📝 {line.strip()}\n")
             
             # If still no steps, create a basic step from the output
             if not steps:
+                if stream_callback:
+                    stream_callback("📝 **Creating basic step from output**\n")
+                
                 output = response["output"] if isinstance(response, dict) else str(response)
                 steps = [f"🤔 Processed query: {query}", f"📝 Generated response: {output[:100]}..."]
+                
+                if stream_callback:
+                    stream_callback(f"🤔 **Processed Query:** {query}\n")
+                    stream_callback(f"📝 **Generated Response:** {output[:200]}...\n")
+            
+            if stream_callback:
+                stream_callback("✅ **Agent Reasoning Complete!**\n")
             
             logger.info("Agent-based reasoning completed successfully")
             return ReasoningResult(
                 content=response["output"] if isinstance(response, dict) else str(response),
                 reasoning_steps=steps,
+                thought_process="\n".join(steps),
+                final_answer=response["output"] if isinstance(response, dict) else str(response),
                 confidence=0.9,
                 sources=["agent_based_reasoning"],
+                reasoning_mode="Agent",
                 intermediate_thoughts=steps
             )
         except Exception as e:
             logger.error(f"Agent-based reasoning failed: {e}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
+            
+            if stream_callback:
+                stream_callback(f"❌ **Agent Error:** {str(e)}\n")
+            
             return ReasoningResult(
                 content="",
                 reasoning_steps=[],
+                thought_process="",
+                final_answer="",
                 confidence=0.0,
                 sources=[],
+                reasoning_mode="Agent",
                 success=False,
                 error=str(e)
             )
@@ -398,8 +450,8 @@ class ReasoningChain:
             logger.error(f"Failed to initialize RunnableSequence: {e}")
             raise
     
-    def execute_reasoning(self, question: str, context: str) -> ReasoningResult:
-        """Execute chain-of-thought reasoning"""
+    def execute_reasoning(self, question: str, context: str, stream_callback=None) -> ReasoningResult:
+        """Execute chain-of-thought reasoning with clear separation of thought process and final answer"""
         logger.info(f"Executing chain-of-thought reasoning for question: '{question}'")
         logger.debug(f"Context length: {len(context)} characters")
         
@@ -407,33 +459,76 @@ class ReasoningChain:
             # Start timer for execution
             start_time = time.time()
             
-            # Run the chain with the question and context
-            response_content = self.chain.invoke({
-                "question": question,
-                "context": context
-            })
+            if stream_callback:
+                stream_callback("🧠 **Starting Chain-of-Thought Reasoning**\nAnalyzing the question step by step...\n")
+            
+            # Improved prompt that clearly separates thought process from final answer
+            improved_prompt = f"""
+            You are a helpful AI assistant. Use chain-of-thought reasoning to answer the following question.
+            
+            CONTEXT:
+            {context}
+            
+            QUESTION:
+            {question}
+            
+            INSTRUCTIONS:
+            1. First, think through the problem step by step. Show your reasoning process.
+            2. Then, provide a clear, concise final answer.
+            3. Clearly separate your thought process from your final answer.
+            
+            THOUGHT PROCESS:
+            (Think through the problem step by step here...)
+            
+            FINAL ANSWER:
+            (Provide your final, direct answer here...)
+            """
+            
+            if stream_callback:
+                stream_callback("💭 **Generating Thought Process**\nWorking through the problem systematically...\n")
+            
+            # Run the chain with the improved prompt
+            response_content = self.llm.invoke(improved_prompt)
             
             # End timer
             end_time = time.time()
             execution_time = end_time - start_time
             
-            # The output from the new chain is a string directly
-            content = response_content.strip()
+            # Parse the response to separate thought process from final answer
+            # Extract content from AIMessage object
+            content = response_content.content if hasattr(response_content, 'content') else str(response_content)
+            content = content.strip()
             
-            # For CoT, the reasoning steps are the thought process of the model
-            # which is implicitly part of the final output.
-            steps = [f"Input: {question}", f"Thought Process:\n{content}"]
+            if stream_callback:
+                stream_callback("✅ **Thought Process Generated**\nParsing and organizing the response...\n")
+            
+            # Extract thought process and final answer
+            thought_process, final_answer = self._parse_chain_of_thought_response(content)
+            
+            # Create reasoning steps for display
+            reasoning_steps = [
+                f"Question: {question}",
+                f"Context Analysis: {len(context)} characters of context provided",
+                f"Thought Process: {thought_process[:200]}..." if len(thought_process) > 200 else f"Thought Process: {thought_process}",
+                f"Final Answer: {final_answer}"
+            ]
             
             # Simulate confidence (can be improved with more advanced methods)
             confidence = 0.85
             
+            if stream_callback:
+                stream_callback("🎯 **Reasoning Complete!**\n")
+            
             logger.info(f"Chain-of-thought reasoning completed in {execution_time:.2f}s")
             return ReasoningResult(
-                content=content,
-                reasoning_steps=steps,
+                content=final_answer,  # Use final answer as main content
+                reasoning_steps=reasoning_steps,
+                thought_process=thought_process,
+                final_answer=final_answer,
                 confidence=confidence,
                 sources=["LLM"],
-                success=True
+                reasoning_mode="Chain-of-Thought",
+                execution_time=execution_time
             )
         except Exception as e:
             logger.error(f"Chain-of-thought reasoning failed: {e}")
@@ -441,11 +536,68 @@ class ReasoningChain:
             return ReasoningResult(
                 content=f"An error occurred: {e}",
                 reasoning_steps=[],
+                thought_process="",
+                final_answer="",
                 confidence=0.0,
                 sources=[],
+                reasoning_mode="Chain-of-Thought",
                 success=False,
-                error=str(e)
+                error=str(e),
+                execution_time=execution_time
             )
+    
+    def _parse_chain_of_thought_response(self, response: str) -> tuple[str, str]:
+        """Parse the chain-of-thought response to separate thought process from final answer"""
+        try:
+            # Look for clear separators
+            if "FINAL ANSWER:" in response:
+                parts = response.split("FINAL ANSWER:", 1)
+                thought_process = parts[0].replace("THOUGHT PROCESS:", "").strip()
+                final_answer = parts[1].strip()
+            elif "Final Answer:" in response:
+                parts = response.split("Final Answer:", 1)
+                thought_process = parts[0].replace("Thought Process:", "").strip()
+                final_answer = parts[1].strip()
+            elif "ANSWER:" in response:
+                parts = response.split("ANSWER:", 1)
+                thought_process = parts[0].replace("THOUGHT PROCESS:", "").strip()
+                final_answer = parts[1].strip()
+            else:
+                # Fallback: try to split on common patterns
+                lines = response.split('\n')
+                thought_lines = []
+                answer_lines = []
+                in_answer = False
+                
+                for line in lines:
+                    if any(keyword in line.lower() for keyword in ['final answer', 'answer:', 'conclusion']):
+                        in_answer = True
+                        answer_lines.append(line)
+                    elif in_answer:
+                        answer_lines.append(line)
+                    else:
+                        thought_lines.append(line)
+                
+                thought_process = '\n'.join(thought_lines).strip()
+                final_answer = '\n'.join(answer_lines).strip()
+            
+            # Clean up the extracted parts
+            thought_process = thought_process.strip()
+            final_answer = final_answer.strip()
+            
+            # If parsing failed, use fallback
+            if not thought_process or not final_answer:
+                # Split response roughly in half
+                mid_point = len(response) // 2
+                thought_process = response[:mid_point].strip()
+                final_answer = response[mid_point:].strip()
+            
+            return thought_process, final_answer
+            
+        except Exception as e:
+            logger.warning(f"Failed to parse chain-of-thought response: {e}")
+            # Fallback: return the full response as thought process, empty final answer
+            return response.strip(), ""
 
 class MultiStepReasoning:
     """Performs multi-step reasoning by breaking down a query"""
@@ -486,8 +638,11 @@ class MultiStepReasoning:
         try:
             response = self.llm.invoke(prompt)
             
+            # Extract content from AIMessage object
+            response_content = response.content if hasattr(response, 'content') else str(response)
+            
             sub_queries = []
-            for line in response.strip().split('\n'):
+            for line in response_content.strip().split('\n'):
                 if line.strip().startswith(('1.', '2.', '3.', '4.', '5.')):
                     sub_queries.append(line.strip().split('.', 1)[1].strip())
             
@@ -518,9 +673,13 @@ class MultiStepReasoning:
         """
         
         try:
-            answer = self.llm.invoke(prompt).strip()
-            logger.debug(f"Sub-query answered, length: {len(answer)} characters")
-            return answer
+            answer = self.llm.invoke(prompt)
+            
+            # Extract content from AIMessage object
+            answer_content = answer.content if hasattr(answer, 'content') else str(answer)
+            
+            logger.debug(f"Sub-query answered, length: {len(answer_content)} characters")
+            return answer_content.strip()
         except Exception as e:
             logger.error(f"Failed to answer sub-query '{sub_query}': {e}")
             return f"Error answering sub-query: {str(e)}"
@@ -547,47 +706,99 @@ class MultiStepReasoning:
         """
         
         try:
-            final_answer = self.llm.invoke(prompt).strip()
-            logger.info(f"Final answer synthesized, length: {len(final_answer)} characters")
-            return final_answer
+            final_answer = self.llm.invoke(prompt)
+            
+            # Extract content from AIMessage object
+            final_answer_content = final_answer.content if hasattr(final_answer, 'content') else str(final_answer)
+            
+            logger.info(f"Final answer synthesized, length: {len(final_answer_content)} characters")
+            return final_answer_content.strip()
         except Exception as e:
             logger.error(f"Failed to synthesize final answer: {e}")
             return f"Error synthesizing final answer: {str(e)}"
 
-    def step_by_step_reasoning(self, query: str, context: str) -> ReasoningResult:
-        """Execute step-by-step reasoning by decomposing the query."""
+    def step_by_step_reasoning(self, query: str, context: str, stream_callback=None) -> ReasoningResult:
+        """Execute step-by-step reasoning by decomposing the query with clear separation of analysis and final answer."""
         logger.info(f"Executing multi-step reasoning for query: '{query}'")
         logger.debug(f"Context length: {len(context)} characters")
         
         try:
+            start_time = time.time()
             intermediate_thoughts = []
+            analysis_steps = []
             
             # 1. Generate sub-queries
             logger.info("Step 1: Generating sub-queries")
+            if stream_callback:
+                stream_callback("🔍 **Step 1: Analyzing Query**\nBreaking down the complex query into manageable sub-questions...\n")
+            
             sub_queries = self._generate_sub_queries(query, context)
             intermediate_thoughts.append(f"Generated {len(sub_queries)} sub-queries: {sub_queries}")
             
+            if stream_callback:
+                stream_callback(f"✅ **Generated {len(sub_queries)} sub-queries:**\n")
+                for i, sub_q in enumerate(sub_queries, 1):
+                    stream_callback(f"{i}. {sub_q}\n")
+                stream_callback("\n")
+            
+            analysis_steps.append(f"**Query Analysis:** Breaking down '{query}' into {len(sub_queries)} sub-questions")
+            
             # 2. Answer each sub-query
             logger.info("Step 2: Answering sub-queries")
+            if stream_callback:
+                stream_callback("🔍 **Step 2: Answering Sub-Queries**\nProcessing each sub-question individually...\n")
+            
             sub_answers = []
             for i, sub_q in enumerate(sub_queries, 1):
                 logger.debug(f"Answering sub-query {i}/{len(sub_queries)}: '{sub_q}'")
+                
+                if stream_callback:
+                    stream_callback(f"**Processing Sub-Question {i}:** {sub_q}\n")
+                
                 answer = self._answer_sub_query(sub_q, context)
                 sub_answers.append({"question": sub_q, "answer": answer})
                 intermediate_thoughts.append(f"Answered '{sub_q}': '{answer[:100]}...'")
+                
+                if stream_callback:
+                    stream_callback(f"✅ **Answer {i}:** {answer[:200]}...\n\n")
+                
+                analysis_steps.append(f"**Step {i}:** {sub_q}")
+                analysis_steps.append(f"  → {answer[:150]}...")
 
             # 3. Synthesize the final answer
             logger.info("Step 3: Synthesizing final answer")
+            if stream_callback:
+                stream_callback("🔍 **Step 3: Synthesizing Final Answer**\nCombining all sub-answers into a comprehensive response...\n")
+            
             final_answer = self._synthesize_final_answer(query, sub_answers)
             intermediate_thoughts.append("Synthesized final answer.")
+            
+            if stream_callback:
+                stream_callback("✅ **Synthesis Complete!**\n")
+            
+            analysis_steps.append("**Synthesis:** Combining sub-answers into final response")
+            
+            # Create reasoning steps for display
+            reasoning_steps = [
+                f"Original Query: {query}",
+                f"Sub-queries Generated: {len(sub_queries)}",
+                f"Analysis Completed: {len(sub_answers)} sub-answers collected",
+                f"Final Synthesis: Complete"
+            ]
+            
+            execution_time = time.time() - start_time
             
             logger.info("Multi-step reasoning completed successfully")
             return ReasoningResult(
                 content=final_answer,
-                reasoning_steps=[f"Sub-query: {q}" for q in sub_queries] + [f"Final Answer: {final_answer}"],
+                reasoning_steps=reasoning_steps,
+                thought_process="\n".join(analysis_steps),
+                final_answer=final_answer,
                 confidence=0.9,
                 sources=["Document Analysis"],
-                intermediate_thoughts=intermediate_thoughts
+                reasoning_mode="Multi-Step",
+                intermediate_thoughts=intermediate_thoughts,
+                execution_time=execution_time
             )
         except Exception as e:
             logger.error(f"Multi-step reasoning failed: {e}")
@@ -595,11 +806,304 @@ class MultiStepReasoning:
             return ReasoningResult(
                 content=f"An error occurred during multi-step reasoning: {e}",
                 reasoning_steps=[],
+                thought_process="",
+                final_answer="",
                 confidence=0.0,
                 sources=[],
+                reasoning_mode="Multi-Step",
                 success=False,
                 error=str(e),
-                intermediate_thoughts=intermediate_thoughts
+                execution_time=time.time() - start_time if 'start_time' in locals() else 0.0
+            )
+
+class StandardReasoning:
+    """Standard reasoning for simple, direct responses."""
+    
+    def __init__(self, model_name: str = DEFAULT_MODEL):
+        logger.info(f"Initializing StandardReasoning with model: {model_name}")
+        
+        try:
+            self.llm = ChatOllama(
+                model=model_name,
+                base_url=OLLAMA_API_URL.replace("/api", "")
+            )
+            logger.info("LLM initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize LLM: {e}")
+            raise
+    
+    def execute_reasoning(self, query: str, context: str, stream_callback=None) -> ReasoningResult:
+        """Execute standard reasoning for simple, direct responses"""
+        logger.info(f"Executing standard reasoning for query: '{query}'")
+        
+        try:
+            start_time = time.time()
+            
+            if stream_callback:
+                stream_callback("📝 **Standard Reasoning**\nProcessing query with direct response approach...\n")
+            
+            # Create a simple prompt for direct response
+            prompt = f"""
+            Context: {context}
+            
+            Question: {query}
+            
+            Please provide a clear, direct answer to the question above. 
+            If context is provided, use it to inform your response.
+            If no context is available, use your general knowledge.
+            
+            Answer:
+            """
+            
+            if stream_callback:
+                stream_callback("💭 **Generating Response**\nCreating direct answer...\n")
+            
+            # Get response from LLM
+            response = self.llm.invoke(prompt)
+            
+            # Extract content from AIMessage object
+            response_content = response.content if hasattr(response, 'content') else str(response)
+            final_answer = response_content.strip()
+            
+            if stream_callback:
+                stream_callback("✅ **Response Generated**\nFinalizing answer...\n")
+            
+            execution_time = time.time() - start_time
+            
+            # Create reasoning steps for display
+            reasoning_steps = [
+                f"Query: {query}",
+                f"Context: {len(context)} characters provided" if context else "Context: None provided",
+                f"Response: Direct answer generated",
+                f"Final Answer: {final_answer[:100]}..." if len(final_answer) > 100 else f"Final Answer: {final_answer}"
+            ]
+            
+            if stream_callback:
+                stream_callback("🎯 **Standard Reasoning Complete!**\n")
+            
+            logger.info(f"Standard reasoning completed in {execution_time:.2f}s")
+            return ReasoningResult(
+                content=final_answer,
+                reasoning_steps=reasoning_steps,
+                thought_process=f"Direct response using standard reasoning approach",
+                final_answer=final_answer,
+                confidence=0.8,
+                sources=["LLM"],
+                reasoning_mode="Standard",
+                execution_time=execution_time
+            )
+        except Exception as e:
+            logger.error(f"Standard reasoning failed: {e}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            
+            if stream_callback:
+                stream_callback(f"❌ **Standard Reasoning Error:** {str(e)}\n")
+            
+            return ReasoningResult(
+                content=f"An error occurred during standard reasoning: {e}",
+                reasoning_steps=[],
+                thought_process="",
+                final_answer="",
+                confidence=0.0,
+                sources=[],
+                reasoning_mode="Standard",
+                success=False,
+                error=str(e),
+                execution_time=time.time() - start_time if 'start_time' in locals() else 0.0
+            )
+
+class AutoReasoning:
+    """Intelligently selects and applies the best reasoning mode for a given query"""
+    
+    def __init__(self, model_name: str = DEFAULT_MODEL):
+        logger.info(f"Initializing AutoReasoning with model: {model_name}")
+        
+        try:
+            self.llm = ChatOllama(
+                model=model_name,
+                base_url=OLLAMA_API_URL.replace("/api", "")
+            )
+            self.model_name = model_name
+            
+            # Initialize all reasoning modes
+            self.chain_of_thought = ReasoningChain(model_name)
+            self.multi_step = MultiStepReasoning(model_name)
+            self.agent = ReasoningAgent(model_name)
+            self.standard = StandardReasoning(model_name)
+            
+            logger.info("AutoReasoning initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize AutoReasoning: {e}")
+            raise
+    
+    def _analyze_query_complexity(self, query: str, context: str) -> Dict[str, Any]:
+        """Analyze query complexity and type to determine best reasoning approach"""
+        logger.debug(f"Analyzing query complexity: '{query}'")
+        
+        analysis_prompt = f"""
+        Analyze the following query and context to determine the best reasoning approach.
+        
+        QUERY: "{query}"
+        CONTEXT: "{context[:500]}..." (truncated)
+        
+        Consider these factors:
+        1. Query complexity (simple vs complex)
+        2. Query type (factual, analytical, creative, mathematical, etc.)
+        3. Whether tools might be needed
+        4. Whether multi-step decomposition would help
+        5. Whether chain-of-thought reasoning would be beneficial
+        
+        Respond with a JSON object:
+        {{
+            "complexity": "simple|moderate|complex",
+            "query_type": "factual|analytical|creative|mathematical|problem_solving|other",
+            "needs_tools": true|false,
+            "needs_decomposition": true|false,
+            "needs_chain_of_thought": true|false,
+            "recommended_mode": "Standard|Chain-of-Thought|Multi-Step|Agent-Based",
+            "reasoning": "brief explanation of why this mode is recommended"
+        }}
+        """
+        
+        try:
+            response = self.llm.invoke(analysis_prompt)
+            
+            # Extract content from AIMessage object
+            response_content = response.content if hasattr(response, 'content') else str(response)
+            
+            # Try to parse JSON response
+            import json
+            try:
+                analysis = json.loads(response_content.strip())
+                logger.info(f"Query analysis: {analysis['recommended_mode']} - {analysis['reasoning']}")
+                return analysis
+            except json.JSONDecodeError:
+                # Fallback analysis
+                logger.warning("Failed to parse JSON analysis, using fallback")
+                return self._fallback_analysis(query, context)
+                
+        except Exception as e:
+            logger.error(f"Failed to analyze query complexity: {e}")
+            return self._fallback_analysis(query, context)
+    
+    def _fallback_analysis(self, query: str, context: str) -> Dict[str, Any]:
+        """Fallback analysis when the main analysis fails"""
+        query_lower = query.lower()
+        
+        # Simple heuristics for mode selection
+        needs_tools = any(word in query_lower for word in ['calculate', 'compute', 'time', 'date', 'search', 'web'])
+        needs_decomposition = len(query.split()) > 15 or any(word in query_lower for word in ['analyze', 'compare', 'explain', 'how', 'why'])
+        needs_chain_of_thought = any(word in query_lower for word in ['solve', 'problem', 'figure out', 'determine'])
+        
+        if needs_tools:
+            return {
+                "complexity": "moderate",
+                "query_type": "problem_solving",
+                "needs_tools": True,
+                "needs_decomposition": needs_decomposition,
+                "needs_chain_of_thought": needs_chain_of_thought,
+                "recommended_mode": "Agent-Based",
+                "reasoning": "Query requires tools for calculation, time, or web search"
+            }
+        elif needs_decomposition:
+            return {
+                "complexity": "complex",
+                "query_type": "analytical",
+                "needs_tools": False,
+                "needs_decomposition": True,
+                "needs_chain_of_thought": needs_chain_of_thought,
+                "recommended_mode": "Multi-Step",
+                "reasoning": "Complex query that benefits from step-by-step decomposition"
+            }
+        elif needs_chain_of_thought:
+            return {
+                "complexity": "moderate",
+                "query_type": "problem_solving",
+                "needs_tools": False,
+                "needs_decomposition": False,
+                "needs_chain_of_thought": True,
+                "recommended_mode": "Chain-of-Thought",
+                "reasoning": "Query requires step-by-step reasoning"
+            }
+        else:
+            return {
+                "complexity": "simple",
+                "query_type": "factual",
+                "needs_tools": False,
+                "needs_decomposition": False,
+                "needs_chain_of_thought": False,
+                "recommended_mode": "Standard",
+                "reasoning": "Simple factual query that doesn't require special reasoning"
+            }
+    
+    def auto_reason(self, query: str, context: str, stream_callback=None) -> ReasoningResult:
+        """Automatically select and apply the best reasoning mode"""
+        logger.info(f"Executing auto reasoning for query: '{query}'")
+        
+        try:
+            start_time = time.time()
+            
+            if stream_callback:
+                stream_callback("🤖 **Auto Reasoning Mode**\nAnalyzing query complexity to select the best reasoning approach...\n")
+            
+            # Analyze query to determine best approach
+            analysis = self._analyze_query_complexity(query, context)
+            recommended_mode = analysis["recommended_mode"]
+            
+            if stream_callback:
+                stream_callback(f"📊 **Query Analysis Complete**\n")
+                stream_callback(f"• **Complexity:** {analysis.get('complexity', 'unknown')}\n")
+                stream_callback(f"• **Query Type:** {analysis.get('query_type', 'unknown')}\n")
+                stream_callback(f"• **Needs Tools:** {analysis.get('needs_tools', False)}\n")
+                stream_callback(f"• **Needs Decomposition:** {analysis.get('needs_decomposition', False)}\n")
+                stream_callback(f"• **Needs Chain-of-Thought:** {analysis.get('needs_chain_of_thought', False)}\n")
+                stream_callback(f"\n🎯 **Selected Mode:** {recommended_mode}\n")
+                stream_callback(f"💡 **Reasoning:** {analysis.get('reasoning', 'No explanation provided')}\n\n")
+            
+            logger.info(f"Auto-selected reasoning mode: {recommended_mode}")
+            
+            # Execute reasoning with the recommended mode
+            if recommended_mode == "Chain-of-Thought":
+                if stream_callback:
+                    stream_callback("🧠 **Executing Chain-of-Thought Reasoning**\n")
+                result = self.chain_of_thought.execute_reasoning(query, context, stream_callback)
+            elif recommended_mode == "Multi-Step":
+                if stream_callback:
+                    stream_callback("🔍 **Executing Multi-Step Reasoning**\n")
+                result = self.multi_step.step_by_step_reasoning(query, context, stream_callback)
+            elif recommended_mode == "Agent-Based":
+                if stream_callback:
+                    stream_callback("🤖 **Executing Agent-Based Reasoning**\n")
+                result = self.agent.run(query, context, stream_callback)
+            elif recommended_mode == "Standard":
+                if stream_callback:
+                    stream_callback("📝 **Executing Standard Reasoning**\n")
+                result = self.standard.execute_reasoning(query, context, stream_callback)
+            
+            # Update the result with auto reasoning metadata
+            result.reasoning_mode = f"Auto ({recommended_mode})"
+            result.execution_time = time.time() - start_time
+            
+            if stream_callback:
+                stream_callback(f"✅ **Auto Reasoning Complete!**\nUsed {recommended_mode} mode in {result.execution_time:.2f}s\n")
+            
+            logger.info(f"Auto reasoning completed in {result.execution_time:.2f}s using {recommended_mode}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"Auto reasoning failed: {e}")
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            return ReasoningResult(
+                content=f"An error occurred during auto reasoning: {e}",
+                reasoning_steps=[],
+                thought_process="",
+                final_answer="",
+                confidence=0.0,
+                sources=[],
+                reasoning_mode="Auto (Error)",
+                success=False,
+                error=str(e),
+                execution_time=time.time() - start_time if 'start_time' in locals() else 0.0
             )
 
 class ReasoningEngine:
@@ -611,6 +1115,7 @@ class ReasoningEngine:
         self.agent_reasoner = None
         self.chain_reasoner = None
         self.multi_step_reasoner = None
+        self.standard_reasoner = None
     
     def _retrieve_and_format_context(self, query: str, doc_processor: Optional[DocumentProcessor]) -> str:
         """Retrieve context from documents and format it for the prompt."""
@@ -675,6 +1180,12 @@ class ReasoningEngine:
                 logger.info("Initializing multi-step reasoner")
                 self.multi_step_reasoner = MultiStepReasoning(model_name=self.model_name)
             return self.multi_step_reasoner.step_by_step_reasoning(query, context)
+            
+        elif mode == "Standard":
+            if self.standard_reasoner is None:
+                logger.info("Initializing standard reasoner")
+                self.standard_reasoner = StandardReasoning(model_name=self.model_name)
+            return self.standard_reasoner.execute_reasoning(query, context)
             
         else:
             error_msg = f"Unknown reasoning mode: {mode}"
