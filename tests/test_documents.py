@@ -211,9 +211,9 @@ class TestDocumentProcessor:
         assert len(processor.processed_files) == 0
 
 class TestProcessedFile:
-    @pytest.mark.integration
-    @pytest.mark.integration
     """Test ProcessedFile data structure"""
+    @pytest.mark.integration
+    @pytest.mark.integration
     
     def test_should_create_processed_file(self):
         """Should create ProcessedFile with all attributes"""

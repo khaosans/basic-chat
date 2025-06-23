@@ -244,9 +244,9 @@ class TestReasoningEngine:
             engine.run("Test question", mode="invalid_mode")
 
 class TestReasoningIntegration:
-    @pytest.mark.integration
-    @pytest.mark.integration
     """Test integration between reasoning components"""
+    @pytest.mark.integration
+    @pytest.mark.integration
     
     @patch('reasoning_engine.ReasoningAgent')
     @patch('reasoning_engine.ReasoningChain')
@@ -286,9 +286,9 @@ class TestReasoningIntegration:
         assert chain_result.content == "Integrated result"
 
 class TestReasoningErrorHandling:
-    @pytest.mark.integration
-    @pytest.mark.integration
     """Test error handling in reasoning components"""
+    @pytest.mark.integration
+    @pytest.mark.integration
     
     @patch('reasoning_engine.ChatOllama')
     def test_should_handle_llm_connection_errors(self, mock_chat_ollama):

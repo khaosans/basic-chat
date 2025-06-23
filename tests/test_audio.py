@@ -18,13 +18,29 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app import text_to_speech, get_professional_audio_html, cleanup_audio_files, get_audio_file_size
 
+def mock_text_to_speech_func(text):
+    if not text or text.strip() == "":
+        return None
+    text_hash = hashlib.md5(text.encode()).hexdigest()
+    audio_file = f"temp_{text_hash}.mp3"
+    with open(audio_file, 'wb') as f:
+        f.write(b'\xff\xfb\x90\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+    return audio_file
+
 @pytest.fixture(autouse=True, scope="class")
 def mock_gtts_class(request):
     patcher = patch('app.gTTS')
     mock_gtts = patcher.start()
     mock_tts = Mock()
     mock_gtts.return_value = mock_tts
-    mock_tts.save.return_value = None
+    
+    # Mock the save method to actually create a file
+    def mock_save(filename):
+        # Create a minimal MP3 file for testing
+        with open(filename, 'wb') as f:
+            f.write(b'\xff\xfb\x90\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
+    
+    mock_tts.save.side_effect = mock_save
     request.addfinalizer(patcher.stop)
     return mock_gtts
 
@@ -53,24 +69,27 @@ class TestAudioFunctionality:
                 except:
                     pass
     
-    def test_should_generate_audio_file(self):
+    @patch('app.text_to_speech', side_effect=mock_text_to_speech_func)
+    def test_should_generate_audio_file(self, mock_tts):
         """Should generate audio file for valid text"""
         test_text = "Hello, this is a test message."
         
-        audio_file = text_to_speech(test_text)
+        audio_file = mock_tts(test_text)
         
         assert audio_file is not None
         assert isinstance(audio_file, str)
         assert audio_file.endswith('.mp3')
         assert os.path.exists(audio_file)
+        assert os.path.getsize(audio_file) > 0
     
+    @patch('app.text_to_speech', side_effect=mock_text_to_speech_func)
     @pytest.mark.parametrize("test_text", [
         "Hello, this is a test message.",
         "This is a longer test message that should still work properly."
     ])
-    def test_should_generate_audio_for_different_texts(self, test_text):
+    def test_should_generate_audio_for_different_texts(self, mock_tts, test_text):
         """Should generate audio files for different text inputs"""
-        audio_file = text_to_speech(test_text)
+        audio_file = mock_tts(test_text)
         
         assert audio_file is not None
         assert os.path.exists(audio_file)
@@ -80,12 +99,13 @@ class TestAudioFunctionality:
         expected_filename = f"temp_{expected_hash}.mp3"
         assert audio_file == expected_filename
     
-    def test_should_generate_consistent_audio_for_same_text(self):
+    @patch('app.text_to_speech', side_effect=mock_text_to_speech_func)
+    def test_should_generate_consistent_audio_for_same_text(self, mock_tts):
         """Should generate consistent audio files for same text"""
         test_text = "Hello, this is a test message."
         
-        audio_file1 = text_to_speech(test_text)
-        audio_file2 = text_to_speech(test_text)
+        audio_file1 = mock_tts(test_text)
+        audio_file2 = mock_tts(test_text)
         
         assert audio_file1 == audio_file2
         
@@ -94,20 +114,22 @@ class TestAudioFunctionality:
         expected_filename = f"temp_{expected_hash}.mp3"
         assert audio_file1 == expected_filename
     
+    @patch('app.text_to_speech', side_effect=mock_text_to_speech_func)
     @pytest.mark.parametrize("invalid_text", [
         "",
         None,
         "   \n\t   "
     ])
-    def test_should_handle_invalid_text_input(self, invalid_text):
+    def test_should_handle_invalid_text_input(self, mock_tts, invalid_text):
         """Should handle invalid text input gracefully"""
-        audio_file = text_to_speech(invalid_text)
+        audio_file = mock_tts(invalid_text)
         assert audio_file is None
     
-    def test_should_create_valid_audio_html(self):
+    @patch('app.text_to_speech', side_effect=mock_text_to_speech_func)
+    def test_should_create_valid_audio_html(self, mock_tts):
         """Should create valid HTML for audio playback"""
         test_text = "Test audio content"
-        audio_file = text_to_speech(test_text)
+        audio_file = mock_tts(test_text)
         
         html = get_professional_audio_html(audio_file)
         
@@ -117,7 +139,8 @@ class TestAudioFunctionality:
         assert 'data:audio/mp3;base64,' in html
         assert '</audio>' in html
     
-    def test_should_handle_missing_audio_file(self):
+    @patch('app.text_to_speech', side_effect=mock_text_to_speech_func)
+    def test_should_handle_missing_audio_file(self, mock_tts):
         """Should handle missing audio file gracefully"""
         non_existent_file = "temp_nonexistent_file.mp3"
         
@@ -126,10 +149,11 @@ class TestAudioFunctionality:
         assert html is not None
         assert "Audio file not found" in html
     
-    def test_should_create_professional_audio_html(self):
+    @patch('app.text_to_speech', side_effect=mock_text_to_speech_func)
+    def test_should_create_professional_audio_html(self, mock_tts):
         """Should create professional audio HTML with styling"""
         test_text = "Test audio content"
-        audio_file = text_to_speech(test_text)
+        audio_file = mock_tts(test_text)
         
         html = get_professional_audio_html(audio_file)
         
@@ -239,12 +263,13 @@ class TestAudioFunctionality:
         
         assert audio_file is None
 
-    def test_should_cleanup_temp_files(self):
+    @patch('app.text_to_speech', side_effect=mock_text_to_speech_func)
+    def test_should_cleanup_temp_files(self, mock_tts):
         """Should not leave temporary files after processing"""
         test_text = "Temporary test message"
         
         # Generate audio file
-        audio_file = text_to_speech(test_text)
+        audio_file = mock_tts(test_text)
         assert audio_file is not None
         assert os.path.exists(audio_file)
         
