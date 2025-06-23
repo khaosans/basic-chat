@@ -423,33 +423,42 @@ Cache keys are designed to balance uniqueness with efficiency. The system uses a
 
 ### **Background Task System**
 
-BasicChat uses a robust background task system to handle long-running operations (complex reasoning, large document processing) without blocking the user interface. This system is built on Celery, Redis, and Flower for distributed task management and monitoring.
+BasicChat uses a robust background task system to handle long-running operations (complex reasoning, deep research, large document processing) without blocking the user interface. This system is built on Celery, Redis, and Flower for distributed task management and monitoring.
 
 ```mermaid
 graph TD
     UI[Streamlit UI]
     TASKQ[Task Queue Redis]
     WORKER1[Celery Worker Reasoning]
-    WORKER2[Celery Worker Documents]
+    WORKER2[Celery Worker Deep Research]
+    WORKER3[Celery Worker Documents]
     FLOWER[Flower Monitoring]
     REDIS[Redis]
 
     UI --> TASKQ
     TASKQ --> WORKER1
     TASKQ --> WORKER2
+    TASKQ --> WORKER3
     WORKER1 --> REDIS
     WORKER2 --> REDIS
+    WORKER3 --> REDIS
     FLOWER --> TASKQ
     FLOWER --> WORKER1
     FLOWER --> WORKER2
+    FLOWER --> WORKER3
     UI --> REDIS
 ```
 
 **How it works:**
 - The Streamlit UI submits long-running tasks to a Redis-backed queue.
-- Celery workers (for reasoning and document processing) pick up tasks and update their status/progress in Redis.
+- Celery workers (for reasoning, deep research, and document processing) pick up tasks and update their status/progress in Redis.
 - The UI polls Redis for task status and displays progress, results, and controls (cancel, cleanup).
 - Flower provides a real-time dashboard for monitoring, retrying, or revoking tasks.
+
+**Task Types:**
+- **Reasoning Tasks**: Complex reasoning operations using different modes (Chain-of-Thought, Multi-Step, etc.)
+- **Deep Research Tasks**: Comprehensive research with multiple sources, web search, and academic analysis
+- **Document Tasks**: Large document processing, analysis, and vectorization
 
 This design keeps the UI responsive, supports horizontal scaling, and enables robust monitoring and management of background operations.
 

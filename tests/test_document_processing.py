@@ -11,6 +11,7 @@ import tempfile
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from document_processor import DocumentProcessor
+from app import DocumentSummaryTool
 
 def create_test_document():
     """Create a simple test document"""

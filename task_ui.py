@@ -92,6 +92,8 @@ def display_task_result(task_status: TaskStatus):
     
     if task_type == "reasoning":
         display_reasoning_result(result)
+    elif task_type == "deep_research":
+        display_deep_research_result(result)
     elif task_type in ["document_analysis", "document_processing"]:
         display_document_result(result)
     else:
@@ -139,6 +141,79 @@ def display_reasoning_result(result: Dict[str, Any]):
     with col3:
         if 'reasoning_mode' in result:
             st.metric("Mode", result['reasoning_mode'])
+
+def display_deep_research_result(result: Dict[str, Any]):
+    """Display deep research task result with rich formatting"""
+    if not result:
+        st.info("No research result available")
+        return
+    
+    # Research query
+    st.markdown(f"### 🔍 Research Query")
+    st.info(result.get('research_query', 'No query specified'))
+    
+    # Executive Summary
+    if result.get('executive_summary'):
+        st.markdown("### 📋 Executive Summary")
+        st.markdown(result['executive_summary'])
+    
+    # Key Findings
+    if result.get('key_findings'):
+        st.markdown("### 🎯 Key Findings")
+        st.markdown(result['key_findings'])
+    
+    # Detailed Analysis
+    if result.get('detailed_analysis'):
+        with st.expander("📊 Detailed Analysis", expanded=True):
+            st.markdown(result['detailed_analysis'])
+    
+    # Sources
+    if result.get('sources'):
+        with st.expander("📚 Sources & Citations", expanded=False):
+            st.markdown("### Sources Used:")
+            for i, source in enumerate(result['sources'][:5], 1):
+                col1, col2 = st.columns([1, 4])
+                with col1:
+                    st.write(f"**{i}.**")
+                with col2:
+                    if source.get('title'):
+                        st.markdown(f"**{source['title']}**")
+                    if source.get('url'):
+                        st.markdown(f"🔗 [{source['url']}]({source['url']})")
+                    if source.get('snippet'):
+                        st.caption(source['snippet'])
+                st.markdown("---")
+    
+    # Recommendations
+    if result.get('recommendations'):
+        with st.expander("💡 Recommendations", expanded=False):
+            st.markdown(result['recommendations'])
+    
+    # Further Research
+    if result.get('further_research'):
+        with st.expander("🔬 Areas for Further Research", expanded=False):
+            st.markdown(result['further_research'])
+    
+    # Research Metadata
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        if 'sources_analyzed' in result:
+            st.metric("Sources", result['sources_analyzed'])
+    with col2:
+        if 'confidence' in result:
+            confidence = result['confidence']
+            if confidence >= 0.8:
+                st.metric("Confidence", f"{confidence:.1%}", delta="High")
+            elif confidence >= 0.6:
+                st.metric("Confidence", f"{confidence:.1%}", delta="Medium")
+            else:
+                st.metric("Confidence", f"{confidence:.1%}", delta="Low")
+    with col3:
+        if 'execution_time' in result:
+            st.metric("Research Time", f"{result['execution_time']:.1f}s")
+    with col4:
+        if 'search_terms_used' in result:
+            st.metric("Search Terms", len(result['search_terms_used']))
 
 def display_document_result(result: Dict[str, Any]):
     """Display document processing result"""
@@ -255,4 +330,15 @@ def should_use_background_task(query: str, reasoning_mode: str, config) -> bool:
         return False
     
     # Check if it's a long-running query
-    return is_long_running_query(query, reasoning_mode) 
+    return is_long_running_query(query, reasoning_mode)
+
+def create_deep_research_message(task_id: str, query: str) -> Dict[str, Any]:
+    """Create a special message for deep research tasks"""
+    return {
+        "role": "assistant",
+        "content": f"🔬 **Deep Research Started**\n\n**Query:** {query}\n**Task ID:** `{task_id}`\n\nI'm conducting comprehensive research on your query. This includes:\n• Multiple source searches\n• Content analysis and synthesis\n• Detailed findings and recommendations\n• Source citations\n\nThis may take a few minutes. You can continue chatting while I research!",
+        "task_id": task_id,
+        "is_task": True,
+        "is_deep_research": True,
+        "metadata": {"query": query}
+    } 

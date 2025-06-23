@@ -117,6 +117,12 @@ class TaskManager:
                     args=[task_id, kwargs.get('query', ''), kwargs.get('mode', 'Standard')],
                     kwargs={'context': kwargs.get('context', '')}
                 )
+            elif task_type == "deep_research":
+                return self.celery_app.send_task(
+                    'tasks.run_deep_research',
+                    args=[task_id, kwargs.get('query', '')],
+                    kwargs={'research_depth': kwargs.get('research_depth', 'comprehensive')}
+                )
             elif task_type == "document_analysis":
                 return self.celery_app.send_task(
                     'tasks.analyze_document',

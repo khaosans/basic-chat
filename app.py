@@ -52,7 +52,8 @@ from task_ui import (
     display_task_result,
     display_task_metrics,
     display_active_tasks,
-    should_use_background_task
+    should_use_background_task,
+    create_deep_research_message
 )
 
 # Import configuration constants
@@ -670,6 +671,10 @@ def enhanced_chat_interface(doc_processor):
     if "task_manager" not in st.session_state:
         st.session_state.task_manager = TaskManager()
     
+    # Initialize deep research mode
+    if "deep_research_mode" not in st.session_state:
+        st.session_state.deep_research_mode = False
+    
     # Sidebar Configuration
     with st.sidebar:
         st.header("✨ Configuration")
@@ -822,13 +827,65 @@ def enhanced_chat_interface(doc_processor):
             if msg["role"] == "assistant" and not msg.get("is_task"):
                 create_enhanced_audio_button(msg["content"], hash(msg['content']))
 
+    # Chat input with deep research toggle
+    st.markdown("---")
+    
+    # Deep Research Toggle (ChatGPT-style)
+    col1, col2, col3 = st.columns([1, 3, 1])
+    with col2:
+        deep_research_toggle = st.toggle(
+            "🔬 Deep Research Mode",
+            value=st.session_state.deep_research_mode,
+            help="Enable comprehensive research with multiple sources and detailed analysis"
+        )
+        
+        # Update session state if toggle changed
+        if deep_research_toggle != st.session_state.deep_research_mode:
+            st.session_state.deep_research_mode = deep_research_toggle
+            if deep_research_toggle:
+                st.info("🔬 Deep Research Mode enabled! Your queries will now trigger comprehensive research with multiple sources.")
+            else:
+                st.info("✅ Standard mode enabled. Switch back to deep research for comprehensive analysis.")
+            st.rerun()
+    
     # Chat input
     if prompt := st.chat_input("Type a message..."):
-        # Check if this should be a long-running task
-        should_be_long_task = should_use_background_task(prompt, st.session_state.reasoning_mode, config)
+        # Determine if this should be a deep research task
+        if st.session_state.deep_research_mode:
+            # Always use deep research for complex queries in research mode
+            should_be_research_task = True
+        else:
+            # Check if this should be a long-running task
+            should_be_long_task = should_use_background_task(prompt, st.session_state.reasoning_mode, config)
+            should_be_research_task = False
         
-        if should_be_long_task:
-            # Submit as background task
+        if should_be_research_task:
+            # Submit as deep research task
+            task_id = st.session_state.task_manager.submit_task(
+                "deep_research",
+                query=prompt,
+                research_depth="comprehensive"
+            )
+            
+            # Add task message to chat
+            task_message = create_deep_research_message(task_id, prompt)
+            st.session_state.messages.append(task_message)
+            
+            # Add user message
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            # Display the user message immediately
+            with st.chat_message("user"):
+                st.write(prompt)
+            
+            # Display task message
+            with st.chat_message("assistant"):
+                st.write(task_message["content"])
+                display_task_status(task_id, st.session_state.task_manager)
+            
+            st.rerun()
+        elif should_be_long_task:
+            # Submit as background task (existing logic)
             task_id = st.session_state.task_manager.submit_task(
                 "reasoning",
                 query=prompt,

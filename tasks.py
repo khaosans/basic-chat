@@ -349,4 +349,225 @@ def health_check(self):
             'status': 'unhealthy',
             'error': str(e),
             'timestamp': time.time()
-        } 
+        }
+
+@celery_app.task(bind=True)
+def run_deep_research(self, task_id: str, query: str, research_depth: str = "comprehensive"):
+    """Run deep research task with multiple sources and comprehensive analysis"""
+    logger.info(f"Starting deep research task {task_id}: {query[:50]}...")
+    
+    try:
+        # Update progress - Initializing
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'task_id': task_id,
+                'progress': 0.05,
+                'status': 'Initializing deep research engine'
+            }
+        )
+        
+        # Import web search capabilities
+        from web_search import WebSearch
+        from reasoning_engine import MultiStepReasoning
+        
+        # Initialize components
+        web_search = WebSearch()
+        reasoning_engine = MultiStepReasoning(DEFAULT_MODEL)  # Best for research
+        
+        # Step 1: Initial query analysis
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'task_id': task_id,
+                'progress': 0.1,
+                'status': 'Analyzing research query'
+            }
+        )
+        
+        analysis_query = f"""
+        Analyze this research query and break it down into key search terms and subtopics:
+        "{query}"
+        
+        Provide:
+        1. Main search terms (3-5 key terms)
+        2. Related subtopics to explore
+        3. Types of sources to look for
+        4. Potential research questions
+        """
+        
+        analysis_result = reasoning_engine.run(analysis_query, "")
+        
+        # Step 2: Web search for multiple sources
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'task_id': task_id,
+                'progress': 0.2,
+                'status': 'Searching for sources'
+            }
+        )
+        
+        # Extract search terms from analysis
+        search_terms = [query]  # Start with original query
+        if analysis_result.content:
+            # Extract key terms from analysis (simplified)
+            lines = analysis_result.content.split('\n')
+            for line in lines:
+                if 'search terms' in line.lower() or 'key terms' in line.lower():
+                    # Extract terms from this line
+                    terms = line.split(':')[-1].strip()
+                    if terms:
+                        search_terms.extend([term.strip() for term in terms.split(',')[:3]])
+        
+        # Perform multiple searches
+        search_results = []
+        for i, term in enumerate(search_terms[:3]):  # Limit to 3 searches
+            try:
+                results = web_search.search(term, max_results=3)
+                search_results.extend(results)
+                
+                # Update progress
+                progress = 0.2 + (i + 1) * 0.15
+                self.update_state(
+                    state='PROGRESS',
+                    meta={
+                        'task_id': task_id,
+                        'progress': progress,
+                        'status': f'Searching: {term}'
+                    }
+                )
+                
+            except Exception as e:
+                logger.warning(f"Search failed for term '{term}': {e}")
+                continue
+        
+        # Step 3: Content analysis and synthesis
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'task_id': task_id,
+                'progress': 0.6,
+                'status': 'Analyzing sources'
+            }
+        )
+        
+        # Prepare content for analysis
+        content_for_analysis = f"""
+        Research Query: {query}
+        
+        Sources Found:
+        """
+        
+        for i, result in enumerate(search_results[:5]):  # Limit to top 5 results
+            content_for_analysis += f"""
+        Source {i+1}: {result.get('title', 'No title')}
+        URL: {result.get('url', 'No URL')}
+        Snippet: {result.get('snippet', 'No snippet')}
+        """
+        
+        # Step 4: Comprehensive analysis
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'task_id': task_id,
+                'progress': 0.7,
+                'status': 'Synthesizing findings'
+            }
+        )
+        
+        synthesis_query = f"""
+        Based on the research query and sources provided, create a comprehensive research report:
+        
+        {content_for_analysis}
+        
+        Please provide:
+        1. Executive Summary (2-3 sentences)
+        2. Key Findings (bullet points)
+        3. Detailed Analysis (comprehensive explanation)
+        4. Sources and Citations
+        5. Recommendations or Conclusions
+        6. Areas for Further Research
+        
+        Make the analysis thorough, well-structured, and academically rigorous.
+        """
+        
+        research_result = reasoning_engine.run(synthesis_query, content_for_analysis)
+        
+        # Step 5: Final formatting and metadata
+        self.update_state(
+            state='PROGRESS',
+            meta={
+                'task_id': task_id,
+                'progress': 0.9,
+                'status': 'Finalizing research report'
+            }
+        )
+        
+        # Format the final result
+        task_result = {
+            'task_id': task_id,
+            'status': 'completed',
+            'progress': 1.0,
+            'result': {
+                'research_query': query,
+                'research_depth': research_depth,
+                'executive_summary': _extract_section(research_result.content, "Executive Summary"),
+                'key_findings': _extract_section(research_result.content, "Key Findings"),
+                'detailed_analysis': _extract_section(research_result.content, "Detailed Analysis"),
+                'sources': search_results,
+                'recommendations': _extract_section(research_result.content, "Recommendations"),
+                'further_research': _extract_section(research_result.content, "Areas for Further Research"),
+                'full_report': research_result.content,
+                'search_terms_used': search_terms,
+                'sources_analyzed': len(search_results),
+                'confidence': research_result.confidence,
+                'execution_time': research_result.execution_time,
+                'success': research_result.success
+            }
+        }
+        
+        logger.info(f"Deep research task {task_id} completed successfully")
+        return task_result
+        
+    except Exception as e:
+        logger.error(f"Deep research task {task_id} failed: {e}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        
+        return {
+            'task_id': task_id,
+            'status': 'failed',
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }
+
+def _extract_section(content: str, section_name: str) -> str:
+    """Extract a specific section from the research content"""
+    try:
+        lines = content.split('\n')
+        section_start = -1
+        section_end = -1
+        
+        for i, line in enumerate(lines):
+            if section_name.lower() in line.lower():
+                section_start = i
+                break
+        
+        if section_start == -1:
+            return ""
+        
+        # Find the end of this section (next numbered item or end)
+        for i in range(section_start + 1, len(lines)):
+            if (lines[i].strip().startswith(('1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.', '9.')) or
+                any(keyword in lines[i].lower() for keyword in ['key findings', 'detailed analysis', 'sources', 'recommendations', 'further research'])):
+                section_end = i
+                break
+        
+        if section_end == -1:
+            section_end = len(lines)
+        
+        return '\n'.join(lines[section_start:section_end]).strip()
+        
+    except Exception as e:
+        logger.warning(f"Error extracting section {section_name}: {e}")
+        return "" 
