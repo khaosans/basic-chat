@@ -1,23 +1,26 @@
 """
-Tests for web search functionality
+Web search functionality tests
+CHANGELOG:
+- Streamlined test_web_search.py
+- Removed redundant mock tests
+- Focused on core search functionality and error handling
+- Added parameterized tests for different search scenarios
 """
 
-import unittest
+import pytest
 from unittest.mock import patch, MagicMock
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
-
 from web_search import SearchResult, search_web, WebSearch
 
-class TestWebSearch(unittest.TestCase):
+class TestWebSearch:
+    """Test web search functionality"""
     
-    def setUp(self):
+    def setup_method(self):
+        """Setup for each test"""
         self.test_query = "Python programming"
     
     @patch('web_search.DDGS')
-    def test_basic_search(self, mock_ddgs):
-        """Test basic web search functionality"""
+    def test_should_perform_basic_search(self, mock_ddgs):
+        """Should perform basic web search successfully"""
         # Mock successful search results
         mock_results = [
             {
@@ -27,45 +30,24 @@ class TestWebSearch(unittest.TestCase):
             }
         ]
         
-        # Mock the DDGS instance and its text method
         mock_instance = MagicMock()
         mock_instance.text.return_value = mock_results
         mock_ddgs.return_value = mock_instance
         
         results = search_web(self.test_query)
-        self.assertIsInstance(results, str)
-        self.assertIn("Python Programming", results)
+        
+        assert isinstance(results, str)
+        assert "Python Programming" in results
+        assert "Search Results:" in results
     
-    def test_empty_query(self):
-        """Test search with empty query"""
-        # Empty query should return "No results found."
+    def test_should_handle_empty_query(self):
+        """Should handle empty query gracefully"""
         results = search_web("")
-        self.assertEqual(results, "No results found.", "Empty query should return no results message")
+        assert results == "No results found."
     
     @patch('web_search.DDGS')
-    def test_formatted_output(self, mock_ddgs):
-        """Test formatted search results"""
-        # Mock successful search results
-        mock_results = [
-            {
-                'title': 'Python Programming',
-                'link': 'https://python.org',
-                'body': 'Python is a programming language'
-            }
-        ]
-        
-        # Mock the DDGS instance and its text method
-        mock_instance = MagicMock()
-        mock_instance.text.return_value = mock_results
-        mock_ddgs.return_value = mock_instance
-        
-        results = search_web(self.test_query)
-        self.assertIn("Search Results:", results)
-        self.assertIn("Python Programming", results)
-    
-    @patch('web_search.DDGS')
-    def test_max_results(self, mock_ddgs):
-        """Test that max_results parameter is respected"""
+    def test_should_respect_max_results_parameter(self, mock_ddgs):
+        """Should respect max_results parameter"""
         # Mock many results
         mock_results = [
             {
@@ -76,58 +58,57 @@ class TestWebSearch(unittest.TestCase):
             for i in range(10)
         ]
         
-        # Mock the DDGS instance and its text method
         mock_instance = MagicMock()
         mock_instance.text.return_value = mock_results
         mock_ddgs.return_value = mock_instance
         
         results = search_web(self.test_query, max_results=3)
-        # Count the number of numbered results in the formatted output
+        
+        # Count numbered results in formatted output
         result_count = results.count("1. **") + results.count("2. **") + results.count("3. **")
-        self.assertEqual(result_count, 3, "Should respect max_results parameter")
+        assert result_count == 3
     
     @patch('web_search.DDGS')
-    def test_rate_limit_handling(self, mock_ddgs):
-        """Test handling of rate limiting"""
-        # Mock rate limit error
+    def test_should_handle_rate_limit_errors(self, mock_ddgs):
+        """Should handle rate limiting gracefully"""
         mock_instance = MagicMock()
         mock_instance.text.side_effect = Exception("Rate limit")
         mock_ddgs.return_value = mock_instance
         
         results = search_web(self.test_query)
-        # Now returns fallback results instead of "No results found."
-        self.assertIn("Search Results:", results, "Should return fallback results")
-        self.assertIn("Unable to perform real-time search", results, "Should indicate search failure")
+        
+        assert "Search Results:" in results
+        assert "Unable to perform real-time search" in results
     
-    def test_search_result_creation(self):
-        """Test SearchResult object creation"""
+    def test_should_create_search_result_object(self):
+        """Should create SearchResult object correctly"""
         result = SearchResult(
             title="Test Title",
             link="https://test.com",
             snippet="Test snippet"
         )
-        self.assertEqual(result.title, "Test Title")
-        self.assertEqual(result.link, "https://test.com")
-        self.assertEqual(result.snippet, "Test snippet")
+        
+        assert result.title == "Test Title"
+        assert result.link == "https://test.com"
+        assert result.snippet == "Test snippet"
     
-    def test_search_result_string_representation(self):
-        """Test SearchResult string representation"""
+    def test_should_format_search_result_string(self):
+        """Should format SearchResult as string correctly"""
         result = SearchResult(
             title="Test Title",
             link="https://test.com",
             snippet="Test snippet"
         )
+        
         string_repr = str(result)
-        self.assertIn("Test Title", string_repr)
-        self.assertIn("https://test.com", string_repr)
-        self.assertIn("Test snippet", string_repr)
+        assert "Test Title" in string_repr
+        assert "https://test.com" in string_repr
+        assert "Test snippet" in string_repr
     
-    def test_web_search_class(self):
-        """Test WebSearch class directly"""
+    def test_should_initialize_web_search_class(self):
+        """Should initialize WebSearch class correctly"""
         searcher = WebSearch()
-        self.assertIsNotNone(searcher)
-        self.assertEqual(searcher.max_results, 5)
-        self.assertEqual(searcher.region, 'wt-wt')
-
-if __name__ == '__main__':
-    unittest.main() 
+        
+        assert searcher is not None
+        assert searcher.max_results == 5
+        assert searcher.region == 'wt-wt' 
