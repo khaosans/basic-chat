@@ -8,13 +8,15 @@ This script evaluates the codebase using an LLM to assess:
 - Documentation quality
 - Overall project health
 
+Uses the built-in Ollama setup instead of external APIs.
+
 Usage:
     python evaluators/check_llm_judge.py
 
 Environment Variables:
-    OPENAI_API_KEY: OpenAI API key (required)
+    OLLAMA_API_URL: Ollama API URL (default: http://localhost:11434/api)
+    OLLAMA_MODEL: Ollama model to use (default: mistral)
     LLM_JUDGE_THRESHOLD: Minimum score required (default: 7.0)
-    LLM_JUDGE_MODEL: OpenAI model to use (default: gpt-4)
 """
 
 import os
@@ -24,26 +26,30 @@ import subprocess
 import tempfile
 from pathlib import Path
 from typing import Dict, List, Any, Optional
-import openai
+import asyncio
 from datetime import datetime
+
+# Add the parent directory to the path so we can import from app
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app import OllamaChat
+from config import config
 
 # Configuration
 DEFAULT_THRESHOLD = 7.0
-DEFAULT_MODEL = "gpt-4"
+DEFAULT_MODEL = "mistral"
 MAX_RETRIES = 3
 
 class LLMJudgeEvaluator:
-    """LLM-based code evaluator for CI/CD pipelines"""
+    """LLM-based code evaluator for CI/CD pipelines using built-in Ollama"""
     
     def __init__(self):
-        self.api_key = os.getenv('OPENAI_API_KEY')
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is required")
-        
+        self.ollama_url = os.getenv('OLLAMA_API_URL', 'http://localhost:11434/api')
+        self.model = os.getenv('OLLAMA_MODEL', DEFAULT_MODEL)
         self.threshold = float(os.getenv('LLM_JUDGE_THRESHOLD', DEFAULT_THRESHOLD))
-        self.model = os.getenv('LLM_JUDGE_MODEL', DEFAULT_MODEL)
         
-        openai.api_key = self.api_key
+        # Initialize Ollama chat client
+        self.ollama_chat = OllamaChat(model_name=self.model)
         
         # Initialize results
         self.results = {
@@ -158,40 +164,35 @@ Respond in the following JSON format:
 """
     
     def evaluate_with_llm(self, prompt: str) -> Dict[str, Any]:
-        """Evaluate the codebase using OpenAI's API"""
+        """Evaluate the codebase using built-in Ollama"""
         for attempt in range(MAX_RETRIES):
             try:
-                response = openai.ChatCompletion.create(
-                    model=self.model,
-                    messages=[
-                        {"role": "system", "content": "You are an expert software engineer evaluating code quality. Provide detailed, constructive feedback."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.3,
-                    max_tokens=2000
-                )
+                # Use the built-in OllamaChat
+                payload = {"inputs": prompt}
+                response = self.ollama_chat.query(payload)
                 
-                content = response.choices[0].message.content
+                if not response:
+                    raise Exception("No response received from Ollama")
                 
                 # Try to parse JSON response
                 try:
                     # Find JSON in the response
-                    start = content.find('{')
-                    end = content.rfind('}') + 1
+                    start = response.find('{')
+                    end = response.rfind('}') + 1
                     if start != -1 and end != 0:
-                        json_str = content[start:end]
+                        json_str = response[start:end]
                         return json.loads(json_str)
                     else:
                         raise ValueError("No JSON found in response")
                 except json.JSONDecodeError as e:
                     print(f"Failed to parse JSON response (attempt {attempt + 1}): {e}")
-                    print(f"Response: {content}")
+                    print(f"Response: {response}")
                     if attempt == MAX_RETRIES - 1:
                         raise
                     continue
                     
             except Exception as e:
-                print(f"API call failed (attempt {attempt + 1}): {e}")
+                print(f"Ollama API call failed (attempt {attempt + 1}): {e}")
                 if attempt == MAX_RETRIES - 1:
                     raise
                 continue
@@ -206,7 +207,7 @@ Respond in the following JSON format:
         print("🤖 Generating evaluation prompt...")
         prompt = self.generate_evaluation_prompt(codebase_info)
         
-        print("🧠 Running LLM evaluation...")
+        print("🧠 Running LLM evaluation with Ollama...")
         evaluation = self.evaluate_with_llm(prompt)
         
         # Store results
@@ -218,7 +219,7 @@ Respond in the following JSON format:
     def print_results(self, results: Dict[str, Any]):
         """Print evaluation results in a readable format"""
         print("\n" + "="*60)
-        print("🤖 LLM JUDGE EVALUATION RESULTS")
+        print("🤖 LLM JUDGE EVALUATION RESULTS (Ollama)")
         print("="*60)
         
         scores = results.get('scores', {})
@@ -260,7 +261,9 @@ Respond in the following JSON format:
     def run(self) -> int:
         """Main execution method"""
         try:
-            print("🚀 Starting LLM Judge Evaluation...")
+            print("🚀 Starting LLM Judge Evaluation (Ollama)...")
+            print(f"📋 Using model: {self.model}")
+            print(f"🔗 Ollama URL: {self.ollama_url}")
             
             results = self.run_evaluation()
             status, score = self.print_results(results)

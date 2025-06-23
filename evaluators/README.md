@@ -4,7 +4,7 @@ This directory contains the LLM-based code quality evaluator for the GitHub Acti
 
 ## Overview
 
-The LLM Judge Evaluator uses OpenAI's GPT models to assess code quality, test coverage, documentation, architecture, security, and performance of the codebase. It runs as a separate job in the CI pipeline after unit tests pass.
+The LLM Judge Evaluator uses the built-in Ollama setup to assess code quality, test coverage, documentation, architecture, security, and performance of the codebase. It runs as a separate job in the CI pipeline after unit tests pass.
 
 ## Files
 
@@ -16,28 +16,25 @@ The LLM Judge Evaluator uses OpenAI's GPT models to assess code quality, test co
 
 ### Environment Variables
 
-- `OPENAI_API_KEY` (required): Your OpenAI API key
+- `OLLAMA_API_URL` (optional): Ollama API URL (default: http://localhost:11434/api)
+- `OLLAMA_MODEL` (optional): Ollama model to use (default: mistral)
 - `LLM_JUDGE_THRESHOLD` (optional): Minimum score required (default: 7.0)
-- `LLM_JUDGE_MODEL` (optional): OpenAI model to use (default: gpt-4)
-
-### GitHub Secrets
-
-Add the following secret to your GitHub repository:
-- `OPENAI_API_KEY`: Your OpenAI API key
 
 ### GitHub Variables (Optional)
 
 You can set these as repository variables for easier management:
+- `OLLAMA_API_URL`: Ollama API URL
+- `OLLAMA_MODEL`: Ollama model to use (e.g., mistral, llama2, codellama)
 - `LLM_JUDGE_THRESHOLD`: Minimum score threshold
-- `LLM_JUDGE_MODEL`: OpenAI model to use
 
 ## Usage
 
 ### Local Development
 
 ```bash
-# Set your OpenAI API key
-export OPENAI_API_KEY="your-api-key-here"
+# Set your Ollama configuration (optional, uses defaults)
+export OLLAMA_API_URL="http://localhost:11434/api"
+export OLLAMA_MODEL="mistral"
 
 # Run the evaluator
 python evaluators/check_llm_judge.py
@@ -48,6 +45,11 @@ python evaluators/check_llm_judge.py
 The evaluator runs automatically in GitHub Actions after tests pass. It only runs on:
 - Pushes to the main branch
 - Pull requests from the same repository (for security)
+
+The CI automatically:
+- Installs Ollama
+- Pulls the specified model
+- Runs the evaluation
 
 ## Evaluation Criteria
 
@@ -70,8 +72,8 @@ The evaluator generates:
 ## Security Considerations
 
 - Only runs on trusted repositories (same-repo PRs)
-- API key is stored as GitHub secret
-- No code or sensitive data is sent to OpenAI
+- Uses local Ollama instance in CI
+- No external API keys required
 - Only metadata and statistics are evaluated
 
 ## Customization
@@ -85,10 +87,11 @@ You can customize the evaluation by modifying:
 
 ### Common Issues
 
-1. **API Key Missing**: Ensure `OPENAI_API_KEY` is set in GitHub secrets
-2. **Low Scores**: Review the recommendations and improve code quality
-3. **API Failures**: The evaluator retries up to 3 times automatically
-4. **Timeout Issues**: Increase timeout values in the config if needed
+1. **Ollama Not Running**: Ensure Ollama is installed and running locally
+2. **Model Not Found**: Pull the required model with `ollama pull <model-name>`
+3. **Low Scores**: Review the recommendations and improve code quality
+4. **API Failures**: Check Ollama service status and model availability
+5. **Timeout Issues**: Increase timeout values in the config if needed
 
 ### Debug Mode
 
@@ -102,7 +105,7 @@ python evaluators/check_llm_judge.py
 
 1. **Start with a lower threshold** (e.g., 6.0) and gradually increase
 2. **Review recommendations** regularly and implement improvements
-3. **Monitor costs** - the evaluator uses OpenAI API calls
+3. **Use appropriate models** - consider using CodeLlama for code-specific evaluations
 4. **Use caching** - GitHub Actions caches dependencies to speed up runs
 5. **Set appropriate timeouts** for your codebase size
 
@@ -113,11 +116,12 @@ The evaluator integrates seamlessly with:
 - Existing test suites
 - Code coverage tools
 - Documentation systems
+- Built-in Ollama setup
 
 ## Support
 
 For issues or questions:
 1. Check the GitHub Actions logs
 2. Review the `llm_judge_results.json` output
-3. Verify your OpenAI API key and quota
+3. Verify Ollama is running and the model is available
 4. Check the configuration in `evaluator.config.json` 

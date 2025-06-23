@@ -21,9 +21,9 @@ class TestLLMJudgeEvaluator:
         """Setup method for each test"""
         # Mock environment variables
         self.original_env = os.environ.copy()
-        os.environ['OPENAI_API_KEY'] = 'test-api-key'
+        os.environ['OLLAMA_API_URL'] = 'http://localhost:11434/api'
+        os.environ['OLLAMA_MODEL'] = 'mistral'
         os.environ['LLM_JUDGE_THRESHOLD'] = '7.0'
-        os.environ['LLM_JUDGE_MODEL'] = 'gpt-4'
     
     def teardown_method(self):
         """Teardown method for each test"""
@@ -35,19 +35,11 @@ class TestLLMJudgeEvaluator:
         """Test that the evaluator initializes correctly"""
         evaluator = LLMJudgeEvaluator()
         
-        assert evaluator.api_key == 'test-api-key'
+        assert evaluator.ollama_url == 'http://localhost:11434/api'
         assert evaluator.threshold == 7.0
-        assert evaluator.model == 'gpt-4'
+        assert evaluator.model == 'mistral'
         assert evaluator.results is not None
-    
-    def test_should_fail_without_api_key(self):
-        """Test that evaluator fails without API key"""
-        # Remove API key
-        if 'OPENAI_API_KEY' in os.environ:
-            del os.environ['OPENAI_API_KEY']
-        
-        with pytest.raises(ValueError, match="OPENAI_API_KEY environment variable is required"):
-            LLMJudgeEvaluator()
+        assert evaluator.ollama_chat is not None
     
     def test_should_collect_codebase_info(self):
         """Test that codebase information is collected correctly"""
@@ -98,13 +90,15 @@ class TestLLMJudgeEvaluator:
         assert 'Security' in prompt
         assert 'Performance' in prompt
     
-    @patch('evaluators.check_llm_judge.openai.ChatCompletion.create')
-    def test_should_evaluate_with_llm(self, mock_openai):
-        """Test LLM evaluation with mocked response"""
-        # Mock OpenAI response
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = '''
+    @patch('evaluators.check_llm_judge.OllamaChat')
+    def test_should_evaluate_with_llm(self, mock_ollama_chat_class):
+        """Test LLM evaluation with mocked OllamaChat"""
+        # Mock OllamaChat
+        mock_ollama_chat = MagicMock()
+        mock_ollama_chat_class.return_value = mock_ollama_chat
+        
+        # Mock the query method to return a valid JSON response
+        mock_ollama_chat.query.return_value = '''
         {
             "scores": {
                 "code_quality": {"score": 8, "justification": "Well-structured code"},
@@ -118,15 +112,14 @@ class TestLLMJudgeEvaluator:
             "recommendations": ["Add more tests", "Improve documentation"]
         }
         '''
-        mock_openai.return_value = mock_response
         
         evaluator = LLMJudgeEvaluator()
         prompt = "Test prompt"
         
         result = evaluator.evaluate_with_llm(prompt)
         
-        # Check that OpenAI was called
-        mock_openai.assert_called_once()
+        # Check that OllamaChat was called
+        mock_ollama_chat.query.assert_called_once_with({"inputs": prompt})
         
         # Check that result contains expected data
         assert 'scores' in result
@@ -135,16 +128,21 @@ class TestLLMJudgeEvaluator:
         assert result['overall_score'] == 7.2
         assert len(result['recommendations']) == 2
     
-    @patch('evaluators.check_llm_judge.openai.ChatCompletion.create')
-    def test_should_handle_llm_failures(self, mock_openai):
+    @patch('evaluators.check_llm_judge.OllamaChat')
+    def test_should_handle_llm_failures(self, mock_ollama_chat_class):
         """Test handling of LLM API failures"""
+        # Mock OllamaChat
+        mock_ollama_chat = MagicMock()
+        mock_ollama_chat_class.return_value = mock_ollama_chat
+        
         # Mock API failure
-        mock_openai.side_effect = Exception("API Error")
+        mock_ollama_chat.query.side_effect = Exception("API Error")
         
         evaluator = LLMJudgeEvaluator()
         prompt = "Test prompt"
         
-        with pytest.raises(Exception, match="Failed to get valid response from LLM after all retries"):
+        # The final exception should be the original API Error from the last retry attempt
+        with pytest.raises(Exception, match="API Error"):
             evaluator.evaluate_with_llm(prompt)
     
     def test_should_print_results_correctly(self):
@@ -198,13 +196,15 @@ class TestLLMJudgeEvaluator:
             assert status == "FAIL"  # 5.5 < 8.0 threshold
             assert score == 5.5
     
-    @patch('evaluators.check_llm_judge.openai.ChatCompletion.create')
-    def test_should_run_complete_evaluation(self, mock_openai):
+    @patch('evaluators.check_llm_judge.OllamaChat')
+    def test_should_run_complete_evaluation(self, mock_ollama_chat_class):
         """Test complete evaluation process"""
-        # Mock OpenAI response
-        mock_response = MagicMock()
-        mock_response.choices = [MagicMock()]
-        mock_response.choices[0].message.content = '''
+        # Mock OllamaChat
+        mock_ollama_chat = MagicMock()
+        mock_ollama_chat_class.return_value = mock_ollama_chat
+        
+        # Mock the query method to return a valid JSON response
+        mock_ollama_chat.query.return_value = '''
         {
             "scores": {
                 "code_quality": {"score": 8, "justification": "Well-structured"},
@@ -218,7 +218,6 @@ class TestLLMJudgeEvaluator:
             "recommendations": ["Add more tests", "Improve docs"]
         }
         '''
-        mock_openai.return_value = mock_response
         
         evaluator = LLMJudgeEvaluator()
         
@@ -243,7 +242,24 @@ class TestLLMJudgeEvaluator:
         
         # Should not raise an error
         assert evaluator.threshold == 7.0
-        assert evaluator.model == 'gpt-4'
+        assert evaluator.model == 'mistral'
+    
+    def test_should_use_default_values(self):
+        """Test that default values are used when environment variables are not set"""
+        # Clear environment variables
+        if 'OLLAMA_API_URL' in os.environ:
+            del os.environ['OLLAMA_API_URL']
+        if 'OLLAMA_MODEL' in os.environ:
+            del os.environ['OLLAMA_MODEL']
+        if 'LLM_JUDGE_THRESHOLD' in os.environ:
+            del os.environ['LLM_JUDGE_THRESHOLD']
+        
+        evaluator = LLMJudgeEvaluator()
+        
+        # Check default values
+        assert evaluator.ollama_url == 'http://localhost:11434/api'
+        assert evaluator.model == 'mistral'
+        assert evaluator.threshold == 7.0
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"]) 

@@ -1,4 +1,4 @@
-name: verifyExpected
+name: verify
 
 on:
   push:
@@ -92,11 +92,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-asyncio
+      - name: Setup Ollama
+        run: |
+          # Install Ollama
+          curl -fsSL https://ollama.ai/install.sh | sh
+          # Start Ollama service
+          ollama serve &
+          # Wait for Ollama to be ready
+          sleep 10
+          # Pull the model
+          ollama pull ${{ vars.OLLAMA_MODEL || 'mistral' }}
       - name: Run LLM Judge Evaluator
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OLLAMA_API_URL: ${{ vars.OLLAMA_API_URL || 'http://localhost:11434/api' }}
+          OLLAMA_MODEL: ${{ vars.OLLAMA_MODEL || 'mistral' }}
           LLM_JUDGE_THRESHOLD: ${{ vars.LLM_JUDGE_THRESHOLD || '7.0' }}
-          LLM_JUDGE_MODEL: ${{ vars.LLM_JUDGE_MODEL || 'gpt-4' }}
         run: |
           python evaluators/check_llm_judge.py
       - name: Upload LLM Judge Results

@@ -1,6 +1,6 @@
 {
   "threshold": 7.0,
-  "model": "gpt-4",
+  "model": "mistral",
   "max_retries": 3,
   "evaluation_categories": {
     "code_quality": {
@@ -34,5 +34,6 @@
   "documentation_extensions": [".md", ".rst", ".txt", ".adoc"],
   "test_file_patterns": ["test_*", "*_test", "*test*"],
   "coverage_timeout": 60,
-  "api_timeout": 30
+  "api_timeout": 30,
+  "ollama_url": "http://localhost:11434/api"
 } 
