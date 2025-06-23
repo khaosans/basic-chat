@@ -18,7 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Add the current directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from document_processor import DocumentProcessor
 from config import EMBEDDING_MODEL, VISION_MODEL
@@ -77,7 +77,7 @@ def test_pdf_upload():
         logger.info("Document processor created successfully")
         
         # Use the generated real PDF file
-        pdf_path = "test_sample.pdf"
+        pdf_path = "tests/data/test_sample.pdf"
         with open(pdf_path, "rb") as f:
             pdf_content = f.read()
         mock_file = MockUploadedFile("test_sample.pdf", pdf_content, "application/pdf")
@@ -107,10 +107,10 @@ def test_image_upload():
         logger.info("Document processor created successfully")
         
         # Use the generated real PNG file
-        image_path = "assets/problem.png"
+        image_path = "tests/data/test_sample.png"
         with open(image_path, "rb") as f:
             image_content = f.read()
-        mock_file = MockUploadedFile("problem.png", image_content, "image/png")
+        mock_file = MockUploadedFile("test_sample.png", image_content, "image/png")
         logger.info(f"Loaded real image file: {mock_file.name} ({len(image_content)} bytes)")
         
         # Process the file
@@ -134,10 +134,10 @@ def test_image_qa_flow():
         doc_processor = DocumentProcessor()
         logger.info("Document processor created successfully")
         # Use the generated real PNG file
-        image_path = "assets/problem.png"
+        image_path = "tests/data/test_sample.png"
         with open(image_path, "rb") as f:
             image_content = f.read()
-        mock_file = MockUploadedFile("problem.png", image_content, "image/png")
+        mock_file = MockUploadedFile("test_sample.png", image_content, "image/png")
         logger.info(f"Loaded real image file: {mock_file.name} ({len(image_content)} bytes)")
         # Process the file
         doc_processor.process_file(mock_file)
