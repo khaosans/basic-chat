@@ -434,15 +434,15 @@ graph TD
     FLOWER[Flower Monitoring]
     REDIS[Redis]
 
-    UI -- submits task --> TASKQ
-    TASKQ -- dispatches --> WORKER1
-    TASKQ -- dispatches --> WORKER2
-    WORKER1 -- updates status --> REDIS
-    WORKER2 -- updates status --> REDIS
-    FLOWER -- monitors --> TASKQ
-    FLOWER -- monitors --> WORKER1
-    FLOWER -- monitors --> WORKER2
-    UI -- fetches status --> REDIS
+    UI --> TASKQ
+    TASKQ --> WORKER1
+    TASKQ --> WORKER2
+    WORKER1 --> REDIS
+    WORKER2 --> REDIS
+    FLOWER --> TASKQ
+    FLOWER --> WORKER1
+    FLOWER --> WORKER2
+    UI --> REDIS
 ```
 
 **How it works:**
