@@ -36,7 +36,7 @@ from config import config
 
 # Configuration
 DEFAULT_THRESHOLD = 7.0
-DEFAULT_MODEL = "deepseek/DeepSeek-V3-0324"
+DEFAULT_MODEL = "microsoft/phi-3.5-mini"
 MAX_RETRIES = 3
 RATE_LIMIT_DELAY = 60  # seconds to wait if rate limited
 
@@ -273,69 +273,85 @@ Respond in JSON format:
         """Evaluate using GitHub Models API with retry logic"""
         from azure.ai.inference.models import SystemMessage, UserMessage
         
-        for attempt in range(MAX_RETRIES):
-            try:
-                print(f"🔄 Attempt {attempt + 1}/{MAX_RETRIES} - Calling GitHub Models API...")
-                
-                response = self.client.complete(
-                    messages=[
-                        SystemMessage("You are an expert software engineer evaluating code quality. Respond only with valid JSON."),
-                        UserMessage(prompt),
-                    ],
-                    temperature=0.3,  # Lower temperature for more consistent evaluation
-                    top_p=0.9,
-                    max_tokens=2000,
-                    model=self.model
-                )
-                
-                self.results['api_calls'] += 1
-                
-                # Extract response content
-                content = response.choices[0].message.content.strip()
-                
-                # Try to parse JSON response
-                try:
-                    # Clean up the response if it has markdown formatting
-                    if content.startswith('```json'):
-                        content = content[7:]
-                    if content.endswith('```'):
-                        content = content[:-3]
-                    
-                    result = json.loads(content)
-                    print("✅ Successfully parsed GitHub Models response")
-                    return result
-                    
-                except json.JSONDecodeError as e:
-                    print(f"⚠️  JSON parsing failed: {e}")
-                    print(f"Raw response: {content[:200]}...")
-                    
-                    # If it's the last attempt, try to extract scores manually
-                    if attempt == MAX_RETRIES - 1:
-                        return self.extract_scores_manually(content)
-                    
-                    continue
-                    
-            except Exception as e:
-                error_msg = str(e).lower()
-                
-                if 'rate limit' in error_msg or '429' in error_msg:
-                    print(f"⚠️  Rate limited. Waiting {RATE_LIMIT_DELAY} seconds...")
-                    self.results['rate_limited'] = True
-                    time.sleep(RATE_LIMIT_DELAY)
-                    continue
-                elif 'unauthorized' in error_msg or '401' in error_msg:
-                    print("❌ Unauthorized. Check your GITHUB_TOKEN has models:read permissions")
-                    return self.create_fallback_response("Authentication failed")
-                elif 'quota' in error_msg:
-                    print("❌ Quota exceeded. Consider upgrading or waiting for reset")
-                    return self.create_fallback_response("Quota exceeded")
-                else:
-                    print(f"⚠️  API call failed: {e}")
-                    if attempt == MAX_RETRIES - 1:
-                        return self.create_fallback_response(f"API error: {e}")
-                    time.sleep(2 ** attempt)  # Exponential backoff
+        # Try multiple models in order of preference
+        models_to_try = [
+            self.model,
+            "microsoft/phi-3.5-mini",
+            "microsoft/phi-3.5",
+            "microsoft/phi-2"
+        ]
         
-        return self.create_fallback_response("Max retries exceeded")
+        for model_to_try in models_to_try:
+            print(f"🔄 Trying model: {model_to_try}")
+            
+            for attempt in range(MAX_RETRIES):
+                try:
+                    print(f"🔄 Attempt {attempt + 1}/{MAX_RETRIES} - Calling GitHub Models API...")
+                    
+                    response = self.client.complete(
+                        messages=[
+                            SystemMessage("You are an expert software engineer evaluating code quality. Respond only with valid JSON."),
+                            UserMessage(prompt),
+                        ],
+                        temperature=0.3,  # Lower temperature for more consistent evaluation
+                        top_p=0.9,
+                        max_tokens=2000,
+                        model=model_to_try
+                    )
+                    
+                    self.results['api_calls'] += 1
+                    self.results['model_used'] = model_to_try
+                    
+                    # Extract response content
+                    content = response.choices[0].message.content.strip()
+                    
+                    # Try to parse JSON response
+                    try:
+                        # Clean up the response if it has markdown formatting
+                        if content.startswith('```json'):
+                            content = content[7:]
+                        if content.endswith('```'):
+                            content = content[:-3]
+                        
+                        result = json.loads(content)
+                        print(f"✅ Successfully parsed GitHub Models response with model: {model_to_try}")
+                        return result
+                        
+                    except json.JSONDecodeError as e:
+                        print(f"⚠️  JSON parsing failed: {e}")
+                        print(f"Raw response: {content[:200]}...")
+                        
+                        # If it's the last attempt for this model, try the next model
+                        if attempt == MAX_RETRIES - 1:
+                            break
+                        
+                        continue
+                        
+                except Exception as e:
+                    error_msg = str(e).lower()
+                    
+                    if 'no_access' in error_msg or 'access denied' in error_msg:
+                        print(f"❌ No access to model {model_to_try}, trying next model...")
+                        break  # Try next model
+                    elif 'rate limit' in error_msg or '429' in error_msg:
+                        print(f"⚠️  Rate limited. Waiting {RATE_LIMIT_DELAY} seconds...")
+                        self.results['rate_limited'] = True
+                        time.sleep(RATE_LIMIT_DELAY)
+                        continue
+                    elif 'unauthorized' in error_msg or '401' in error_msg:
+                        print("❌ Unauthorized. Check your GITHUB_TOKEN has models:read permissions")
+                        return self.create_fallback_response("Authentication failed")
+                    elif 'quota' in error_msg:
+                        print("❌ Quota exceeded. Consider upgrading or waiting for reset")
+                        return self.create_fallback_response("Quota exceeded")
+                    else:
+                        print(f"⚠️  API call failed: {e}")
+                        if attempt == MAX_RETRIES - 1:
+                            break  # Try next model
+                        time.sleep(2 ** attempt)  # Exponential backoff
+        
+        # If all models failed, return fallback response
+        return self.create_fallback_response("All GitHub Models failed - no access to any models")
     
     def extract_scores_manually(self, content: str) -> Dict[str, Any]:
         """Extract scores manually if JSON parsing fails"""

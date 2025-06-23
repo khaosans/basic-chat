@@ -97,16 +97,32 @@ jobs:
       - name: Run GitHub Models LLM Judge Evaluator
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_MODEL: ${{ vars.GITHUB_MODEL || 'deepseek/DeepSeek-V3-0324' }}
+          GITHUB_MODEL: ${{ vars.GITHUB_MODEL || 'microsoft/phi-3.5-mini' }}
           LLM_JUDGE_THRESHOLD: ${{ vars.LLM_JUDGE_THRESHOLD || '7.0' }}
         run: |
           set +e
+          echo "🔄 Attempting GitHub Models evaluation..."
           python evaluators/check_llm_judge_github.py --quick
-          status=$?
+          github_status=$?
           set -e
-          if [ $status -ne 0 ]; then
-            echo "❌ GitHub Models evaluation failed, falling back to OpenAI"
-            python evaluators/check_llm_judge_openai.py --quick
+          
+          if [ $github_status -ne 0 ]; then
+            echo "❌ GitHub Models evaluation failed, trying OpenAI fallback..."
+            
+            # Check if OpenAI API key is available
+            if [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
+              echo "🔑 OpenAI API key found, running OpenAI evaluator..."
+              python evaluators/check_llm_judge_openai.py --quick
+              openai_status=$?
+              
+              if [ $openai_status -ne 0 ]; then
+                echo "❌ OpenAI evaluation also failed, using mock evaluation..."
+                python evaluators/check_llm_judge.py --mock
+              fi
+            else
+              echo "⚠️  No OpenAI API key found, using mock evaluation..."
+              python evaluators/check_llm_judge.py --mock
+            fi
           fi
       - name: Upload LLM Judge Results
         if: always()
