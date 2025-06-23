@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  test-unit:
+  tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -32,147 +32,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-asyncio pytest-xdist
-      - name: Run all unit/fast tests (no marker filtering)
+      - name: Run all tests
         run: |
           pytest tests/ -n auto --dist=worksteal -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov-report=term-missing
-
-  test-integration:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.11]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio pytest-xdist
-      - name: Run integration tests
-        run: |
-          pytest tests/ -m "integration" -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov-report=term-missing
-
-  test-slow:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.11]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio pytest-xdist
-      - name: Run slow tests
-        run: |
-          pytest tests/ -m "slow" -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov-report=term-missing
-
-  test-isolated:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.11]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio pytest-xdist
-      - name: Run isolated tests (no parallel)
-        run: |
-          pytest tests/ -m "isolated" -n 0 -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov-report=term-missing
-
-  test-basic-functionality:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.11]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-asyncio
-      - name: Run basic functionality test
-        run: |
-          python -c "
-          try:
-              from app import OllamaChat
-              print('✅ OllamaChat imported successfully')
-              
-              from reasoning_engine import ReasoningEngine
-              print('✅ ReasoningEngine imported successfully')
-              
-              from document_processor import DocumentProcessor
-              print('✅ DocumentProcessor imported successfully')
-              
-              from utils.enhanced_tools import EnhancedCalculator
-              print('✅ EnhancedCalculator imported successfully')
-              
-              print('✅ All core modules imported successfully')
-          except ImportError as e:
-              print(f'❌ Import failed: {str(e)}')
-              raise
-          "
-      - name: Test configuration
-        run: |
-          python -c "
-          try:
-              from config import config
-              print(f'✅ Configuration loaded: {config.ollama_model}')
-              print(f'✅ Ollama URL: {config.ollama_url}')
-              print(f'✅ Caching enabled: {config.enable_caching}')
-          except Exception as e:
-              print(f'❌ Configuration test failed: {str(e)}')
-              raise
-          "
 
   llm-judge:
     runs-on: ubuntu-latest
