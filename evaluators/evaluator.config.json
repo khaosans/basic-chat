@@ -1,0 +1,38 @@
+{
+  "threshold": 7.0,
+  "model": "gpt-4",
+  "max_retries": 3,
+  "evaluation_categories": {
+    "code_quality": {
+      "weight": 1.0,
+      "description": "Code structure, naming conventions, complexity, and adherence to Python best practices"
+    },
+    "test_coverage": {
+      "weight": 1.0,
+      "description": "Test comprehensiveness, quality, and effectiveness"
+    },
+    "documentation": {
+      "weight": 0.8,
+      "description": "README quality, inline documentation, and overall project documentation"
+    },
+    "architecture": {
+      "weight": 1.0,
+      "description": "Overall design patterns, modularity, and scalability"
+    },
+    "security": {
+      "weight": 0.9,
+      "description": "Potential security vulnerabilities and best practices"
+    },
+    "performance": {
+      "weight": 0.7,
+      "description": "Code efficiency and optimization opportunities"
+    }
+  },
+  "file_extensions": [".py", ".js", ".ts", ".jsx", ".tsx"],
+  "exclude_directories": [".git", "venv", "__pycache__", "node_modules", ".pytest_cache"],
+  "exclude_files": ["*.pyc", "*.pyo", "*.pyd", "*.so", "*.dll", "*.dylib"],
+  "documentation_extensions": [".md", ".rst", ".txt", ".adoc"],
+  "test_file_patterns": ["test_*", "*_test", "*test*"],
+  "coverage_timeout": 60,
+  "api_timeout": 30
+} 
