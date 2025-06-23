@@ -1,47 +1,49 @@
 {
-  "timestamp": "2025-06-22T20:55:49.520808",
+  "timestamp": "2025-06-22T21:32:07.366374",
   "scores": {
     "code_quality": {
-      "score": 7.1,
-      "justification": "Mock evaluation for code quality"
+      "score": 7,
+      "justification": "Code structure is decent, but naming conventions could be improved"
     },
     "test_coverage": {
-      "score": 8.0,
-      "justification": "Mock evaluation for test coverage"
+      "score": 3,
+      "justification": "Very low test coverage, major gaps in testing"
     },
     "documentation": {
-      "score": 6.6,
-      "justification": "Mock evaluation for documentation"
+      "score": 4,
+      "justification": "Documentation is lacking, both in README and inline comments"
     },
     "architecture": {
-      "score": 8.3,
-      "justification": "Mock evaluation for architecture"
+      "score": 6,
+      "justification": "Design patterns are somewhat followed, but scalability could be improved"
     },
     "security": {
-      "score": 7.2,
-      "justification": "Mock evaluation for security"
+      "score": 5,
+      "justification": "Basic security practices in place, but potential vulnerabilities need to be addressed"
     },
     "performance": {
-      "score": 7.2,
-      "justification": "Mock evaluation for performance"
+      "score": 6,
+      "justification": "Code efficiency is average, some optimization opportunities exist"
     }
   },
   "details": {},
   "recommendations": [
-    "This is a mock evaluation - run with real models for actual feedback",
-    "Consider adding more comprehensive tests",
-    "Enhance documentation with examples",
-    "Review code for potential optimizations"
+    "Increase test coverage significantly to ensure code reliability",
+    "Improve documentation across the codebase for better maintainability",
+    "Refactor code to adhere to better naming conventions and design patterns",
+    "Conduct a security audit to identify and address potential vulnerabilities",
+    "Identify and optimize performance bottlenecks in the codebase"
   ],
-  "overall_score": 7.4,
-  "evaluation_mode": "mock",
-  "model_used": "claude-3.5-sonnet",
+  "overall_score": 5.2,
+  "evaluation_mode": "quick",
+  "model_used": "gpt-3.5-turbo",
+  "estimated_cost": 0.0017152500000000002,
   "codebase_info": {
     "file_count": 6,
-    "lines_of_code": 3232,
+    "lines_of_code": 3252,
     "test_files": 11,
     "test_coverage": 0.0,
-    "documentation_files": 353,
+    "documentation_files": 357,
     "dependencies": [
       "streamlit>=1.28.0",
       "requests>=2.31.0",
@@ -53,6 +55,7 @@
       "langchain-community>=0.0.11",
       "chromadb==1.0.13",
       "pydantic>=2.0.0",
+      "gTTS>=2.3.2",
       "pytz>=2023.3",
       "pillow>=10.0.0",
       "pypdf>=3.0.0",
@@ -63,7 +66,8 @@
       "asyncio-throttle>=1.0.0",
       "redis>=4.5.0",
       "cachetools>=5.3.0",
-      "structlog>=23.1.0"
+      "structlog>=23.1.0",
+      "openai>=1.0.0"
     ],
     "recent_changes": []
   }
