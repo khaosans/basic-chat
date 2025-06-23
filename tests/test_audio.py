@@ -249,7 +249,7 @@ class TestAudioFunctionality:
         """Should handle audio file errors gracefully"""
         with patch('builtins.open', side_effect=Exception("Test error")):
             html = get_professional_audio_html("any_file.mp3")
-            assert "Failed to read audio file" in html
+            assert "Error loading audio" in html
     
     @patch('app.gTTS')
     def test_should_handle_tts_errors(self, mock_gtts):

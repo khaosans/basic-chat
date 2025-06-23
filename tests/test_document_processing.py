@@ -39,66 +39,62 @@ def test_document_processing():
     """Test the document processing functionality"""
     print("🧪 Testing Document Processing...")
     
-    try:
-        # Initialize document processor
-        doc_processor = DocumentProcessor()
-        print("✅ DocumentProcessor initialized successfully")
-        
-        # Create test document
-        test_file_path = create_test_document()
-        print(f"✅ Test document created: {test_file_path}")
-        
-        # Create a mock uploaded file object
-        class MockUploadedFile:
-            def __init__(self, file_path):
-                self.name = os.path.basename(file_path)
-                self.type = "text/plain"
-                
-            def getvalue(self):
-                with open(test_file_path, 'rb') as f:
-                    return f.read()
-        
-        mock_file = MockUploadedFile(test_file_path)
-        
-        # Process the document
-        result = doc_processor.process_file(mock_file)
-        print(f"✅ Document processed: {result}")
-        
-        # Check processed files
-        processed_files = doc_processor.get_processed_files()
-        print(f"✅ Processed files: {len(processed_files)}")
-        for file_data in processed_files:
-            print(f"   - {file_data['name']} ({file_data['type']})")
-        
-        # Test document search
-        print("\n🔍 Testing Document Search...")
-        query = "What is artificial intelligence?"
-        context = doc_processor.get_relevant_context(query, k=2)
-        print(f"✅ Search query: '{query}'")
-        print(f"✅ Found context: {len(context)} characters")
-        if context:
-            print(f"   Preview: {context[:200]}...")
-        else:
-            print("   ⚠️ No context found")
-        
-        # Test document summary
-        print("\n📋 Testing Document Summary...")
-        summary_tool = DocumentSummaryTool(doc_processor)
-        summary_result = summary_tool.execute("summarize document")
-        print(f"✅ Summary result: {summary_result.success}")
-        if summary_result.success:
-            print(f"   Content: {summary_result.content[:200]}...")
-        
-        # Cleanup
-        os.unlink(test_file_path)
-        print(f"✅ Cleanup completed")
-        
-        print("\n🎉 All tests passed! Document processing is working correctly.")
-        return True
-        
-    except Exception as e:
-        print(f"❌ Test failed: {str(e)}")
-        return False
+    # Initialize document processor
+    doc_processor = DocumentProcessor()
+    print("✅ DocumentProcessor initialized successfully")
+    
+    # Create test document
+    test_file_path = create_test_document()
+    print(f"✅ Test document created: {test_file_path}")
+    
+    # Create a mock uploaded file object
+    class MockUploadedFile:
+        def __init__(self, file_path):
+            self.name = os.path.basename(file_path)
+            self.type = "text/plain"
+            
+        def getvalue(self):
+            with open(test_file_path, 'rb') as f:
+                return f.read()
+    
+    mock_file = MockUploadedFile(test_file_path)
+    
+    # Process the document
+    result = doc_processor.process_file(mock_file)
+    print(f"✅ Document processed: {result}")
+    
+    # Check processed files
+    processed_files = doc_processor.get_processed_files()
+    print(f"✅ Processed files: {len(processed_files)}")
+    assert len(processed_files) > 0, "No files were processed"
+    for file_data in processed_files:
+        print(f"   - {file_data['name']} ({file_data['type']})")
+    
+    # Test document search
+    print("\n🔍 Testing Document Search...")
+    query = "What is artificial intelligence?"
+    context = doc_processor.get_relevant_context(query, k=2)
+    print(f"✅ Search query: '{query}'")
+    print(f"✅ Found context: {len(context)} characters")
+    if context:
+        print(f"   Preview: {context[:200]}...")
+    else:
+        print("   ⚠️ No context found")
+    
+    # Test document summary
+    print("\n📋 Testing Document Summary...")
+    summary_tool = DocumentSummaryTool(doc_processor)
+    summary_result = summary_tool.execute("summarize document")
+    print(f"✅ Summary result: {summary_result.success}")
+    assert summary_result.success, f"Summary failed: {summary_result.error}"
+    if summary_result.success:
+        print(f"   Content: {summary_result.content[:200]}...")
+    
+    # Cleanup
+    os.unlink(test_file_path)
+    print(f"✅ Cleanup completed")
+    
+    print("\n🎉 All tests passed! Document processing is working correctly.")
 
 if __name__ == "__main__":
     # Import the DocumentSummaryTool from app.py
