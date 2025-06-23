@@ -428,9 +428,9 @@ BasicChat uses a robust background task system to handle long-running operations
 ```mermaid
 graph TD
     UI[Streamlit UI]
-    TASKQ[Task Queue (Redis)]
-    WORKER1[Celery Worker: Reasoning]
-    WORKER2[Celery Worker: Documents]
+    TASKQ[Task Queue Redis]
+    WORKER1[Celery Worker Reasoning]
+    WORKER2[Celery Worker Documents]
     FLOWER[Flower Monitoring]
     REDIS[Redis]
 

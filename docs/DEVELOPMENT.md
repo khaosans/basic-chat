@@ -413,10 +413,10 @@ graph TB
     end
     
     subgraph "🔧 Script Options"
-        --status[--status]
-        --dry-run[--dry-run]
-        --age[--age HOURS]
-        --force[--force]
+        STATUS_OPT[Status Option]
+        DRY_RUN_OPT[Dry Run Option]
+        AGE_OPT[Age Option]
+        FORCE_OPT[Force Option]
     end
     
     STATUS --> DIRECTORIES
@@ -428,10 +428,10 @@ graph TB
     AGE_CLEANUP --> STATUS
     FORCE_CLEANUP --> STATUS
     
-    --status --> STATUS
-    --dry-run --> DRY_RUN
-    --age --> AGE_CLEANUP
-    --force --> FORCE_CLEANUP
+    STATUS_OPT --> STATUS
+    DRY_RUN_OPT --> DRY_RUN
+    AGE_OPT --> AGE_CLEANUP
+    FORCE_OPT --> FORCE_CLEANUP
 ```
 
 **Database Maintenance Strategy:**
