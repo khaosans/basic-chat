@@ -452,6 +452,7 @@ class ReasoningChain:
     
     def execute_reasoning(self, question: str, context: str, stream_callback=None) -> ReasoningResult:
         """Execute chain-of-thought reasoning with clear separation of thought process and final answer"""
+        execution_time = 0.0  # Ensure always defined
         logger.info(f"Executing chain-of-thought reasoning for question: '{question}'")
         logger.debug(f"Context length: {len(context)} characters")
         
