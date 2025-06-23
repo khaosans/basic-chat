@@ -41,7 +41,7 @@ export ENABLE_BACKGROUND_TASKS=true
 # Function to cleanup background processes
 cleanup() {
     echo "🛑 Shutting down..."
-    kill $CELERY_PID $FLOWER_PID $BEAT_PID 2>/dev/null || true
+    kill $CELERY_PID $CELERY_DOCS_PID $FLOWER_PID $BEAT_PID 2>/dev/null || true
     exit 0
 }
 

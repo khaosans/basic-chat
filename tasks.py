@@ -18,6 +18,18 @@ logger = logging.getLogger(__name__)
 celery_app = Celery('basic_chat')
 celery_app.config_from_object('celery_config')
 
+# Shared FileUpload helper for simulating file uploads in Celery tasks
+class FileUpload:
+    def __init__(self, file_path, file_type):
+        self.name = file_path.split('/')[-1]
+        self.type = file_type
+        self.file = open(file_path, 'rb')
+    def getvalue(self):
+        self.file.seek(0)
+        return self.file.read()
+    def close(self):
+        self.file.close()
+
 @celery_app.task(bind=True)
 def run_reasoning(self, task_id: str, query: str, mode: str, context: str = ""):
     """Long-running reasoning task"""
@@ -46,30 +58,6 @@ def run_reasoning(self, task_id: str, query: str, mode: str, context: str = ""):
                 'status': f'Running {mode} reasoning'
             }
         )
-        
-        # Run reasoning with progress callback
-        def progress_callback(message: str):
-            """Callback to update progress during reasoning"""
-            # Estimate progress based on message content
-            if "starting" in message.lower() or "initializing" in message.lower():
-                progress = 0.4
-            elif "processing" in message.lower() or "analyzing" in message.lower():
-                progress = 0.6
-            elif "generating" in message.lower() or "creating" in message.lower():
-                progress = 0.8
-            elif "complete" in message.lower() or "finalizing" in message.lower():
-                progress = 0.9
-            else:
-                progress = 0.7
-            
-            self.update_state(
-                state='PROGRESS',
-                meta={
-                    'task_id': task_id,
-                    'progress': progress,
-                    'status': message
-                }
-            )
         
         # Run the reasoning
         result = reasoning_engine.run(query, mode, context=context)
@@ -147,20 +135,6 @@ def analyze_document(self, task_id: str, file_path: str, file_type: str = "unkno
         
         # Load and process document
         with open(file_path, 'rb') as f:
-            # Simulate file upload object
-            class FileUpload:
-                def __init__(self, file_path, file_type):
-                    self.name = file_path.split('/')[-1]
-                    self.type = file_type
-                    self.file = open(file_path, 'rb')
-                
-                def getvalue(self):
-                    self.file.seek(0)
-                    return self.file.read()
-                
-                def close(self):
-                    self.file.close()
-            
             file_upload = FileUpload(file_path, file_type)
             
             # Update progress - Processing
@@ -258,19 +232,6 @@ def process_document(self, task_id: str, file_path: str, file_type: str = "unkno
         )
         
         # Simulate file upload object
-        class FileUpload:
-            def __init__(self, file_path, file_type):
-                self.name = file_path.split('/')[-1]
-                self.type = file_type
-                self.file = open(file_path, 'rb')
-            
-            def getvalue(self):
-                self.file.seek(0)
-                return self.file.read()
-            
-            def close(self):
-                self.file.close()
-        
         file_upload = FileUpload(file_path, file_type)
         
         # Update progress - Text extraction

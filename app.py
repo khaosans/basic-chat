@@ -716,22 +716,24 @@ def enhanced_chat_interface(doc_processor):
             
             # Check if this should be a background task
             if config.enable_background_tasks and uploaded_file.size > 1024 * 1024:  # > 1MB
+                import tempfile, os
+                # Save uploaded file to a temp file
+                with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as temp_file:
+                    temp_file.write(uploaded_file.getvalue())
+                    temp_file_path = temp_file.name
                 # Submit as background task
                 task_id = st.session_state.task_manager.submit_task(
                     "document_processing",
-                    file_path=uploaded_file.name,
+                    file_path=temp_file_path,
                     file_type=uploaded_file.type,
                     file_size=uploaded_file.size
                 )
-                
                 # Add task message
                 task_message = create_task_message(task_id, "Document Processing", 
                                                  file_name=uploaded_file.name)
                 st.session_state.messages.append(task_message)
-                
                 # Update session state to mark as processed
                 st.session_state.processed_file_id = uploaded_file.file_id
-                
                 st.success(f"🚀 Document '{uploaded_file.name}' submitted for background processing!")
                 st.rerun()
             else:
@@ -869,8 +871,6 @@ def enhanced_chat_interface(doc_processor):
                         if response.success:
                             st.write(response.content)
                             st.session_state.messages.append({"role": "assistant", "content": response.content})
-                        else:
-                            st.error(response.content)
                 else:
                     # Use reasoning modes with separated thought process and final output
                     with st.spinner(f"Processing with {st.session_state.reasoning_mode} reasoning..."):
