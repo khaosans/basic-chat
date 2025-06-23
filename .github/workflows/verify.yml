@@ -32,9 +32,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-cov pytest-asyncio pytest-xdist
-      - name: Run unit tests (parallel)
+      - name: Run all unit/fast tests (no marker filtering)
         run: |
-          pytest tests/ -m "unit or fast" -n auto --dist=worksteal -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov-report=term-missing
+          pytest tests/ -n auto --dist=worksteal -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov-report=term-missing
 
   test-integration:
     runs-on: ubuntu-latest
