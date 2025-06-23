@@ -1,22 +1,22 @@
 #!/usr/bin/env python3
 """
-LLM Judge Evaluator using GitHub Models
+LLM Judge Evaluator using GitHub Models API
 
-This script evaluates the codebase using GitHub's Model feature to assess:
+This script evaluates the codebase using GitHub Models (via Azure AI Inference SDK) to assess:
 - Code quality and maintainability
 - Test coverage and effectiveness
 - Documentation quality
 - Overall project health
 
-Uses GitHub's built-in models instead of external APIs or Ollama.
+Uses GitHub Models for free evaluation with rate limits.
 
 Usage:
-    python evaluators/check_llm_judge_github.py [--quick]
+    python evaluators/check_llm_judge_github.py [--quick] [--model deepseek/DeepSeek-V3-0324]
 
 Environment Variables:
-    GITHUB_MODEL: GitHub model to use (default: claude-3.5-sonnet)
+    GITHUB_TOKEN: GitHub personal access token with models:read permissions
+    GITHUB_MODEL: GitHub model to use (default: deepseek/DeepSeek-V3-0324)
     LLM_JUDGE_THRESHOLD: Minimum score required (default: 7.0)
-    GITHUB_TOKEN: GitHub token for model access
 """
 
 import os
@@ -27,7 +27,7 @@ import argparse
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-import requests
+import time
 
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -36,20 +36,72 @@ from config import config
 
 # Configuration
 DEFAULT_THRESHOLD = 7.0
-DEFAULT_MODEL = "claude-3.5-sonnet"
+DEFAULT_MODEL = "deepseek/DeepSeek-V3-0324"
 MAX_RETRIES = 3
+RATE_LIMIT_DELAY = 60  # seconds to wait if rate limited
 
-class GitHubModelEvaluator:
-    """LLM-based code evaluator using GitHub Models"""
+# GitHub Models available for evaluation
+GITHUB_MODELS = {
+    "deepseek/DeepSeek-V3-0324": {
+        "type": "High",
+        "quality": "Excellent",
+        "speed": "Fast",
+        "max_tokens": 8000,
+        "rate_limit": "10 requests/minute, 50 requests/day"
+    },
+    "deepseek/deepseek-coder-33b-instruct": {
+        "type": "High",
+        "quality": "Excellent",
+        "speed": "Fast",
+        "max_tokens": 8000,
+        "rate_limit": "10 requests/minute, 50 requests/day"
+    },
+    "deepseek/deepseek-coder-6.7b-instruct": {
+        "type": "High", 
+        "quality": "Excellent",
+        "speed": "Fast",
+        "max_tokens": 8000,
+        "rate_limit": "10 requests/minute, 50 requests/day"
+    },
+    "microsoft/phi-3.5": {
+        "type": "Low",
+        "quality": "Good",
+        "speed": "Very Fast",
+        "max_tokens": 8000,
+        "rate_limit": "15 requests/minute, 150 requests/day"
+    },
+    "microsoft/phi-3.5-mini": {
+        "type": "Low",
+        "quality": "Good", 
+        "speed": "Very Fast",
+        "max_tokens": 8000,
+        "rate_limit": "15 requests/minute, 150 requests/day"
+    },
+    "microsoft/phi-2": {
+        "type": "Low",
+        "quality": "Good",
+        "speed": "Very Fast", 
+        "max_tokens": 8000,
+        "rate_limit": "15 requests/minute, 150 requests/day"
+    }
+}
+
+class GitHubModelsEvaluator:
+    """LLM-based code evaluator using GitHub Models API"""
     
-    def __init__(self, quick_mode: bool = False):
-        self.model = os.getenv('GITHUB_MODEL', DEFAULT_MODEL)
+    def __init__(self, quick_mode: bool = False, model: str = None):
+        self.model = model or os.getenv('GITHUB_MODEL', DEFAULT_MODEL)
         self.threshold = float(os.getenv('LLM_JUDGE_THRESHOLD', DEFAULT_THRESHOLD))
         self.quick_mode = quick_mode
-        self.github_token = os.getenv('GITHUB_TOKEN')
+        self.token = os.getenv('GITHUB_TOKEN')
         
         # GitHub Models API endpoint
-        self.api_url = "https://api.github.com/models"
+        self.endpoint = "https://models.github.ai/inference"
+        
+        # Validate model
+        if self.model not in GITHUB_MODELS:
+            print(f"⚠️  Warning: Model {self.model} not in supported list. Using {DEFAULT_MODEL}")
+            self.model = DEFAULT_MODEL
         
         # Initialize results
         self.results = {
@@ -59,8 +111,27 @@ class GitHubModelEvaluator:
             'recommendations': [],
             'overall_score': 0.0,
             'evaluation_mode': 'quick' if quick_mode else 'full',
-            'model_used': self.model
+            'model_used': self.model,
+            'api_calls': 0,
+            'rate_limited': False
         }
+        
+        # Initialize Azure AI client
+        try:
+            from azure.ai.inference import ChatCompletionsClient
+            from azure.core.credentials import AzureKeyCredential
+            
+            self.client = ChatCompletionsClient(
+                endpoint=self.endpoint,
+                credential=AzureKeyCredential(self.token),
+            )
+            print(f"✅ GitHub Models client initialized with model: {self.model}")
+        except ImportError:
+            print("❌ Azure AI Inference SDK not installed. Install with: pip install azure-ai-inference")
+            sys.exit(1)
+        except Exception as e:
+            print(f"❌ Failed to initialize GitHub Models client: {e}")
+            sys.exit(1)
     
     def collect_codebase_info(self) -> Dict[str, Any]:
         """Collect information about the codebase for evaluation"""
@@ -165,215 +236,313 @@ Codebase Information:
 
 Please evaluate the following aspects and provide scores from 1-10 (where 10 is excellent):
 
-1. **Code Quality** (1-10): Assess code structure, naming conventions, complexity, and adherence to Python best practices
-2. **Test Coverage** (1-10): Evaluate test comprehensiveness, quality, and effectiveness
-3. **Documentation** (1-10): Assess README quality, inline documentation, and overall project documentation
-4. **Architecture** (1-10): Evaluate overall design patterns, modularity, and scalability
-5. **Security** (1-10): Assess potential security vulnerabilities and best practices
-6. **Performance** (1-10): Evaluate code efficiency and optimization opportunities
-
-{"In QUICK MODE, focus on major issues and provide brief justifications." if self.quick_mode else "Provide detailed analysis with specific examples."}
+1. Code Quality (structure, readability, best practices)
+2. Test Coverage (adequacy and quality of tests)
+3. Documentation (completeness and clarity)
+4. Architecture (design patterns, modularity)
+5. Security (potential vulnerabilities, best practices)
+6. Performance (efficiency, optimization opportunities)
+7. Maintainability (ease of future development)
+8. Overall Project Health
 
 For each category, provide:
 - Score (1-10)
-- Brief justification
+- Brief explanation
 - Specific recommendations for improvement
 
-Respond in the following JSON format:
+Respond in JSON format:
 {{
     "scores": {{
-        "code_quality": {{"score": 8, "justification": "Well-structured code with good naming conventions"}},
-        "test_coverage": {{"score": 7, "justification": "Good test coverage but could be more comprehensive"}},
-        "documentation": {{"score": 6, "justification": "Basic documentation present but could be enhanced"}},
-        "architecture": {{"score": 8, "justification": "Clean modular design with good separation of concerns"}},
-        "security": {{"score": 7, "justification": "No obvious security issues, follows basic security practices"}},
-        "performance": {{"score": 7, "justification": "Generally efficient code with room for optimization"}}
+        "code_quality": {{"score": X, "explanation": "...", "recommendations": ["..."]}},
+        "test_coverage": {{"score": X, "explanation": "...", "recommendations": ["..."]}},
+        "documentation": {{"score": X, "explanation": "...", "recommendations": ["..."]}},
+        "architecture": {{"score": X, "explanation": "...", "recommendations": ["..."]}},
+        "security": {{"score": X, "explanation": "...", "recommendations": ["..."]}},
+        "performance": {{"score": X, "explanation": "...", "recommendations": ["..."]}},
+        "maintainability": {{"score": X, "explanation": "...", "recommendations": ["..."]}},
+        "overall_health": {{"score": X, "explanation": "...", "recommendations": ["..."]}}
     }},
-    "overall_score": 7.2,
-    "recommendations": [
-        "Add more comprehensive integration tests",
-        "Enhance API documentation with examples",
-        "Consider adding type hints throughout the codebase"
-    ]
+    "overall_score": X.X,
+    "summary": "...",
+    "critical_issues": ["..."],
+    "next_steps": ["..."]
 }}
 """
     
-    def evaluate_with_github_model(self, prompt: str) -> Dict[str, Any]:
-        """Evaluate the codebase using GitHub Models"""
-        if not self.github_token:
-            raise Exception("GITHUB_TOKEN environment variable is required for GitHub Models")
-        
-        headers = {
-            'Authorization': f'Bearer {self.github_token}',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        
-        payload = {
-            'model': self.model,
-            'messages': [
-                {
-                    'role': 'system',
-                    'content': 'You are an expert software engineer evaluating code quality. Provide detailed, actionable feedback in JSON format.'
-                },
-                {
-                    'role': 'user',
-                    'content': prompt
-                }
-            ],
-            'max_tokens': 2000,
-            'temperature': 0.1
-        }
+    def evaluate_with_github_models(self, prompt: str) -> Dict[str, Any]:
+        """Evaluate using GitHub Models API with retry logic"""
+        from azure.ai.inference.models import SystemMessage, UserMessage
         
         for attempt in range(MAX_RETRIES):
             try:
-                response = requests.post(
-                    f"{self.api_url}/chat/completions",
-                    headers=headers,
-                    json=payload,
-                    timeout=60
+                print(f"🔄 Attempt {attempt + 1}/{MAX_RETRIES} - Calling GitHub Models API...")
+                
+                response = self.client.complete(
+                    messages=[
+                        SystemMessage("You are an expert software engineer evaluating code quality. Respond only with valid JSON."),
+                        UserMessage(prompt),
+                    ],
+                    temperature=0.3,  # Lower temperature for more consistent evaluation
+                    top_p=0.9,
+                    max_tokens=2000,
+                    model=self.model
                 )
                 
-                if response.status_code == 200:
-                    result = response.json()
-                    content = result['choices'][0]['message']['content']
+                self.results['api_calls'] += 1
+                
+                # Extract response content
+                content = response.choices[0].message.content.strip()
+                
+                # Try to parse JSON response
+                try:
+                    # Clean up the response if it has markdown formatting
+                    if content.startswith('```json'):
+                        content = content[7:]
+                    if content.endswith('```'):
+                        content = content[:-3]
                     
-                    # Try to parse JSON response
-                    try:
-                        # Find JSON in the response
-                        start = content.find('{')
-                        end = content.rfind('}') + 1
-                        if start != -1 and end != 0:
-                            json_str = content[start:end]
-                            return json.loads(json_str)
-                        else:
-                            raise ValueError("No JSON found in response")
-                    except json.JSONDecodeError as e:
-                        print(f"Failed to parse JSON response (attempt {attempt + 1}): {e}")
-                        print(f"Response: {content}")
-                        if attempt == MAX_RETRIES - 1:
-                            raise
-                        continue
-                else:
-                    print(f"GitHub Models API call failed (attempt {attempt + 1}): {response.status_code}")
-                    print(f"Response: {response.text}")
+                    result = json.loads(content)
+                    print("✅ Successfully parsed GitHub Models response")
+                    return result
+                    
+                except json.JSONDecodeError as e:
+                    print(f"⚠️  JSON parsing failed: {e}")
+                    print(f"Raw response: {content[:200]}...")
+                    
+                    # If it's the last attempt, try to extract scores manually
                     if attempt == MAX_RETRIES - 1:
-                        raise Exception(f"GitHub Models API failed with status {response.status_code}")
+                        return self.extract_scores_manually(content)
+                    
                     continue
                     
-            except requests.exceptions.RequestException as e:
-                print(f"GitHub Models API request failed (attempt {attempt + 1}): {e}")
-                if attempt == MAX_RETRIES - 1:
-                    raise
-                continue
+            except Exception as e:
+                error_msg = str(e).lower()
+                
+                if 'rate limit' in error_msg or '429' in error_msg:
+                    print(f"⚠️  Rate limited. Waiting {RATE_LIMIT_DELAY} seconds...")
+                    self.results['rate_limited'] = True
+                    time.sleep(RATE_LIMIT_DELAY)
+                    continue
+                elif 'unauthorized' in error_msg or '401' in error_msg:
+                    print("❌ Unauthorized. Check your GITHUB_TOKEN has models:read permissions")
+                    return self.create_fallback_response("Authentication failed")
+                elif 'quota' in error_msg:
+                    print("❌ Quota exceeded. Consider upgrading or waiting for reset")
+                    return self.create_fallback_response("Quota exceeded")
+                else:
+                    print(f"⚠️  API call failed: {e}")
+                    if attempt == MAX_RETRIES - 1:
+                        return self.create_fallback_response(f"API error: {e}")
+                    time.sleep(2 ** attempt)  # Exponential backoff
         
-        raise Exception("Failed to get valid response from GitHub Models after all retries")
+        return self.create_fallback_response("Max retries exceeded")
+    
+    def extract_scores_manually(self, content: str) -> Dict[str, Any]:
+        """Extract scores manually if JSON parsing fails"""
+        print("🔄 Attempting manual score extraction...")
+        
+        # Look for score patterns in the text
+        import re
+        
+        scores = {}
+        score_pattern = r'(\d+(?:\.\d+)?)/10|score[:\s]*(\d+(?:\.\d+)?)'
+        matches = re.findall(score_pattern, content, re.IGNORECASE)
+        
+        if matches:
+            # Extract the first 8 scores found
+            numeric_scores = []
+            for match in matches:
+                score = match[0] if match[0] else match[1]
+                if score:
+                    numeric_scores.append(float(score))
+            
+            if len(numeric_scores) >= 8:
+                categories = ['code_quality', 'test_coverage', 'documentation', 'architecture', 
+                            'security', 'performance', 'maintainability', 'overall_health']
+                
+                for i, category in enumerate(categories):
+                    scores[category] = {
+                        "score": numeric_scores[i],
+                        "explanation": f"Extracted from response",
+                        "recommendations": ["Review response manually for specific recommendations"]
+                    }
+                
+                overall_score = sum(numeric_scores) / len(numeric_scores)
+                
+                return {
+                    "scores": scores,
+                    "overall_score": overall_score,
+                    "summary": "Scores extracted manually from response",
+                    "critical_issues": ["Manual extraction used - review response"],
+                    "next_steps": ["Review full response for detailed recommendations"]
+                }
+        
+        return self.create_fallback_response("Could not extract scores from response")
+    
+    def create_fallback_response(self, reason: str) -> Dict[str, Any]:
+        """Create a fallback response when API fails"""
+        return {
+            "scores": {
+                "code_quality": {"score": 5.0, "explanation": reason, "recommendations": ["Check API connectivity"]},
+                "test_coverage": {"score": 5.0, "explanation": reason, "recommendations": ["Check API connectivity"]},
+                "documentation": {"score": 5.0, "explanation": reason, "recommendations": ["Check API connectivity"]},
+                "architecture": {"score": 5.0, "explanation": reason, "recommendations": ["Check API connectivity"]},
+                "security": {"score": 5.0, "explanation": reason, "recommendations": ["Check API connectivity"]},
+                "performance": {"score": 5.0, "explanation": reason, "recommendations": ["Check API connectivity"]},
+                "maintainability": {"score": 5.0, "explanation": reason, "recommendations": ["Check API connectivity"]},
+                "overall_health": {"score": 5.0, "explanation": reason, "recommendations": ["Check API connectivity"]}
+            },
+            "overall_score": 5.0,
+            "summary": f"Evaluation failed: {reason}",
+            "critical_issues": [f"API error: {reason}"],
+            "next_steps": ["Check GitHub token permissions", "Verify model availability", "Review rate limits"]
+        }
     
     def run_evaluation(self) -> Dict[str, Any]:
-        """Run the complete evaluation process"""
-        mode_text = "QUICK" if self.quick_mode else "FULL"
-        print(f"🔍 Collecting codebase information ({mode_text} mode)...")
+        """Run the complete evaluation"""
+        print(f"🚀 Starting GitHub Models LLM Judge evaluation...")
+        print(f"📊 Model: {self.model}")
+        print(f"⚡ Mode: {'Quick' if self.quick_mode else 'Full'}")
+        print(f"🎯 Threshold: {self.threshold}")
+        
+        # Collect codebase information
+        print("📁 Collecting codebase information...")
         codebase_info = self.collect_codebase_info()
         
-        print("🤖 Generating evaluation prompt...")
+        # Generate evaluation prompt
+        print("📝 Generating evaluation prompt...")
         prompt = self.generate_evaluation_prompt(codebase_info)
         
-        print(f"🧠 Running LLM evaluation with GitHub Model: {self.model}...")
-        evaluation = self.evaluate_with_github_model(prompt)
+        # Run evaluation
+        print("🤖 Running LLM evaluation...")
+        evaluation_result = self.evaluate_with_github_models(prompt)
         
-        # Store results
-        self.results.update(evaluation)
-        self.results['codebase_info'] = codebase_info
+        # Process results
+        self.results.update(evaluation_result)
+        
+        # Calculate overall score if not provided
+        if 'overall_score' not in self.results or self.results['overall_score'] == 0:
+            scores = self.results.get('scores', {})
+            if scores:
+                total_score = sum(score.get('score', 0) for score in scores.values())
+                self.results['overall_score'] = total_score / len(scores)
         
         return self.results
     
     def print_results(self, results: Dict[str, Any]):
-        """Print evaluation results in a readable format"""
-        mode_text = "QUICK" if self.quick_mode else "FULL"
+        """Print evaluation results in a formatted way"""
         print("\n" + "="*60)
-        print(f"🤖 LLM JUDGE EVALUATION RESULTS (GitHub Models) - {mode_text} MODE")
+        print("🔍 GITHUB MODELS LLM JUDGE EVALUATION RESULTS")
         print("="*60)
         
+        # Model and mode info
+        print(f"🤖 Model: {results.get('model_used', 'Unknown')}")
+        print(f"⚡ Mode: {results.get('evaluation_mode', 'Unknown').title()}")
+        print(f"📅 Timestamp: {results.get('timestamp', 'Unknown')}")
+        print(f"📊 API Calls: {results.get('api_calls', 0)}")
+        
+        if results.get('rate_limited'):
+            print("⚠️  Rate limited during evaluation")
+        
+        # Overall score
+        overall_score = results.get('overall_score', 0)
+        print(f"\n🎯 OVERALL SCORE: {overall_score:.1f}/10")
+        
+        # Score breakdown
+        print("\n📊 DETAILED SCORES:")
         scores = results.get('scores', {})
-        overall_score = results.get('overall_score', 0.0)
-        
-        print(f"\n📊 OVERALL SCORE: {overall_score:.1f}/10")
-        print(f"🤖 MODEL USED: {self.model}")
-        
-        print("\n📈 DETAILED SCORES:")
         for category, data in scores.items():
             if isinstance(data, dict):
                 score = data.get('score', 0)
-                justification = data.get('justification', 'No justification provided')
-                print(f"  {category.replace('_', ' ').title()}: {score}/10")
-                print(f"    {justification}")
+                explanation = data.get('explanation', 'No explanation provided')
+                print(f"  {category.replace('_', ' ').title()}: {score:.1f}/10")
+                print(f"    💡 {explanation}")
         
-        print(f"\n🎯 THRESHOLD: {self.threshold}/10")
+        # Summary
+        if 'summary' in results:
+            print(f"\n📝 SUMMARY:")
+            print(f"  {results['summary']}")
         
-        if overall_score >= self.threshold:
-            print("✅ EVALUATION PASSED")
-            status = "PASS"
+        # Critical issues
+        critical_issues = results.get('critical_issues', [])
+        if critical_issues:
+            print(f"\n🚨 CRITICAL ISSUES:")
+            for issue in critical_issues:
+                print(f"  • {issue}")
+        
+        # Next steps
+        next_steps = results.get('next_steps', [])
+        if next_steps:
+            print(f"\n✅ NEXT STEPS:")
+            for step in next_steps:
+                print(f"  • {step}")
+        
+        # Pass/fail status
+        threshold = self.threshold
+        if overall_score >= threshold:
+            print(f"\n✅ PASSED: Score {overall_score:.1f} >= {threshold}")
         else:
-            print("❌ EVALUATION FAILED")
-            status = "FAIL"
+            print(f"\n❌ FAILED: Score {overall_score:.1f} < {threshold}")
         
-        recommendations = results.get('recommendations', [])
-        if recommendations:
-            print(f"\n💡 RECOMMENDATIONS:")
-            for i, rec in enumerate(recommendations, 1):
-                print(f"  {i}. {rec}")
-        
-        # Save results to file
-        output_file = "llm_judge_results.json"
-        with open(output_file, 'w') as f:
-            json.dump(results, f, indent=2)
-        print(f"\n📄 Results saved to: {output_file}")
-        
-        return status, overall_score
+        print("="*60)
+    
+    def save_results(self, results: Dict[str, Any]):
+        """Save results to JSON file"""
+        output_file = 'llm_judge_results.json'
+        try:
+            with open(output_file, 'w') as f:
+                json.dump(results, f, indent=2)
+            print(f"💾 Results saved to {output_file}")
+        except Exception as e:
+            print(f"⚠️  Failed to save results: {e}")
     
     def run(self) -> int:
         """Main execution method"""
         try:
-            mode_text = "QUICK" if self.quick_mode else "FULL"
-            print(f"🚀 Starting LLM Judge Evaluation (GitHub Models) - {mode_text} MODE...")
-            print(f"📋 Using model: {self.model}")
-            print(f"🔗 GitHub Models API: {self.api_url}")
-            
-            if not self.github_token:
-                print("❌ GITHUB_TOKEN environment variable is required")
+            # Validate token
+            if not self.token:
+                print("❌ GITHUB_TOKEN environment variable not set")
+                print("💡 Set it with: export GITHUB_TOKEN='your-token-here'")
                 return 1
             
+            # Run evaluation
             results = self.run_evaluation()
-            status, score = self.print_results(results)
             
-            if status == "FAIL":
-                print(f"\n❌ Evaluation failed: Score {score:.1f} is below threshold {self.threshold}")
-                return 1
-            else:
-                print(f"\n✅ Evaluation passed: Score {score:.1f} meets threshold {self.threshold}")
+            # Print results
+            self.print_results(results)
+            
+            # Save results
+            self.save_results(results)
+            
+            # Return exit code based on threshold
+            overall_score = results.get('overall_score', 0)
+            if overall_score >= self.threshold:
                 return 0
+            else:
+                return 1
                 
+        except KeyboardInterrupt:
+            print("\n⚠️  Evaluation interrupted by user")
+            return 1
         except Exception as e:
-            print(f"❌ Evaluation failed with error: {e}")
+            print(f"❌ Evaluation failed: {e}")
             return 1
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description='LLM Judge Evaluator using GitHub Models')
-    parser.add_argument('--quick', action='store_true', 
-                       help='Run in quick mode for faster CI evaluation')
+    parser = argparse.ArgumentParser(description='GitHub Models LLM Judge Evaluator')
+    parser.add_argument('--quick', action='store_true', help='Run in quick evaluation mode')
+    parser.add_argument('--model', type=str, help='GitHub model to use')
+    parser.add_argument('--threshold', type=float, default=DEFAULT_THRESHOLD, help='Minimum score threshold')
+    
     args = parser.parse_args()
     
-    try:
-        evaluator = GitHubModelEvaluator(quick_mode=args.quick)
-        exit_code = evaluator.run()
-        sys.exit(exit_code)
-    except KeyboardInterrupt:
-        print("\n⚠️ Evaluation interrupted by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"❌ Fatal error: {e}")
-        sys.exit(1)
+    # Set environment variables from args
+    if args.threshold != DEFAULT_THRESHOLD:
+        os.environ['LLM_JUDGE_THRESHOLD'] = str(args.threshold)
+    
+    evaluator = GitHubModelsEvaluator(quick_mode=args.quick, model=args.model)
+    return evaluator.run()
 
-if __name__ == "__main__":
-    main() 
+if __name__ == '__main__':
+    sys.exit(main()) 

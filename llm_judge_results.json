@@ -1,0 +1,70 @@
+{
+  "timestamp": "2025-06-22T20:55:49.520808",
+  "scores": {
+    "code_quality": {
+      "score": 7.1,
+      "justification": "Mock evaluation for code quality"
+    },
+    "test_coverage": {
+      "score": 8.0,
+      "justification": "Mock evaluation for test coverage"
+    },
+    "documentation": {
+      "score": 6.6,
+      "justification": "Mock evaluation for documentation"
+    },
+    "architecture": {
+      "score": 8.3,
+      "justification": "Mock evaluation for architecture"
+    },
+    "security": {
+      "score": 7.2,
+      "justification": "Mock evaluation for security"
+    },
+    "performance": {
+      "score": 7.2,
+      "justification": "Mock evaluation for performance"
+    }
+  },
+  "details": {},
+  "recommendations": [
+    "This is a mock evaluation - run with real models for actual feedback",
+    "Consider adding more comprehensive tests",
+    "Enhance documentation with examples",
+    "Review code for potential optimizations"
+  ],
+  "overall_score": 7.4,
+  "evaluation_mode": "mock",
+  "model_used": "claude-3.5-sonnet",
+  "codebase_info": {
+    "file_count": 6,
+    "lines_of_code": 3232,
+    "test_files": 11,
+    "test_coverage": 0.0,
+    "documentation_files": 353,
+    "dependencies": [
+      "streamlit>=1.28.0",
+      "requests>=2.31.0",
+      "python-dotenv>=1.0.0",
+      "langchain-core==0.3.66",
+      "langchain-chroma==0.2.4",
+      "langchain-text-splitters==0.3.8",
+      "langchain-ollama>=0.1.0",
+      "langchain-community>=0.0.11",
+      "chromadb==1.0.13",
+      "pydantic>=2.0.0",
+      "pytz>=2023.3",
+      "pillow>=10.0.0",
+      "pypdf>=3.0.0",
+      "unstructured>=0.10.0",
+      "sentence-transformers>=2.2.0",
+      "duckduckgo-search>=4.1.1",
+      "aiohttp>=3.8.0",
+      "asyncio-throttle>=1.0.0",
+      "redis>=4.5.0",
+      "cachetools>=5.3.0",
+      "structlog>=23.1.0"
+    ],
+    "recent_changes": []
+  }
+}
