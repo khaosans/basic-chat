@@ -33,6 +33,7 @@ import requests
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config import config
+from evaluators.consistency import LLMJudgeConsistency
 
 # Configuration
 DEFAULT_THRESHOLD = 7.0
@@ -75,6 +76,7 @@ class OpenAIEvaluator:
         self.threshold = float(os.getenv('LLM_JUDGE_THRESHOLD', DEFAULT_THRESHOLD))
         self.quick_mode = quick_mode
         self.api_key = os.getenv('OPENAI_API_KEY')
+        self.consistency = LLMJudgeConsistency()
         
         # OpenAI API endpoint
         self.api_url = "https://api.openai.com/v1/chat/completions"
@@ -181,11 +183,14 @@ class OpenAIEvaluator:
         return info
     
     def generate_evaluation_prompt(self, codebase_info: Dict[str, Any]) -> str:
-        """Generate the evaluation prompt for the LLM"""
+        """Generate the evaluation prompt for the LLM, injecting rubric and version for consistency"""
         mode_note = "QUICK EVALUATION MODE - Focus on critical issues only" if self.quick_mode else "FULL EVALUATION MODE"
-        
+        rubric_md = self.consistency.rubric_text()
+        version = self.consistency.version
         return f"""
 You are an expert software engineer evaluating a Python codebase for quality, maintainability, and best practices.
+
+LLM Judge Rubric Version: {version}
 
 {mode_note}
 
@@ -199,14 +204,7 @@ Codebase Information:
 
 Please evaluate the following aspects and provide scores from 1-10 (where 10 is excellent):
 
-1. **Code Quality** (1-10): Assess code structure, naming conventions, complexity, and adherence to Python best practices
-2. **Test Coverage** (1-10): Evaluate test comprehensiveness, quality, and effectiveness
-3. **Documentation** (1-10): Assess README quality, inline documentation, and overall project documentation
-4. **Architecture** (1-10): Evaluate overall design patterns, modularity, and scalability
-5. **Security** (1-10): Assess potential security vulnerabilities and best practices
-6. **Performance** (1-10): Evaluate code efficiency and optimization opportunities
-
-{"In QUICK MODE, focus on major issues and provide brief justifications." if self.quick_mode else "Provide detailed analysis with specific examples."}
+{rubric_md}
 
 For each category, provide:
 - Score (1-10)
