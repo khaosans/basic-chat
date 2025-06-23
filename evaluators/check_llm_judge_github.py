@@ -1,57 +1,55 @@
 #!/usr/bin/env python3
 """
-LLM Judge Evaluator for GitHub Actions CI
+LLM Judge Evaluator using GitHub Models
 
-This script evaluates the codebase using an LLM to assess:
+This script evaluates the codebase using GitHub's Model feature to assess:
 - Code quality and maintainability
 - Test coverage and effectiveness
 - Documentation quality
 - Overall project health
 
-Uses the built-in Ollama setup instead of external APIs.
+Uses GitHub's built-in models instead of external APIs or Ollama.
 
 Usage:
-    python evaluators/check_llm_judge.py [--quick]
+    python evaluators/check_llm_judge_github.py [--quick]
 
 Environment Variables:
-    OLLAMA_API_URL: Ollama API URL (default: http://localhost:11434/api)
-    OLLAMA_MODEL: Ollama model to use (default: mistral)
+    GITHUB_MODEL: GitHub model to use (default: claude-3.5-sonnet)
     LLM_JUDGE_THRESHOLD: Minimum score required (default: 7.0)
+    GITHUB_TOKEN: GitHub token for model access
 """
 
 import os
 import sys
 import json
 import subprocess
-import tempfile
 import argparse
 from pathlib import Path
 from typing import Dict, List, Any, Optional
-import asyncio
 from datetime import datetime
+import requests
 
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import OllamaChat
 from config import config
 
 # Configuration
 DEFAULT_THRESHOLD = 7.0
-DEFAULT_MODEL = "mistral"
+DEFAULT_MODEL = "claude-3.5-sonnet"
 MAX_RETRIES = 3
 
-class LLMJudgeEvaluator:
-    """LLM-based code evaluator for CI/CD pipelines using built-in Ollama"""
+class GitHubModelEvaluator:
+    """LLM-based code evaluator using GitHub Models"""
     
     def __init__(self, quick_mode: bool = False):
-        self.ollama_url = os.getenv('OLLAMA_API_URL', 'http://localhost:11434/api')
-        self.model = os.getenv('OLLAMA_MODEL', DEFAULT_MODEL)
+        self.model = os.getenv('GITHUB_MODEL', DEFAULT_MODEL)
         self.threshold = float(os.getenv('LLM_JUDGE_THRESHOLD', DEFAULT_THRESHOLD))
         self.quick_mode = quick_mode
+        self.github_token = os.getenv('GITHUB_TOKEN')
         
-        # Initialize Ollama chat client
-        self.ollama_chat = OllamaChat(model_name=self.model)
+        # GitHub Models API endpoint
+        self.api_url = "https://api.github.com/models"
         
         # Initialize results
         self.results = {
@@ -60,7 +58,8 @@ class LLMJudgeEvaluator:
             'details': {},
             'recommendations': [],
             'overall_score': 0.0,
-            'evaluation_mode': 'quick' if quick_mode else 'full'
+            'evaluation_mode': 'quick' if quick_mode else 'full',
+            'model_used': self.model
         }
     
     def collect_codebase_info(self) -> Dict[str, Any]:
@@ -199,41 +198,76 @@ Respond in the following JSON format:
 }}
 """
     
-    def evaluate_with_llm(self, prompt: str) -> Dict[str, Any]:
-        """Evaluate the codebase using built-in Ollama"""
+    def evaluate_with_github_model(self, prompt: str) -> Dict[str, Any]:
+        """Evaluate the codebase using GitHub Models"""
+        if not self.github_token:
+            raise Exception("GITHUB_TOKEN environment variable is required for GitHub Models")
+        
+        headers = {
+            'Authorization': f'Bearer {self.github_token}',
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        
+        payload = {
+            'model': self.model,
+            'messages': [
+                {
+                    'role': 'system',
+                    'content': 'You are an expert software engineer evaluating code quality. Provide detailed, actionable feedback in JSON format.'
+                },
+                {
+                    'role': 'user',
+                    'content': prompt
+                }
+            ],
+            'max_tokens': 2000,
+            'temperature': 0.1
+        }
+        
         for attempt in range(MAX_RETRIES):
             try:
-                # Use the built-in OllamaChat
-                payload = {"inputs": prompt}
-                response = self.ollama_chat.query(payload)
+                response = requests.post(
+                    f"{self.api_url}/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=60
+                )
                 
-                if not response:
-                    raise Exception("No response received from Ollama")
-                
-                # Try to parse JSON response
-                try:
-                    # Find JSON in the response
-                    start = response.find('{')
-                    end = response.rfind('}') + 1
-                    if start != -1 and end != 0:
-                        json_str = response[start:end]
-                        return json.loads(json_str)
-                    else:
-                        raise ValueError("No JSON found in response")
-                except json.JSONDecodeError as e:
-                    print(f"Failed to parse JSON response (attempt {attempt + 1}): {e}")
-                    print(f"Response: {response}")
+                if response.status_code == 200:
+                    result = response.json()
+                    content = result['choices'][0]['message']['content']
+                    
+                    # Try to parse JSON response
+                    try:
+                        # Find JSON in the response
+                        start = content.find('{')
+                        end = content.rfind('}') + 1
+                        if start != -1 and end != 0:
+                            json_str = content[start:end]
+                            return json.loads(json_str)
+                        else:
+                            raise ValueError("No JSON found in response")
+                    except json.JSONDecodeError as e:
+                        print(f"Failed to parse JSON response (attempt {attempt + 1}): {e}")
+                        print(f"Response: {content}")
+                        if attempt == MAX_RETRIES - 1:
+                            raise
+                        continue
+                else:
+                    print(f"GitHub Models API call failed (attempt {attempt + 1}): {response.status_code}")
+                    print(f"Response: {response.text}")
                     if attempt == MAX_RETRIES - 1:
-                        raise
+                        raise Exception(f"GitHub Models API failed with status {response.status_code}")
                     continue
                     
-            except Exception as e:
-                print(f"Ollama API call failed (attempt {attempt + 1}): {e}")
+            except requests.exceptions.RequestException as e:
+                print(f"GitHub Models API request failed (attempt {attempt + 1}): {e}")
                 if attempt == MAX_RETRIES - 1:
                     raise
                 continue
         
-        raise Exception("Failed to get valid response from LLM after all retries")
+        raise Exception("Failed to get valid response from GitHub Models after all retries")
     
     def run_evaluation(self) -> Dict[str, Any]:
         """Run the complete evaluation process"""
@@ -244,8 +278,8 @@ Respond in the following JSON format:
         print("🤖 Generating evaluation prompt...")
         prompt = self.generate_evaluation_prompt(codebase_info)
         
-        print("🧠 Running LLM evaluation with Ollama...")
-        evaluation = self.evaluate_with_llm(prompt)
+        print(f"🧠 Running LLM evaluation with GitHub Model: {self.model}...")
+        evaluation = self.evaluate_with_github_model(prompt)
         
         # Store results
         self.results.update(evaluation)
@@ -257,13 +291,14 @@ Respond in the following JSON format:
         """Print evaluation results in a readable format"""
         mode_text = "QUICK" if self.quick_mode else "FULL"
         print("\n" + "="*60)
-        print(f"🤖 LLM JUDGE EVALUATION RESULTS (Ollama) - {mode_text} MODE")
+        print(f"🤖 LLM JUDGE EVALUATION RESULTS (GitHub Models) - {mode_text} MODE")
         print("="*60)
         
         scores = results.get('scores', {})
         overall_score = results.get('overall_score', 0.0)
         
         print(f"\n📊 OVERALL SCORE: {overall_score:.1f}/10")
+        print(f"🤖 MODEL USED: {self.model}")
         
         print("\n📈 DETAILED SCORES:")
         for category, data in scores.items():
@@ -300,9 +335,13 @@ Respond in the following JSON format:
         """Main execution method"""
         try:
             mode_text = "QUICK" if self.quick_mode else "FULL"
-            print(f"🚀 Starting LLM Judge Evaluation (Ollama) - {mode_text} MODE...")
+            print(f"🚀 Starting LLM Judge Evaluation (GitHub Models) - {mode_text} MODE...")
             print(f"📋 Using model: {self.model}")
-            print(f"🔗 Ollama URL: {self.ollama_url}")
+            print(f"🔗 GitHub Models API: {self.api_url}")
+            
+            if not self.github_token:
+                print("❌ GITHUB_TOKEN environment variable is required")
+                return 1
             
             results = self.run_evaluation()
             status, score = self.print_results(results)
@@ -320,13 +359,13 @@ Respond in the following JSON format:
 
 def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description='LLM Judge Evaluator')
+    parser = argparse.ArgumentParser(description='LLM Judge Evaluator using GitHub Models')
     parser.add_argument('--quick', action='store_true', 
                        help='Run in quick mode for faster CI evaluation')
     args = parser.parse_args()
     
     try:
-        evaluator = LLMJudgeEvaluator(quick_mode=args.quick)
+        evaluator = GitHubModelEvaluator(quick_mode=args.quick)
         exit_code = evaluator.run()
         sys.exit(exit_code)
     except KeyboardInterrupt:
