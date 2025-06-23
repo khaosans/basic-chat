@@ -1,0 +1,77 @@
+{
+  "timestamp": "2025-06-22T21:59:46.144874",
+  "scores": {
+    "code_quality": {
+      "score": 5.0,
+      "explanation": "All GitHub Models failed - no access to any models",
+      "recommendations": [
+        "Check API connectivity"
+      ]
+    },
+    "test_coverage": {
+      "score": 5.0,
+      "explanation": "All GitHub Models failed - no access to any models",
+      "recommendations": [
+        "Check API connectivity"
+      ]
+    },
+    "documentation": {
+      "score": 5.0,
+      "explanation": "All GitHub Models failed - no access to any models",
+      "recommendations": [
+        "Check API connectivity"
+      ]
+    },
+    "architecture": {
+      "score": 5.0,
+      "explanation": "All GitHub Models failed - no access to any models",
+      "recommendations": [
+        "Check API connectivity"
+      ]
+    },
+    "security": {
+      "score": 5.0,
+      "explanation": "All GitHub Models failed - no access to any models",
+      "recommendations": [
+        "Check API connectivity"
+      ]
+    },
+    "performance": {
+      "score": 5.0,
+      "explanation": "All GitHub Models failed - no access to any models",
+      "recommendations": [
+        "Check API connectivity"
+      ]
+    },
+    "maintainability": {
+      "score": 5.0,
+      "explanation": "All GitHub Models failed - no access to any models",
+      "recommendations": [
+        "Check API connectivity"
+      ]
+    },
+    "overall_health": {
+      "score": 5.0,
+      "explanation": "All GitHub Models failed - no access to any models",
+      "recommendations": [
+        "Check API connectivity"
+      ]
+    }
+  },
+  "details": {},
+  "recommendations": [],
+  "overall_score": 5.0,
+  "evaluation_mode": "quick",
+  "model_used": "microsoft/phi-3.5-mini",
+  "api_calls": 0,
+  "rate_limited": false,
+  "summary": "Evaluation failed: All GitHub Models failed - no access to any models",
+  "critical_issues": [
+    "API error: All GitHub Models failed - no access to any models"
+  ],
+  "next_steps": [
+    "Check GitHub token permissions",
+    "Verify model availability",
+    "Review rate limits"
+  ]
+}

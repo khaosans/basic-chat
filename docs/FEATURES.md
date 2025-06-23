@@ -399,7 +399,7 @@ This diagram illustrates the connection management strategy for optimizing netwo
 
 - **🎨 Clean Interface**: Intuitive Streamlit-based design
 - **📱 Responsive**: Works on desktop and mobile
-- **🎵 Audio Support**: Text-to-speech capabilities
+- **🎵 Lightweight Audio**: Local text-to-speech without external APIs
 - **📊 Real-time Updates**: Live response streaming
 - **🔧 Easy Configuration**: Model and parameter selection
 

@@ -1,111 +1,147 @@
 """
-Shared test fixtures and configuration for streamlined test suite
-CHANGELOG:
-- Consolidated all fixtures into single file
-- Added comprehensive mock objects for external dependencies
-- Removed redundant fixtures from individual test files
+Pytest configuration and fixtures for BasicChat tests.
+Provides test isolation and environment management.
 """
 
 import pytest
 import os
-import sys
 import tempfile
-import asyncio
-from unittest.mock import Mock, MagicMock, patch
+import shutil
+from unittest.mock import Mock, patch
 from pathlib import Path
-from io import BytesIO
-from PIL import Image
 
-# Add the project root to Python path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an instance of the default event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-@pytest.fixture
-def sample_text():
-    """Sample text for testing"""
-    return """This is a sample text for testing document processing.
-    It contains multiple lines and can be used for various test cases.
-    The text includes information about artificial intelligence and machine learning."""
-
-@pytest.fixture
-def sample_query():
-    """Sample query for testing"""
-    return "What is Python programming?"
-
-@pytest.fixture
-def test_model_name():
-    """Test model name"""
-    return "mistral"
-
-@pytest.fixture
-def mock_ollama_response():
-    """Mock Ollama API response"""
-    return "This is a mock response from the AI model."
-
-@pytest.fixture
-def mock_uploaded_file():
-    """Mock uploaded file for testing"""
-    file_mock = Mock()
-    file_mock.name = "test_document.txt"
-    file_mock.type = "text/plain"
-    file_mock.getvalue.return_value = b"This is a test document content for testing purposes."
-    return file_mock
-
-@pytest.fixture
-def mock_pdf_file():
-    """Mock PDF file for testing"""
-    file_mock = Mock()
-    file_mock.name = "test_document.pdf"
-    file_mock.type = "application/pdf"
-    file_mock.getvalue.return_value = b"%PDF-1.4\nTest PDF content"
-    return file_mock
-
-@pytest.fixture
-def mock_image_file():
-    """Mock image file for testing"""
-    # Create a simple test image
-    img = Image.new('RGB', (100, 100), color='red')
-    img_bytes = BytesIO()
-    img.save(img_bytes, format='PNG')
-    img_bytes.seek(0)
+# Test environment configuration
+@pytest.fixture(scope="session", autouse=True)
+def test_environment():
+    """Setup test environment variables and cleanup."""
+    # Store original environment
+    original_env = os.environ.copy()
     
-    file_mock = Mock()
-    file_mock.name = "test_image.png"
-    file_mock.type = "image/png"
-    file_mock.getvalue.return_value = img_bytes.getvalue()
-    return file_mock
+    # Set test-specific environment variables
+    os.environ.update({
+        'TESTING': 'true',
+        'CHROMA_PERSIST_DIR': './test_chroma_db',
+        'OLLAMA_BASE_URL': 'http://localhost:11434',
+        'MOCK_EXTERNAL_SERVICES': 'true',
+    })
+    
+    # Create test directories
+    test_dirs = ['./test_chroma_db', './tests/data']
+    for dir_path in test_dirs:
+        Path(dir_path).mkdir(parents=True, exist_ok=True)
+    
+    yield
+    
+    # Cleanup
+    for dir_path in test_dirs:
+        if os.path.exists(dir_path):
+            shutil.rmtree(dir_path)
+    
+    # Restore original environment
+    os.environ.clear()
+    os.environ.update(original_env)
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def temp_dir():
-    """Temporary directory for test files"""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        yield temp_dir
+    """Create a temporary directory for test files."""
+    temp_dir = tempfile.mkdtemp()
+    yield temp_dir
+    shutil.rmtree(temp_dir, ignore_errors=True)
 
-@pytest.fixture
-def mock_chroma_client():
-    """Mock ChromaDB client"""
-    client_mock = Mock()
-    collection_mock = Mock()
-    client_mock.get_or_create_collection.return_value = collection_mock
-    client_mock.get_collection.return_value = collection_mock
-    return client_mock
+@pytest.fixture(scope="function")
+def mock_external_services():
+    """Mock external services for unit tests."""
+    with patch('document_processor.OllamaEmbeddings') as mock_embeddings, \
+         patch('document_processor.ChatOllama') as mock_chat, \
+         patch('document_processor.chromadb.PersistentClient') as mock_chroma, \
+         patch('app.gTTS') as mock_gtts:
+        
+        # Configure mocks
+        mock_embeddings.return_value = Mock()
+        mock_chat.return_value = Mock()
+        mock_chroma.return_value = Mock()
+        mock_gtts.return_value = Mock()
+        
+        yield {
+            'embeddings': mock_embeddings,
+            'chat': mock_chat,
+            'chroma': mock_chroma,
+            'gtts': mock_gtts
+        }
 
-@pytest.fixture
-def mock_llm():
-    """Mock LLM for testing"""
-    llm_mock = Mock()
-    llm_mock.invoke.return_value.content = "Mock LLM response"
-    return llm_mock
+@pytest.fixture(scope="function")
+def mock_file_system():
+    """Mock file system operations for isolated tests."""
+    with patch('builtins.open') as mock_open, \
+         patch('os.path.exists') as mock_exists, \
+         patch('os.path.getsize') as mock_getsize:
+        
+        # Default behaviors
+        mock_exists.return_value = True
+        mock_getsize.return_value = 1024
+        
+        yield {
+            'open': mock_open,
+            'exists': mock_exists,
+            'getsize': mock_getsize
+        }
 
-@pytest.fixture
-def mock_embeddings():
-    """Mock embeddings for testing"""
-    embeddings_mock = Mock()
-    embeddings_mock.embed_query.return_value = [0.1] * 384  # Mock embedding vector
-    return embeddings_mock 
+@pytest.fixture(scope="function")
+def sample_test_files():
+    """Create sample test files for testing."""
+    files = {}
+    
+    # Create sample text file
+    text_content = "This is a sample test document for testing purposes."
+    files['text'] = text_content.encode('utf-8')
+    
+    # Create sample PDF content (minimal valid PDF)
+    pdf_content = b'%PDF-1.4\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n2 0 obj\n<<\n/Type /Pages\n/Kids [3 0 R]\n/Count 1\n>>\nendobj\n3 0 obj\n<<\n/Type /Page\n/Parent 2 0 R\n/MediaBox [0 0 612 792]\n/Contents 4 0 R\n>>\nendobj\n4 0 obj\n<<\n/Length 44\n>>\nstream\nBT\n/F1 12 Tf\n72 720 Td\n(Test PDF) Tj\nET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f \n0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n0000000204 00000 n \ntrailer\n<<\n/Size 5\n/Root 1 0 R\n>>\nstartxref\n297\n%%EOF'
+    files['pdf'] = pdf_content
+    
+    # Create sample image content (minimal PNG)
+    png_content = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x0cIDATx\x9cc```\x00\x00\x00\x04\x00\x01\xf6\x178U\x00\x00\x00\x00IEND\xaeB`\x82'
+    files['png'] = png_content
+    
+    yield files
+
+def pytest_configure(config):
+    """Configure pytest with custom markers."""
+    config.addinivalue_line(
+        "markers", "unit: mark test as a unit test (fast, isolated)"
+    )
+    config.addinivalue_line(
+        "markers", "integration: mark test as an integration test (requires external services)"
+    )
+    config.addinivalue_line(
+        "markers", "slow: mark test as slow (LLM calls, heavy processing)"
+    )
+    config.addinivalue_line(
+        "markers", "fast: mark test as fast (mocked, no external calls)"
+    )
+    config.addinivalue_line(
+        "markers", "isolated: mark test as needing isolation"
+    )
+    config.addinivalue_line(
+        "markers", "e2e: mark test as end-to-end test"
+    )
+
+def pytest_collection_modifyitems(config, items):
+    """Modify test collection to add default markers."""
+    for item in items:
+        # Add default markers based on test location and name
+        if 'test_core' in item.nodeid or 'test_tools' in item.nodeid:
+            item.add_marker(pytest.mark.unit)
+            item.add_marker(pytest.mark.fast)
+        elif 'test_audio' in item.nodeid and 'integration' not in item.nodeid:
+            item.add_marker(pytest.mark.unit)
+        elif 'test_voice' in item.nodeid:
+            item.add_marker(pytest.mark.unit)
+        elif 'test_llm_judge' in item.nodeid:
+            item.add_marker(pytest.mark.slow)
+        elif 'test_reasoning' in item.nodeid or 'test_documents' in item.nodeid:
+            item.add_marker(pytest.mark.integration)
+        elif 'test_web_search' in item.nodeid:
+            item.add_marker(pytest.mark.integration)
+        elif 'test_upload' in item.nodeid or 'test_document_processing' in item.nodeid:
+            item.add_marker(pytest.mark.integration) 

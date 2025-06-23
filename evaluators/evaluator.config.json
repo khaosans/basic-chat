@@ -1,0 +1,82 @@
+{
+  "version": "1.0.0",
+  "threshold": 7.0,
+  "model": "mistral",
+  "max_retries": 3,
+  "evaluation_categories": {
+    "code_quality": {
+      "weight": 1.0,
+      "description": "Code structure, naming conventions, complexity, and adherence to Python best practices",
+      "rubric": {
+        "10": "Excellent: Clean, well-structured, follows all Python best practices",
+        "8-9": "Good: Well-structured with minor improvements needed",
+        "6-7": "Fair: Generally good structure with some issues",
+        "4-5": "Poor: Significant structural issues",
+        "1-3": "Very Poor: Major structural problems"
+      }
+    },
+    "test_coverage": {
+      "weight": 1.0,
+      "description": "Test comprehensiveness, quality, and effectiveness",
+      "rubric": {
+        "10": ">90% coverage, comprehensive edge case testing",
+        "8-9": ">80% coverage, good test quality",
+        "6-7": ">60% coverage, basic testing present",
+        "4-5": ">30% coverage, minimal testing",
+        "1-3": "<30% coverage, inadequate testing"
+      }
+    },
+    "documentation": {
+      "weight": 0.8,
+      "description": "README quality, inline documentation, and overall project documentation",
+      "rubric": {
+        "10": "Comprehensive docs with examples",
+        "8-9": "Clear documentation with some examples",
+        "6-7": "Basic documentation present",
+        "4-5": "Minimal documentation",
+        "1-3": "No or inadequate documentation"
+      }
+    },
+    "architecture": {
+      "weight": 1.0,
+      "description": "Overall design patterns, modularity, and scalability",
+      "rubric": {
+        "10": "Clean, scalable, well-designed architecture",
+        "8-9": "Well-designed with minor scalability concerns",
+        "6-7": "Generally good design with some issues",
+        "4-5": "Significant architectural issues",
+        "1-3": "Major architectural problems"
+      }
+    },
+    "security": {
+      "weight": 0.9,
+      "description": "Potential security vulnerabilities and best practices",
+      "rubric": {
+        "10": "Comprehensive security practices",
+        "8-9": "Good security practices with minor gaps",
+        "6-7": "Basic security practices followed",
+        "4-5": "Some security concerns",
+        "1-3": "Major security vulnerabilities"
+      }
+    },
+    "performance": {
+      "weight": 0.7,
+      "description": "Code efficiency and optimization opportunities",
+      "rubric": {
+        "10": "Highly optimized, efficient code",
+        "8-9": "Generally efficient with minor optimizations",
+        "6-7": "Acceptable performance with room for improvement",
+        "4-5": "Some performance issues",
+        "1-3": "Major performance problems"
+      }
+    }
+  },
+  "file_extensions": [".py", ".js", ".ts", ".jsx", ".tsx"],
+  "exclude_directories": [".git", "venv", "__pycache__", "node_modules", ".pytest_cache"],
+  "exclude_files": ["*.pyc", "*.pyo", "*.pyd", "*.so", "*.dll", "*.dylib"],
+  "documentation_extensions": [".md", ".rst", ".txt", ".adoc"],
+  "test_file_patterns": ["test_*", "*_test", "*test*"],
+  "coverage_timeout": 60,
+  "api_timeout": 30,
+  "ollama_url": "http://localhost:11434/api"
+} 

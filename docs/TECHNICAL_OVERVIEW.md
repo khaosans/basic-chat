@@ -357,7 +357,7 @@ python scripts/cleanup_chroma.py --force
 - **cachetools**: In-memory caching with TTL
 - **structlog**: Structured logging for observability
 - **pillow**: Image processing for OCR
-- **gTTS**: Text-to-speech capabilities
+- **Local TTS**: Lightweight text-to-speech without external APIs
 
 ---
 

@@ -1109,7 +1109,8 @@ class AutoReasoning:
 
 class ReasoningEngine:
     """Main reasoning engine"""
-    
+    reasoning_modes = ["Agent", "Chain-of-Thought", "Multi-Step", "Standard", "Auto"]
+
     def __init__(self, model_name: str = DEFAULT_MODEL):
         logger.info(f"Initializing ReasoningEngine with model: {model_name}")
         self.model_name = model_name
@@ -1157,6 +1158,10 @@ class ReasoningEngine:
             logger.error(f"Error during document search: {e}")
             logger.error(f"Full traceback: {traceback.format_exc()}")
             return "An error occurred while searching the documents."
+
+    def process_query(self, query: str, mode: str, document_processor: Optional[DocumentProcessor] = None) -> 'ReasoningResult':
+        """Alias for run, for backward compatibility with tests."""
+        return self.run(query, mode, document_processor)
 
     def run(self, query: str, mode: str, document_processor: Optional[DocumentProcessor] = None) -> ReasoningResult:
         """Run reasoning with selected mode"""
