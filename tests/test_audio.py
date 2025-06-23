@@ -142,6 +142,56 @@ class TestAudioFunctionality:
         """Should handle nonexistent file size gracefully"""
         size = get_audio_file_size("nonexistent_file.mp3")
         assert size == "Unknown size"
+
+    @patch('app.gTTS')
+    @patch('app.os.path.exists')
+    @patch('app.os.path.getsize')
+    def test_should_integrate_with_gtts_library(self, mock_getsize, mock_exists, mock_gtts):
+        """Should integrate with gTTS library correctly"""
+        # Patch threading.Event to simulate immediate completion
+        mock_event = Mock()
+        mock_event.wait.return_value = True
+        
+        # Patch threading.Thread to run the target function immediately
+        def instant_thread(target, *args, **kwargs):
+            class DummyThread:
+                def __init__(self, target, *args, **kwargs):
+                    self._target = target
+                def start(self):
+                    self._target()
+                def join(self):
+                    pass
+                @property
+                def daemon(self):
+                    return True
+                @daemon.setter
+                def daemon(self, value):
+                    pass
+            return DummyThread(target)
+        
+        # Mock gTTS
+        mock_tts = MagicMock()
+        mock_gtts.return_value = mock_tts
+        
+        # Simulate file existence: False before save, True after save
+        file_state = {'created': False}
+        def exists_side_effect(path):
+            return file_state['created']
+        def save_side_effect(path):
+            file_state['created'] = True
+        mock_exists.side_effect = exists_side_effect
+        mock_getsize.return_value = 1024  # 1KB file
+        mock_tts.save.side_effect = save_side_effect
+        
+        with patch('threading.Event', return_value=mock_event), \
+             patch('threading.Thread', side_effect=instant_thread):
+            test_text = "Test with mocked gTTS"
+            audio_file = text_to_speech(test_text)
+        
+        # Verify gTTS was called
+        mock_gtts.assert_called_once_with(text=test_text, lang='en', slow=False)
+        mock_tts.save.assert_called_once()
+        assert audio_file.endswith('.mp3')
     
     def test_should_handle_audio_file_errors(self):
         """Should handle audio file errors gracefully"""

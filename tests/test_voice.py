@@ -179,6 +179,20 @@ class TestVoiceFunctionality:
             assert len(data) > 0
             # Check for MP3 header (starts with 0xFF 0xFB)
             assert data.startswith(b'\xff\xfb')
+
+    @patch('app.gTTS')
+    def test_text_to_speech_gtts_integration(self, mock_gtts):
+        """Test integration with gTTS library"""
+        # Mock gTTS
+        mock_tts = MagicMock()
+        mock_gtts.return_value = mock_tts
+        
+        test_text = "Test with mocked gTTS"
+        audio_file = text_to_speech(test_text)
+        
+        # Verify gTTS was called correctly
+        mock_gtts.assert_called_once_with(text=test_text, lang='en')
+        mock_tts.save.assert_called_once_with(audio_file)
     
     def test_voice_with_special_characters(self):
         """Test voice generation with special characters"""
@@ -188,6 +202,7 @@ class TestVoiceFunctionality:
         
         assert audio_file is not None
         assert os.path.exists(audio_file)
+        assert os.path.getsize(audio_file) > 0
     
     def test_voice_with_long_text(self):
         """Test voice generation with longer text"""
