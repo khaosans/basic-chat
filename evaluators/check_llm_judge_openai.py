@@ -211,7 +211,14 @@ Please evaluate the following aspects and provide scores from 1-10 (where 10 is 
 For each category, provide:
 - Score (1-10)
 - Brief justification
-- Specific recommendations for improvement
+- Specific, actionable recommendations for improvement
+
+**For recommendations:**
+- List each as a single, clear, actionable checklist item
+- Reference specific files, functions, or areas of the codebase if possible
+- Prioritize the most impactful actions first
+- Use concise, direct language
+- If relevant, provide a brief example or filename
 
 Respond in the following JSON format:
 {{
@@ -225,9 +232,11 @@ Respond in the following JSON format:
     }},
     "overall_score": 7.2,
     "recommendations": [
-        "Add more comprehensive integration tests",
-        "Enhance API documentation with examples",
-        "Consider adding type hints throughout the codebase"
+        "[tests/test_core.py] Add unit tests for edge cases in ReasoningEngine.",
+        "[README.md] Expand documentation with usage examples and setup instructions.",
+        "[app.py] Refactor function names to follow snake_case convention.",
+        "[config.py] Add type hints to all functions.",
+        "[ALL] Run a security audit for dependency vulnerabilities."
     ]
 }}
 """
