@@ -421,40 +421,39 @@ The multi-layer caching strategy is designed to maximize hit rates while minimiz
 **Cache Key Design:**
 Cache keys are designed to balance uniqueness with efficiency. The system uses a hierarchical key structure that includes query hash, model parameters, and context information. This approach ensures that similar queries with different parameters are cached separately while maintaining reasonable key sizes. The key generation process is optimized to minimize computational overhead while providing sufficient uniqueness for accurate cache lookups.
 
-### **Async Processing Pipeline**
+### **Background Task System**
+
+BasicChat uses a robust background task system to handle long-running operations (complex reasoning, large document processing) without blocking the user interface. This system is built on Celery, Redis, and Flower for distributed task management and monitoring.
 
 ```mermaid
-graph LR
-    subgraph "⚡ Async Processing"
-        REQ[Request Queue]
-        WORKER1[Worker 1]
-        WORKER2[Worker 2]
-        WORKER3[Worker 3]
-        RESP[Response Queue]
-    end
-    
-    subgraph "🔧 Connection Pool"
-        POOL[Connection Pool]
-        LIMITER[Rate Limiter]
-        RETRY[Retry Logic]
-    end
-    
-    REQ --> WORKER1
-    REQ --> WORKER2
-    REQ --> WORKER3
-    
-    WORKER1 --> POOL
-    WORKER2 --> POOL
-    WORKER3 --> POOL
-    
-    POOL --> LIMITER
-    LIMITER --> RETRY
-    RETRY --> RESP
+graph TD
+    UI[Streamlit UI]
+    TASKQ[Task Queue (Redis)]
+    WORKER1[Celery Worker: Reasoning]
+    WORKER2[Celery Worker: Documents]
+    FLOWER[Flower Monitoring]
+    REDIS[Redis]
+
+    UI -- submits task --> TASKQ
+    TASKQ -- dispatches --> WORKER1
+    TASKQ -- dispatches --> WORKER2
+    WORKER1 -- updates status --> REDIS
+    WORKER2 -- updates status --> REDIS
+    FLOWER -- monitors --> TASKQ
+    FLOWER -- monitors --> WORKER1
+    FLOWER -- monitors --> WORKER2
+    UI -- fetches status --> REDIS
 ```
 
-**Diagram Narrative: Async Processing Pipeline**
+**How it works:**
+- The Streamlit UI submits long-running tasks to a Redis-backed queue.
+- Celery workers (for reasoning and document processing) pick up tasks and update their status/progress in Redis.
+- The UI polls Redis for task status and displays progress, results, and controls (cancel, cleanup).
+- Flower provides a real-time dashboard for monitoring, retrying, or revoking tasks.
 
-This diagram shows how asynchronous workers and connection pooling boost throughput by distributing requests, pooling resources, and applying rate limits. The async and pooling design enables the system to handle high loads efficiently (Beazley & Jones).
+This design keeps the UI responsive, supports horizontal scaling, and enables robust monitoring and management of background operations.
+
+See the [README](../README.md#long-running-tasks--background-processing) and [Development Guide](DEVELOPMENT.md#running-with-background-tasks) for usage details.
 
 ## 🔒 Security & Privacy Architecture
 

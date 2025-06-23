@@ -44,6 +44,17 @@ from utils.caching import response_cache
 # Import the proper DocumentProcessor with vector database support
 from document_processor import DocumentProcessor, ProcessedFile
 
+# Import task management components
+from task_manager import TaskManager
+from task_ui import (
+    display_task_status, 
+    create_task_message, 
+    display_task_result,
+    display_task_metrics,
+    display_active_tasks,
+    should_use_background_task
+)
+
 # Import configuration constants
 from config import (
     APP_TITLE,
@@ -655,6 +666,10 @@ def enhanced_chat_interface(doc_processor):
     Main chat interface using Streamlit, with enhanced features.
     """
     
+    # Initialize task manager
+    if "task_manager" not in st.session_state:
+        st.session_state.task_manager = TaskManager()
+    
     # Sidebar Configuration
     with st.sidebar:
         st.header("✨ Configuration")
@@ -679,6 +694,12 @@ def enhanced_chat_interface(doc_processor):
 
         st.markdown("---")
         
+        # --- Task Management ---
+        if config.enable_background_tasks:
+            display_task_metrics(st.session_state.task_manager)
+            display_active_tasks(st.session_state.task_manager)
+            st.markdown("---")
+        
         # --- Document Management ---
         st.header("📚 Documents")
         
@@ -693,32 +714,54 @@ def enhanced_chat_interface(doc_processor):
         if uploaded_file and uploaded_file.file_id != st.session_state.get("processed_file_id"):
             logger.info(f"Processing new document: {uploaded_file.name}")
             
-            try:
-                # Process the uploaded file
-                doc_processor.process_file(uploaded_file)
+            # Check if this should be a background task
+            if config.enable_background_tasks and uploaded_file.size > 1024 * 1024:  # > 1MB
+                # Submit as background task
+                task_id = st.session_state.task_manager.submit_task(
+                    "document_processing",
+                    file_path=uploaded_file.name,
+                    file_type=uploaded_file.type,
+                    file_size=uploaded_file.size
+                )
+                
+                # Add task message
+                task_message = create_task_message(task_id, "Document Processing", 
+                                                 file_name=uploaded_file.name)
+                st.session_state.messages.append(task_message)
                 
                 # Update session state to mark as processed
                 st.session_state.processed_file_id = uploaded_file.file_id
                 
-                # Show success message
-                st.success(f"✅ Document '{uploaded_file.name}' processed successfully!")
-                
-            except Exception as e:
-                logger.error(f"Error processing document '{uploaded_file.name}': {str(e)}")
-                logger.error(f"Full traceback: {traceback.format_exc()}")
-                logger.error(f"File details - Name: {uploaded_file.name}, Type: {uploaded_file.type}, Size: {len(uploaded_file.getvalue())} bytes")
-                
-                # Log additional diagnostic information
+                st.success(f"🚀 Document '{uploaded_file.name}' submitted for background processing!")
+                st.rerun()
+            else:
+                # Process immediately
                 try:
-                    logger.info(f"Document processor state: {len(doc_processor.processed_files)} processed files")
-                    logger.info(f"ChromaDB client status: {doc_processor.client is not None}")
-                    logger.info(f"Embeddings model: {doc_processor.embeddings.model}")
-                except Exception as diag_error:
-                    logger.error(f"Error during diagnostics: {diag_error}")
-                
-                st.error(f"❌ Error processing document: {str(e)}")
-                # Also mark as processed on error to prevent reprocessing loop
-                st.session_state.processed_file_id = uploaded_file.file_id
+                    # Process the uploaded file
+                    doc_processor.process_file(uploaded_file)
+                    
+                    # Update session state to mark as processed
+                    st.session_state.processed_file_id = uploaded_file.file_id
+                    
+                    # Show success message
+                    st.success(f"✅ Document '{uploaded_file.name}' processed successfully!")
+                    
+                except Exception as e:
+                    logger.error(f"Error processing document '{uploaded_file.name}': {str(e)}")
+                    logger.error(f"Full traceback: {traceback.format_exc()}")
+                    logger.error(f"File details - Name: {uploaded_file.name}, Type: {uploaded_file.type}, Size: {len(uploaded_file.getvalue())} bytes")
+                    
+                    # Log additional diagnostic information
+                    try:
+                        logger.info(f"Document processor state: {len(doc_processor.processed_files)} processed files")
+                        logger.info(f"ChromaDB client status: {doc_processor.client is not None}")
+                        logger.info(f"Embeddings model: {doc_processor.embeddings.model}")
+                    except Exception as diag_error:
+                        logger.error(f"Error during diagnostics: {diag_error}")
+                    
+                    st.error(f"❌ Error processing document: {str(e)}")
+                    # Also mark as processed on error to prevent reprocessing loop
+                    st.session_state.processed_file_id = uploaded_file.file_id
 
         processed_files = doc_processor.get_processed_files()
         if processed_files:
@@ -757,111 +800,158 @@ def enhanced_chat_interface(doc_processor):
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
-            if msg["role"] == "assistant":
+            
+            # Handle task messages
+            if msg.get("is_task"):
+                task_id = msg.get("task_id")
+                if task_id:
+                    task_status = st.session_state.task_manager.get_task_status(task_id)
+                    if task_status:
+                        if task_status.status == "completed":
+                            # Display task result
+                            display_task_result(task_status)
+                        elif task_status.status == "failed":
+                            st.error(f"Task failed: {task_status.error}")
+                        else:
+                            # Show task status
+                            display_task_status(task_id, st.session_state.task_manager)
+            
+            # Add audio button for assistant messages
+            if msg["role"] == "assistant" and not msg.get("is_task"):
                 create_enhanced_audio_button(msg["content"], hash(msg['content']))
 
     # Chat input
     if prompt := st.chat_input("Type a message..."):
-        # Add user message to session state immediately
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        # Check if this should be a long-running task
+        should_be_long_task = should_use_background_task(prompt, st.session_state.reasoning_mode, config)
         
-        # Display the user message immediately
-        with st.chat_message("user"):
-            st.write(prompt)
-        
-        # Process response based on reasoning mode
-        with st.chat_message("assistant"):
-            # First check if it's a tool-based query
-            tool = tool_registry.get_tool(prompt)
-            if tool:
-                with st.spinner(f"Using {tool.name()}..."):
-                    response = tool.execute(prompt)
-                    if response.success:
-                        st.write(response.content)
-                        st.session_state.messages.append({"role": "assistant", "content": response.content})
-                    else:
-                        st.error(response.content)
-            else:
-                # Use reasoning modes with separated thought process and final output
-                with st.spinner(f"Processing with {st.session_state.reasoning_mode} reasoning..."):
-                    try:
-                        # Get relevant document context first
-                        context = doc_processor.get_relevant_context(prompt) if doc_processor else ""
-                        
-                        # Add context to the prompt if available
-                        enhanced_prompt = prompt
-                        if context:
-                            enhanced_prompt = f"Context from uploaded documents:\n{context}\n\nQuestion: {prompt}"
-                        
-                        if st.session_state.reasoning_mode == "Chain-of-Thought":
-                            result = reasoning_chain.execute_reasoning(question=prompt, context=context)
+        if should_be_long_task:
+            # Submit as background task
+            task_id = st.session_state.task_manager.submit_task(
+                "reasoning",
+                query=prompt,
+                mode=st.session_state.reasoning_mode
+            )
+            
+            # Add task message to chat
+            task_message = create_task_message(task_id, "Reasoning", query=prompt)
+            st.session_state.messages.append(task_message)
+            
+            # Add user message
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            # Display the user message immediately
+            with st.chat_message("user"):
+                st.write(prompt)
+            
+            # Display task message
+            with st.chat_message("assistant"):
+                st.write(task_message["content"])
+                display_task_status(task_id, st.session_state.task_manager)
+            
+            st.rerun()
+        else:
+            # Process normally (existing code)
+            # Add user message to session state immediately
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            
+            # Display the user message immediately
+            with st.chat_message("user"):
+                st.write(prompt)
+            
+            # Process response based on reasoning mode
+            with st.chat_message("assistant"):
+                # First check if it's a tool-based query
+                tool = tool_registry.get_tool(prompt)
+                if tool:
+                    with st.spinner(f"Using {tool.name()}..."):
+                        response = tool.execute(prompt)
+                        if response.success:
+                            st.write(response.content)
+                            st.session_state.messages.append({"role": "assistant", "content": response.content})
+                        else:
+                            st.error(response.content)
+                else:
+                    # Use reasoning modes with separated thought process and final output
+                    with st.spinner(f"Processing with {st.session_state.reasoning_mode} reasoning..."):
+                        try:
+                            # Get relevant document context first
+                            context = doc_processor.get_relevant_context(prompt) if doc_processor else ""
                             
-                            with st.expander("💭 Thought Process", expanded=False):
-                                # Display the thought process
-                                st.markdown(result.thought_process)
+                            # Add context to the prompt if available
+                            enhanced_prompt = prompt
+                            if context:
+                                enhanced_prompt = f"Context from uploaded documents:\n{context}\n\nQuestion: {prompt}"
                             
-                            # Show final answer separately
-                            st.markdown("### 📝 Final Answer")
-                            st.markdown(result.final_answer)
-                            st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
-                            
-                        elif st.session_state.reasoning_mode == "Multi-Step":
-                            result = multi_step.step_by_step_reasoning(query=prompt, context=context)
-                            
-                            with st.expander("🔍 Analysis & Planning", expanded=False):
-                                # Display the analysis phase
-                                st.markdown(result.thought_process)
-                            
-                            st.markdown("### 📝 Final Answer")
-                            st.markdown(result.final_answer)
-                            st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
-                            
-                        elif st.session_state.reasoning_mode == "Agent-Based":
-                            result = reasoning_agent.run(query=prompt, context=context)
-                            
-                            with st.expander("🤖 Agent Actions", expanded=False):
-                                # Display agent actions
-                                st.markdown(result.thought_process)
-                            
-                            st.markdown("### 📝 Final Answer")
-                            st.markdown(result.final_answer)
-                            st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
-                            
-                        elif st.session_state.reasoning_mode == "Auto":
-                            auto_reasoning = AutoReasoning(selected_model)
-                            result = auto_reasoning.auto_reason(query=prompt, context=context)
-                            
-                            # Show which mode was auto-selected
-                            st.info(f"🤖 Auto-selected: **{result.reasoning_mode}** reasoning")
-                            
-                            with st.expander("💭 Thought Process", expanded=False):
-                                # Display the thought process
-                                st.markdown(result.thought_process)
-                            
-                            st.markdown("### 📝 Final Answer")
-                            st.markdown(result.final_answer)
-                            st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
-                            
-                        else:  # Standard mode
-                            # Note: The standard mode now also benefits from context
-                            if response := ollama_chat.query({"inputs": enhanced_prompt}):
-                                st.markdown(response)
-                                st.session_state.messages.append({"role": "assistant", "content": response})
-                            else:
-                                st.error("Failed to get response")
+                            if st.session_state.reasoning_mode == "Chain-of-Thought":
+                                result = reasoning_chain.execute_reasoning(question=prompt, context=context)
                                 
-                    except Exception as e:
-                        logger.error(f"Error in {st.session_state.reasoning_mode} mode: {str(e)}")
-                        logger.error(f"Traceback: {traceback.format_exc()}")
-                        st.error(f"Error in {st.session_state.reasoning_mode} mode: {str(e)}")
-                        # Fallback to standard mode
-                        if response := ollama_chat.query({"inputs": prompt}):
-                            st.write(response)
-                            st.session_state.messages.append({"role": "assistant", "content": response})
-        
-        # Add audio button for the assistant's response
-        if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
-            create_enhanced_audio_button(st.session_state.messages[-1]["content"], hash(st.session_state.messages[-1]["content"]))
+                                with st.expander("💭 Thought Process", expanded=False):
+                                    # Display the thought process
+                                    st.markdown(result.thought_process)
+                                
+                                # Show final answer separately
+                                st.markdown("### 📝 Final Answer")
+                                st.markdown(result.final_answer)
+                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
+                                
+                            elif st.session_state.reasoning_mode == "Multi-Step":
+                                result = multi_step.step_by_step_reasoning(query=prompt, context=context)
+                                
+                                with st.expander("🔍 Analysis & Planning", expanded=False):
+                                    # Display the analysis phase
+                                    st.markdown(result.thought_process)
+                                
+                                st.markdown("### 📝 Final Answer")
+                                st.markdown(result.final_answer)
+                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
+                                
+                            elif st.session_state.reasoning_mode == "Agent-Based":
+                                result = reasoning_agent.run(query=prompt, context=context)
+                                
+                                with st.expander("🤖 Agent Actions", expanded=False):
+                                    # Display agent actions
+                                    st.markdown(result.thought_process)
+                                
+                                st.markdown("### 📝 Final Answer")
+                                st.markdown(result.final_answer)
+                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
+                                
+                            elif st.session_state.reasoning_mode == "Auto":
+                                auto_reasoning = AutoReasoning(selected_model)
+                                result = auto_reasoning.auto_reason(query=prompt, context=context)
+                                
+                                # Show which mode was auto-selected
+                                st.info(f"🤖 Auto-selected: **{result.reasoning_mode}** reasoning")
+                                
+                                with st.expander("💭 Thought Process", expanded=False):
+                                    # Display the thought process
+                                    st.markdown(result.thought_process)
+                                
+                                st.markdown("### 📝 Final Answer")
+                                st.markdown(result.final_answer)
+                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
+                                
+                            else:  # Standard mode
+                                # Note: The standard mode now also benefits from context
+                                if response := ollama_chat.query({"inputs": enhanced_prompt}):
+                                    st.markdown(response)
+                                    st.session_state.messages.append({"role": "assistant", "content": response})
+                                else:
+                                    st.error("Failed to get response")
+                                    
+                        except Exception as e:
+                            logger.error(f"Error in {st.session_state.reasoning_mode} mode: {str(e)}")
+                            logger.error(f"Traceback: {traceback.format_exc()}")
+                            st.error(f"Error in {st.session_state.reasoning_mode} mode: {str(e)}")
+                            # Fallback to standard mode
+                            if response := ollama_chat.query({"inputs": prompt}):
+                                st.write(response)
+                                st.session_state.messages.append({"role": "assistant", "content": response})
+            
+            # Add audio button for the assistant's response
+            if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
+                create_enhanced_audio_button(st.session_state.messages[-1]["content"], hash(st.session_state.messages[-1]["content"]))
 
 # Main Function
 def main():
@@ -896,21 +986,53 @@ def main():
         st.session_state.reasoning_mode = DEFAULT_REASONING_MODE
     if "processed_file_id" not in st.session_state:
         st.session_state.processed_file_id = None
+    
+    # Initialize task manager if background tasks are enabled
+    if config.enable_background_tasks and "task_manager" not in st.session_state:
+        logger.info("Initializing task manager")
+        st.session_state.task_manager = TaskManager()
+        
+        # Clean up old tasks periodically
+        if "task_cleanup_done" not in st.session_state:
+            try:
+                st.session_state.task_manager.cleanup_old_tasks(max_age_hours=24)
+                st.session_state.task_cleanup_done = True
+            except Exception as e:
+                logger.warning(f"Failed to cleanup old tasks: {e}")
         
     doc_processor = st.session_state.doc_processor
 
     # Enhanced chat interface
     enhanced_chat_interface(doc_processor)
 
-    # Add cleanup button in sidebar for development
-    if st.sidebar.button("🧹 Cleanup ChromaDB", help="Clean up all ChromaDB directories (development only)"):
-        try:
-            from document_processor import DocumentProcessor
-            DocumentProcessor.cleanup_all_chroma_directories()
-            st.sidebar.success("ChromaDB cleanup completed!")
-            st.rerun()
-        except Exception as e:
-            st.sidebar.error(f"Cleanup failed: {e}")
+    # Add cleanup buttons in sidebar for development
+    with st.sidebar:
+        st.markdown("---")
+        st.header("🧹 Development Tools")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("🗄️ Cleanup ChromaDB", help="Clean up all ChromaDB directories"):
+                try:
+                    from document_processor import DocumentProcessor
+                    DocumentProcessor.cleanup_all_chroma_directories()
+                    st.success("ChromaDB cleanup completed!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Cleanup failed: {e}")
+        
+        with col2:
+            if st.button("📋 Cleanup Tasks", help="Clean up old completed tasks"):
+                try:
+                    if "task_manager" in st.session_state:
+                        st.session_state.task_manager.cleanup_old_tasks(max_age_hours=1)
+                        st.success("Task cleanup completed!")
+                        st.rerun()
+                    else:
+                        st.warning("No task manager available")
+                except Exception as e:
+                    st.error(f"Task cleanup failed: {e}")
 
 if __name__ == "__main__":
     main()

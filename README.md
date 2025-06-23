@@ -72,6 +72,24 @@
 
 ---
 
+## ⏳ Long-Running Tasks & Background Processing
+
+BasicChat supports **long-running tasks** for complex queries and large document processing. These are handled in the background using a robust Celery + Redis task queue system, so you can continue chatting while heavy operations run asynchronously.
+
+- **Background Task UI**: See task progress, status, and results directly in the chat interface.
+- **Task Management**: Cancel running tasks, monitor metrics, and clean up old tasks from the sidebar.
+- **Performance**: Offloads heavy work to background workers, keeping the UI responsive.
+- **Monitoring**: Use [Flower](https://flower.readthedocs.io/) for real-time task monitoring and debugging.
+
+> **How it works:**
+> - Submitting a complex query or uploading a large document triggers a background task.
+> - Task status, progress, and results are shown in the chat and sidebar.
+> - You can cancel tasks or clean up completed/failed ones from the UI.
+
+See the [Architecture Overview](docs/ARCHITECTURE.md#background-task-system) for a diagram of the task queue and worker system.
+
+---
+
 ## 🚀 Quick Start
 
 ### **Prerequisites**
@@ -109,17 +127,28 @@ ollama pull nomic-embed-text
 ollama pull llava
 ```
 
-### **Launch Application**
+### **Quick Start with Background Tasks**
+
+For full async/background processing, use the provided dev script or Docker Compose setup:
 
 ```bash
-# Start Ollama service (if not running)
-ollama serve
-
-# Launch BasicChat
-streamlit run app.py
+# Start all services (Redis, Celery workers, Flower, Streamlit app)
+./start_dev.sh
 ```
 
-**🌐 Access at:** `http://localhost:8501`
+Or with Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+- **Main App:** http://localhost:8501
+- **Task Monitor (Flower):** http://localhost:5555
+- **Redis:** localhost:6379
+
+> Flower provides a real-time dashboard for monitoring, retrying, or revoking tasks.
+
+For more details, see [Development Guide](docs/DEVELOPMENT.md#running-with-background-tasks).
 
 ---
 

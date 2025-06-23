@@ -50,6 +50,13 @@ REQUEST_TIMEOUT = int(os.environ.get("REQUEST_TIMEOUT", "30")) # Request timeout
 REDIS_ENABLED = os.environ.get("REDIS_ENABLED", "false").lower() == "true"
 REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
 
+# --- Task Queue Configuration ---
+ENABLE_BACKGROUND_TASKS = os.environ.get("ENABLE_BACKGROUND_TASKS", "true").lower() == "true"
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+MAX_TASK_DURATION = int(os.environ.get("MAX_TASK_DURATION", "300"))  # 5 minutes
+TASK_CLEANUP_INTERVAL = int(os.environ.get("TASK_CLEANUP_INTERVAL", "3600"))  # 1 hour
+
 # --- UI Configuration ---
 # Defines the title of the web application.
 APP_TITLE = "BasicChat"
@@ -86,6 +93,13 @@ class AppConfig:
     redis_url: Optional[str] = REDIS_URL
     redis_enabled: bool = REDIS_ENABLED
     
+    # Task Queue Configuration
+    enable_background_tasks: bool = ENABLE_BACKGROUND_TASKS
+    celery_broker_url: str = CELERY_BROKER_URL
+    celery_result_backend: str = CELERY_RESULT_BACKEND
+    max_task_duration: int = MAX_TASK_DURATION
+    task_cleanup_interval: int = TASK_CLEANUP_INTERVAL
+    
     # Logging Configuration
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
     enable_structured_logging: bool = os.getenv("ENABLE_STRUCTURED_LOGGING", "true").lower() == "true"
@@ -111,6 +125,8 @@ class AppConfig:
             raise ValueError("Max tokens must be positive")
         if self.cache_ttl < 0:
             raise ValueError("Cache TTL must be non-negative")
+        if self.max_task_duration < 60:
+            raise ValueError("Max task duration must be at least 60 seconds")
         return True
 
 # Global configuration instance
