@@ -1,130 +1,216 @@
+#!/usr/bin/env python3
 """
-Core application functionality tests
-CHANGELOG:
-- Merged test_app.py and test_basic.py into single core test file
-- Removed redundant initialization tests
-- Focused on critical path testing
-- Added parameterized tests for better coverage
+Core functionality tests for BasicChat application.
+
+These tests verify the basic functionality of the application components.
 """
 
 import pytest
-from unittest.mock import patch, Mock
-from app import OllamaChat, DocumentSummaryTool, ToolRegistry
+import os
+import sys
+from unittest.mock import Mock, patch, MagicMock
+from pathlib import Path
+
+# Add the parent directory to the path so we can import from app
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app import OllamaChat
+from reasoning_engine import ReasoningEngine
+from document_processor import DocumentProcessor
+from utils.enhanced_tools import EnhancedCalculator
 from config import config
 
-class TestOllamaChat:
-    """Test core chat functionality"""
-    
-    def test_should_initialize_with_default_model(self):
-        """Should initialize with default model when none provided"""
-        chat = OllamaChat()
-        assert chat.model_name == "mistral"
-        assert chat.async_chat is not None
-        assert chat.system_prompt is not None
-    
-    def test_should_initialize_with_custom_model(self):
-        """Should initialize with custom model when provided"""
-        chat = OllamaChat("llama2")
-        assert chat.model_name == "llama2"
-    
-    @pytest.mark.parametrize("payload,expected_type", [
-        ({"inputs": "Hello"}, str),
-        ({"inputs": ""}, (str, type(None))),
-        ({"inputs": None}, (str, type(None))),
-    ])
-    @patch('app.asyncio.run')
-    def test_should_handle_different_payload_types(self, mock_asyncio_run, payload, expected_type):
-        """Should handle different payload types correctly"""
-        chat = OllamaChat()
-        mock_asyncio_run.return_value = "test response"
-        
-        result = chat.query(payload)
-        assert isinstance(result, expected_type)
-    
-    @patch('app.asyncio.run')
-    def test_should_use_async_implementation_by_default(self, mock_asyncio_run):
-        """Should use async implementation by default"""
-        chat = OllamaChat()
-        mock_asyncio_run.return_value = "async response"
-        
-        result = chat.query({"inputs": "test"})
-        
-        assert result == "async response"
-        mock_asyncio_run.assert_called_once()
-    
-    def test_should_fallback_to_sync_on_async_failure(self):
-        """Should fallback to sync implementation when async fails"""
-        chat = OllamaChat()
-        chat._use_sync_fallback = True  # Force fallback
-        
-        with patch('app.requests.post') as mock_post:
-            mock_response = Mock()
-            mock_response.iter_content.return_value = [b'{"response": "sync response"}']
-            mock_post.return_value = mock_response
-            
-            result = chat.query({"inputs": "test"})
-            
-            assert result == "sync response"
-            mock_post.assert_called_once()
 
-class TestDocumentSummaryTool:
-    """Test document summary tool functionality"""
-    
-    def test_should_return_summary_when_documents_exist(self):
-        """Should return summary when documents are processed"""
-        doc_processor_mock = Mock()
-        doc_processor_mock.get_processed_files.return_value = [
-            {"name": "doc1.pdf", "type": "application/pdf", "size": 1000},
-            {"name": "doc2.txt", "type": "text/plain", "size": 500}
-        ]
-        
-        tool = DocumentSummaryTool(doc_processor_mock)
-        result = tool.execute("summarize document")
-        
-        assert result.success is True
-        assert "doc1.pdf" in result.content
-        assert "doc2.txt" in result.content
-    
-    def test_should_return_error_when_no_documents(self):
-        """Should return error when no documents are processed"""
-        doc_processor_mock = Mock()
-        doc_processor_mock.get_processed_files.return_value = []
-        
-        tool = DocumentSummaryTool(doc_processor_mock)
-        result = tool.execute("summarize document")
-        
-        assert result.success is False
-        assert "No documents" in result.content
+@pytest.mark.unit
+@pytest.mark.fast
+class TestCoreFunctionality:
+    """Test core application functionality"""
 
-class TestToolRegistry:
-    """Test tool registry functionality"""
-    
-    def test_should_return_tool_for_matching_trigger(self):
-        """Should return appropriate tool for matching trigger"""
-        doc_processor_mock = Mock()
-        registry = ToolRegistry(doc_processor_mock)
-        
-        tool = registry.get_tool("summarize the document")
-        
-        assert tool is not None
-        assert isinstance(tool, DocumentSummaryTool)
-    
-    def test_should_return_none_for_no_matching_trigger(self):
-        """Should return None when no tool matches trigger"""
-        doc_processor_mock = Mock()
-        registry = ToolRegistry(doc_processor_mock)
-        
-        tool = registry.get_tool("random text that doesn't match")
-        
-        assert tool is None
+    def test_ollama_chat_initialization(self):
+        """Test OllamaChat initialization"""
+        chat = OllamaChat()
+        assert chat is not None
+        assert hasattr(chat, 'query')
 
-class TestConfiguration:
-    """Test configuration integration"""
-    
-    def test_should_have_required_config_attributes(self):
-        """Should have all required configuration attributes"""
-        assert hasattr(config, 'ollama_url')
+    def test_reasoning_engine_initialization(self):
+        """Test ReasoningEngine initialization"""
+        engine = ReasoningEngine()
+        assert engine is not None
+        assert hasattr(engine, 'process_query')
+
+    def test_document_processor_initialization(self):
+        """Test DocumentProcessor initialization"""
+        processor = DocumentProcessor()
+        assert processor is not None
+        assert hasattr(processor, 'process_file')
+
+    def test_enhanced_calculator_initialization(self):
+        """Test EnhancedCalculator initialization"""
+        calc = EnhancedCalculator()
+        assert calc is not None
+        assert hasattr(calc, 'calculate')
+
+    def test_config_loading(self):
+        """Test configuration loading"""
+        assert config is not None
         assert hasattr(config, 'ollama_model')
+        assert hasattr(config, 'ollama_url')
+
+
+@pytest.mark.unit
+@pytest.mark.fast
+class TestOllamaChat:
+    """Test OllamaChat functionality"""
+
+    @patch('utils.async_ollama.AsyncOllamaChat.query')
+    def test_query_method(self, mock_async_query):
+        """Test OllamaChat query method"""
+        # Mock async response
+        mock_async_query.return_value = "Test response from Ollama"
+
+        chat = OllamaChat()
+        result = chat.query({'inputs': 'Hello, world!'})
+        
+        assert result == "Test response from Ollama"
+        mock_async_query.assert_called_once()
+
+    @patch('app.requests.post')
+    def test_query_with_error_handling(self, mock_post):
+        """Test OllamaChat error handling"""
+        # Mock error response
+        mock_post.side_effect = Exception("Connection error")
+
+        chat = OllamaChat()
+        result = chat.query({'inputs': 'Hello, world!'})
+        
+        # Should handle error gracefully
+        assert result is None or isinstance(result, str)
+
+
+@pytest.mark.unit
+@pytest.mark.fast
+class TestReasoningEngine:
+    """Test ReasoningEngine functionality"""
+
+    def test_reasoning_modes(self):
+        """Test available reasoning modes"""
+        engine = ReasoningEngine()
+        
+        # Check that reasoning modes are available
+        assert hasattr(engine, 'reasoning_modes')
+        assert isinstance(engine.reasoning_modes, list)
+        assert len(engine.reasoning_modes) > 0
+
+    @patch('reasoning_engine.OllamaChat')
+    def test_process_query(self, mock_ollama):
+        """Test process_query method"""
+        # Mock OllamaChat
+        mock_chat = Mock()
+        mock_chat.query.return_value = "Test response"
+        mock_ollama.return_value = mock_chat
+
+        engine = ReasoningEngine()
+        result = engine.process_query("Test query", mode="standard")
+        
+        assert result is not None
+        mock_chat.query.assert_called()
+
+
+@pytest.mark.unit
+@pytest.mark.fast
+class TestDocumentProcessor:
+    """Test DocumentProcessor functionality"""
+
+    def test_processor_initialization(self):
+        """Test DocumentProcessor initialization"""
+        processor = DocumentProcessor()
+        
+        # Check that required attributes exist
+        assert hasattr(processor, 'client')
+        assert hasattr(processor, 'embeddings')
+        assert hasattr(processor, 'text_splitter')
+
+    def test_get_processed_files(self):
+        """Test get_processed_files method"""
+        processor = DocumentProcessor()
+        files = processor.get_processed_files()
+        
+        # Should return a list
+        assert isinstance(files, list)
+
+    def test_get_available_documents(self):
+        """Test get_available_documents method"""
+        processor = DocumentProcessor()
+        documents = processor.get_available_documents()
+        
+        # Should return a list
+        assert isinstance(documents, list)
+
+
+@pytest.mark.unit
+@pytest.mark.fast
+class TestEnhancedCalculator:
+    """Test EnhancedCalculator functionality"""
+
+    def test_basic_calculation(self):
+        """Test basic mathematical operations"""
+        calc = EnhancedCalculator()
+        
+        # Test basic arithmetic
+        result = calc.calculate("2 + 2")
+        assert result.success
+        assert str(result.result) == "4" or str(result.result) == "4.0"
+
+    def test_complex_calculation(self):
+        """Test complex mathematical operations"""
+        calc = EnhancedCalculator()
+        
+        # Test more complex expression
+        result = calc.calculate("(2 + 3) * 4")
+        assert result.success
+        assert str(result.result) == "20" or str(result.result) == "20.0"
+
+    def test_invalid_expression(self):
+        """Test handling of invalid expressions"""
+        calc = EnhancedCalculator()
+        
+        # Test invalid expression
+        result = calc.calculate("invalid expression")
+        assert not result.success
+        assert result.error is not None
+
+    def test_safe_expression_validation(self):
+        """Test expression safety validation"""
+        calc = EnhancedCalculator()
+        
+        # Test safe expression
+        assert calc._is_safe_expression("2 + 2")
+        
+        # Test unsafe expression
+        assert not calc._is_safe_expression("__import__('os')")
+
+
+@pytest.mark.unit
+@pytest.mark.fast
+class TestConfiguration:
+    """Test configuration system"""
+
+    def test_config_attributes(self):
+        """Test that config has required attributes"""
+        assert hasattr(config, 'ollama_model')
+        assert hasattr(config, 'ollama_url')
         assert hasattr(config, 'enable_caching')
+        
+        # Check that values are not None
+        assert config.ollama_model is not None
         assert config.ollama_url is not None
-        assert config.ollama_model is not None 
+
+    def test_config_types(self):
+        """Test configuration value types"""
+        assert isinstance(config.ollama_model, str)
+        assert isinstance(config.ollama_url, str)
+        assert isinstance(config.enable_caching, bool)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__]) 

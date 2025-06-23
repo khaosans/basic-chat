@@ -16,6 +16,8 @@ from evaluators.check_llm_judge import LLMJudgeEvaluator
 
 class TestLLMJudgeEvaluator:
     """Test class for LLM Judge Evaluator"""
+    @pytest.mark.slow
+    @pytest.mark.slow
     
     def setup_method(self):
         """Setup method for each test"""

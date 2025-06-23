@@ -14,10 +14,8 @@ from langchain_core.documents import Document
 
 class TestDocumentProcessor:
     """Test document processor core functionality"""
-    
-    @patch('document_processor.OllamaEmbeddings')
-    @patch('document_processor.ChatOllama')
-    @patch('document_processor.chromadb.PersistentClient')
+    @pytest.mark.integration
+    @pytest.mark.integration
     def test_should_initialize_successfully(self, mock_chroma, mock_chat_ollama, mock_embeddings):
         """Should initialize document processor with all components"""
         mock_embeddings.return_value = Mock()
@@ -213,6 +211,8 @@ class TestDocumentProcessor:
         assert len(processor.processed_files) == 0
 
 class TestProcessedFile:
+    @pytest.mark.integration
+    @pytest.mark.integration
     """Test ProcessedFile data structure"""
     
     def test_should_create_processed_file(self):

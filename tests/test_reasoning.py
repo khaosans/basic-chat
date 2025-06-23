@@ -17,7 +17,8 @@ from collections import namedtuple
 
 class TestReasoningResult:
     """Test reasoning result data structure"""
-    
+    @pytest.mark.integration
+    @pytest.mark.integration
     def test_should_create_valid_reasoning_result(self):
         """Should create valid reasoning result with all fields"""
         result = ReasoningResult(
@@ -64,7 +65,8 @@ class TestReasoningResult:
 
 class TestReasoningAgent:
     """Test reasoning agent functionality"""
-    
+    @pytest.mark.integration
+    @pytest.mark.integration
     @patch('reasoning_engine.ChatOllama')
     @patch('reasoning_engine.initialize_agent')
     def test_should_initialize_agent_with_llm(self, mock_initialize_agent, mock_chat_ollama):
@@ -118,7 +120,8 @@ class TestReasoningAgent:
 
 class TestReasoningChain:
     """Test reasoning chain functionality"""
-    
+    @pytest.mark.integration
+    @pytest.mark.integration
     @patch('reasoning_engine.ChatOllama')
     def test_should_execute_reasoning_chain(self, mock_chat_ollama):
         """Should execute multi-step reasoning chain"""
@@ -149,7 +152,8 @@ class TestReasoningChain:
 
 class TestMultiStepReasoning:
     """Test multi-step reasoning functionality"""
-    
+    @pytest.mark.integration
+    @pytest.mark.integration
     @patch('reasoning_engine.ChatOllama')
     def test_should_perform_multi_step_reasoning(self, mock_chat_ollama):
         """Should perform multi-step reasoning with intermediate steps"""
@@ -178,7 +182,8 @@ class TestMultiStepReasoning:
 
 class TestReasoningEngine:
     """Test main reasoning engine functionality"""
-    
+    @pytest.mark.integration
+    @pytest.mark.integration
     def test_should_initialize_reasoning_engine(self):
         """Should initialize reasoning engine with all components"""
         engine = ReasoningEngine("test_model")
@@ -239,6 +244,8 @@ class TestReasoningEngine:
             engine.run("Test question", mode="invalid_mode")
 
 class TestReasoningIntegration:
+    @pytest.mark.integration
+    @pytest.mark.integration
     """Test integration between reasoning components"""
     
     @patch('reasoning_engine.ReasoningAgent')
@@ -279,6 +286,8 @@ class TestReasoningIntegration:
         assert chain_result.content == "Integrated result"
 
 class TestReasoningErrorHandling:
+    @pytest.mark.integration
+    @pytest.mark.integration
     """Test error handling in reasoning components"""
     
     @patch('reasoning_engine.ChatOllama')

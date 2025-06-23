@@ -15,6 +15,7 @@ from unittest.mock import Mock, MagicMock, patch
 from pathlib import Path
 from io import BytesIO
 from PIL import Image
+import shutil
 
 # Add the project root to Python path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -26,12 +27,57 @@ def event_loop():
     yield loop
     loop.close()
 
+@pytest.fixture(scope="session")
+def test_config():
+    """Global test configuration"""
+    return {
+        "temp_dir": tempfile.mkdtemp(),
+        "test_data_dir": Path(__file__).parent / "data",
+        "parallel_safe": True
+    }
+
+@pytest.fixture(scope="function")
+def temp_dir(test_config):
+    """Create a temporary directory for each test"""
+    temp_path = tempfile.mkdtemp()
+    yield temp_path
+    shutil.rmtree(temp_path, ignore_errors=True)
+
+@pytest.fixture(scope="function")
+def isolated_test_env():
+    """Create isolated environment for tests that can't run in parallel"""
+    # Save original environment
+    original_env = os.environ.copy()
+    
+    # Set test-specific environment
+    os.environ['TESTING'] = 'true'
+    os.environ['PYTHONPATH'] = str(Path(__file__).parent.parent)
+    
+    yield
+    
+    # Restore original environment
+    os.environ.clear()
+    os.environ.update(original_env)
+
+@pytest.fixture(scope="session")
+def parallel_safe():
+    """Mark tests as safe for parallel execution"""
+    return True
+
 @pytest.fixture
 def sample_text():
     """Sample text for testing"""
-    return """This is a sample text for testing document processing.
-    It contains multiple lines and can be used for various test cases.
-    The text includes information about artificial intelligence and machine learning."""
+    return "This is a sample text for testing purposes."
+
+@pytest.fixture
+def sample_pdf_path(test_config):
+    """Path to sample PDF file"""
+    return test_config["test_data_dir"] / "test_sample.pdf"
+
+@pytest.fixture
+def sample_image_path(test_config):
+    """Path to sample image file"""
+    return test_config["test_data_dir"] / "test_sample.png"
 
 @pytest.fixture
 def sample_query():
@@ -82,12 +128,6 @@ def mock_image_file():
     return file_mock
 
 @pytest.fixture
-def temp_dir():
-    """Temporary directory for test files"""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        yield temp_dir
-
-@pytest.fixture
 def mock_chroma_client():
     """Mock ChromaDB client"""
     client_mock = Mock()
@@ -108,4 +148,15 @@ def mock_embeddings():
     """Mock embeddings for testing"""
     embeddings_mock = Mock()
     embeddings_mock.embed_query.return_value = [0.1] * 384  # Mock embedding vector
-    return embeddings_mock 
+    return embeddings_mock
+
+# Cleanup after all tests
+def pytest_sessionfinish(session, exitstatus):
+    """Cleanup after test session"""
+    # Clean up any remaining temporary files
+    temp_dirs = [d for d in os.listdir(tempfile.gettempdir()) if d.startswith('pytest-')]
+    for temp_dir in temp_dirs:
+        try:
+            shutil.rmtree(os.path.join(tempfile.gettempdir(), temp_dir), ignore_errors=True)
+        except Exception:
+            pass 

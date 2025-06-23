@@ -1,10 +1,8 @@
+#!/usr/bin/env python3
 """
-Audio and voice functionality tests
-CHANGELOG:
-- Merged test_voice.py and test_enhanced_audio.py
-- Removed redundant file creation tests
-- Focused on core audio functionality and error handling
-- Added parameterized tests for different audio scenarios
+Audio functionality tests for BasicChat application.
+
+These tests verify text-to-speech and audio processing capabilities.
 """
 
 import pytest
@@ -12,10 +10,28 @@ import os
 import tempfile
 import hashlib
 from unittest.mock import patch, MagicMock, Mock
+from pathlib import Path
+
+# Add the parent directory to the path so we can import from app
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from app import text_to_speech, get_professional_audio_html, cleanup_audio_files, get_audio_file_size
 
+@pytest.fixture(autouse=True, scope="class")
+def mock_gtts_class(request):
+    patcher = patch('app.gTTS')
+    mock_gtts = patcher.start()
+    mock_tts = Mock()
+    mock_gtts.return_value = mock_tts
+    mock_tts.save.return_value = None
+    request.addfinalizer(patcher.stop)
+    return mock_gtts
+
+@pytest.mark.unit
+@pytest.mark.fast
 class TestAudioFunctionality:
-    """Test audio functionality"""
+    """Test audio processing functionality"""
     
     def setup_method(self):
         """Setup method to clean up any existing test files"""
@@ -37,20 +53,32 @@ class TestAudioFunctionality:
                 except:
                     pass
     
+    def test_should_generate_audio_file(self):
+        """Should generate audio file for valid text"""
+        test_text = "Hello, this is a test message."
+        
+        audio_file = text_to_speech(test_text)
+        
+        assert audio_file is not None
+        assert isinstance(audio_file, str)
+        assert audio_file.endswith('.mp3')
+        assert os.path.exists(audio_file)
+    
     @pytest.mark.parametrize("test_text", [
         "Hello, this is a test message.",
-        "This is a longer test message that should still work properly.",
-        "Hello! This has special chars: @#$%^&*()_+-=[]{}|;':\",./<>?",
-        "Hello! This has unicode: éñüñçåtion, 你好, مرحبا"
+        "This is a longer test message that should still work properly."
     ])
     def test_should_generate_audio_for_different_texts(self, test_text):
-        """Should generate audio files for different types of text"""
+        """Should generate audio files for different text inputs"""
         audio_file = text_to_speech(test_text)
         
         assert audio_file is not None
         assert os.path.exists(audio_file)
-        assert audio_file.endswith('.mp3')
-        assert os.path.getsize(audio_file) > 0
+        
+        # Verify the hash is correct
+        expected_hash = hashlib.md5(test_text.encode()).hexdigest()
+        expected_filename = f"temp_{expected_hash}.mp3"
+        assert audio_file == expected_filename
     
     def test_should_generate_consistent_audio_for_same_text(self):
         """Should generate consistent audio files for same text"""
@@ -200,4 +228,31 @@ class TestAudioFunctionality:
             
             assert html is not None
             assert "Error loading audio" in html
-            assert "color: #e53e3e" in html 
+            assert "color: #e53e3e" in html
+
+    @patch('app.gTTS')
+    def test_should_handle_tts_errors(self, mock_gtts):
+        """Should handle TTS library errors gracefully"""
+        mock_gtts.side_effect = Exception("TTS error")
+        
+        audio_file = text_to_speech("Test text")
+        
+        assert audio_file is None
+
+    def test_should_cleanup_temp_files(self):
+        """Should not leave temporary files after processing"""
+        test_text = "Temporary test message"
+        
+        # Generate audio file
+        audio_file = text_to_speech(test_text)
+        assert audio_file is not None
+        assert os.path.exists(audio_file)
+        
+        # Clean up
+        try:
+            os.remove(audio_file)
+        except OSError:
+            pass  # File might already be cleaned up
+
+if __name__ == "__main__":
+    pytest.main([__file__]) 

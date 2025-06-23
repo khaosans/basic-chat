@@ -16,6 +16,8 @@ from app import text_to_speech, get_professional_audio_html
 
 class TestVoiceFunctionality:
     """Test class for voice functionality"""
+    @pytest.mark.isolated
+    @pytest.mark.isolated
     
     def setup_method(self):
         """Setup method to clean up any existing test files"""

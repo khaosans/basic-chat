@@ -13,6 +13,9 @@ from web_search import SearchResult, search_web, WebSearch
 
 class TestWebSearch:
     """Test web search functionality"""
+    @pytest.mark.integration
+    @pytest.mark.integration
+    """Test web search functionality"""
     
     def setup_method(self):
         """Setup for each test"""
