@@ -170,12 +170,25 @@ class TestVoiceFunctionality:
         mock_tts = MagicMock()
         mock_gtts.return_value = mock_tts
         
+        # Mock the save method to actually create a file
+        def mock_save(filename):
+            # Create a dummy MP3 file for testing
+            with open(filename, 'wb') as f:
+                f.write(b'fake_mp3_data_for_testing')
+        
+        mock_tts.save.side_effect = mock_save
+        
         test_text = "Test with mocked gTTS"
         audio_file = text_to_speech(test_text)
         
         # Verify gTTS was called correctly
-        mock_gtts.assert_called_once_with(text=test_text, lang='en')
+        mock_gtts.assert_called_once_with(text=test_text, lang='en', slow=False)
         mock_tts.save.assert_called_once_with(audio_file)
+        
+        # Verify the file was created
+        assert audio_file is not None
+        assert os.path.exists(audio_file)
+        assert os.path.getsize(audio_file) > 0
     
     def test_voice_with_special_characters(self):
         """Test voice generation with special characters"""
