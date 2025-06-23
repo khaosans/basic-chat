@@ -4,7 +4,12 @@ Test script to verify document processing and vector search functionality
 """
 
 import os
+import sys
 import tempfile
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from document_processor import DocumentProcessor
 
 def create_test_document():
