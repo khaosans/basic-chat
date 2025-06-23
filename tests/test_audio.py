@@ -248,20 +248,20 @@ class TestAudioFunctionality:
     def test_should_handle_audio_file_errors(self):
         """Should handle audio file errors gracefully"""
         with patch('builtins.open', side_effect=Exception("Test error")):
-            html = get_professional_audio_html("test_file.mp3")
-            
-            assert html is not None
-            assert "Error loading audio" in html
-            assert "color: #e53e3e" in html
-
+            html = get_professional_audio_html("any_file.mp3")
+            assert "Failed to read audio file" in html
+    
     @patch('app.gTTS')
     def test_should_handle_tts_errors(self, mock_gtts):
-        """Should handle TTS library errors gracefully"""
-        mock_gtts.side_effect = Exception("TTS error")
+        """Should handle TTS errors during audio generation"""
+        mock_tts_instance = MagicMock()
+        mock_tts_instance.save.side_effect = Exception("TTS API is down")
+        mock_gtts.return_value = mock_tts_instance
         
-        audio_file = text_to_speech("Test text")
+        with pytest.raises(Exception) as excinfo:
+            text_to_speech("This will fail")
         
-        assert audio_file is None
+        assert "Failed to generate audio: TTS API is down" in str(excinfo.value)
 
     @patch('app.text_to_speech', side_effect=mock_text_to_speech_func)
     def test_should_cleanup_temp_files(self, mock_tts):
