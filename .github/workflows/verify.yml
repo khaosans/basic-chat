@@ -34,7 +34,13 @@ jobs:
           pip install pytest pytest-cov pytest-asyncio pytest-xdist
       - name: Run unit tests only
         run: |
-          pytest tests/ -m "unit or fast" -n auto --dist=worksteal -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov-report=term-missing
+          pytest tests/ -m "unit or fast" -n auto --dist=worksteal -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov=task_manager --cov=task_ui --cov=tasks --cov-report=term-missing
+        env:
+          # Task system configuration for testing
+          ENABLE_BACKGROUND_TASKS: "true"
+          REDIS_ENABLED: "false"
+          CELERY_BROKER_URL: "redis://localhost:6379/0"
+          MOCK_EXTERNAL_SERVICES: "true"
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         with:
@@ -81,6 +87,10 @@ jobs:
           # Mock external services for integration tests
           MOCK_EXTERNAL_SERVICES: "true"
           CHROMA_PERSIST_DIR: "./test_chroma_db"
+          # Task system configuration for integration testing
+          ENABLE_BACKGROUND_TASKS: "true"
+          REDIS_ENABLED: "false"
+          CELERY_BROKER_URL: "redis://localhost:6379/0"
       - name: Cleanup test environment
         if: always()
         run: |
@@ -119,6 +129,10 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
           LLM_JUDGE_THRESHOLD: ${{ vars.LLM_JUDGE_THRESHOLD || '7.0' }}
+          # Task system configuration for LLM judge
+          ENABLE_BACKGROUND_TASKS: "true"
+          REDIS_ENABLED: "false"
+          CELERY_BROKER_URL: "redis://localhost:6379/0"
         run: |
           if [ -z "$OPENAI_API_KEY" ]; then
             echo "⚠️  No OpenAI API key found, skipping LLM Judge evaluation"

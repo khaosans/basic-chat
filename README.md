@@ -4,7 +4,7 @@
 
 ![BasicChat Logo](assets/brand/logo/elron-logo-full.png)
 
-**🔒 Privacy-First • 🧠 Advanced Reasoning • ⚡ High Performance**
+**🔒 Privacy-First • 🧠 Advanced Reasoning • 🔬 Deep Research • ⚡ High Performance**
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io)
@@ -33,11 +33,11 @@
 
 <div align="center">
 
-| 🔒 **Privacy** | 🧠 **Intelligence** | 🛠️ **Tools** | 📄 **Documents** | ⚡ **Performance** |
-|:---:|:---:|:---:|:---:|:---:|
-| 100% Local Processing | 5 Reasoning Modes | Smart Calculator | Multi-Format Support | Async Architecture |
-| No External APIs | Chain-of-Thought | Time Tools | PDF, Text, Images | Multi-Layer Caching |
-| Data Never Leaves | Multi-Step Analysis | Web Search | Advanced RAG | Connection Pooling |
+| 🔒 **Privacy** | 🧠 **Intelligence** | 🔬 **Research** | 🛠️ **Tools** | 📄 **Documents** | ⚡ **Performance** |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| 100% Local Processing | 5 Reasoning Modes | Deep Research Mode | Smart Calculator | Multi-Format Support | Async Architecture |
+| No External APIs | Chain-of-Thought | Multi-Source Analysis | Time Tools | PDF, Text, Images | Multi-Layer Caching |
+| Data Never Leaves | Multi-Step Analysis | Academic Rigor | Web Search | Advanced RAG | Connection Pooling |
 
 </div>
 
@@ -51,6 +51,13 @@
 - **Chain-of-Thought**: Step-by-step reasoning for complex problems (Wei et al.)
 - **Agent-Based**: Intelligent tool selection and execution
 - **Auto Mode**: Automatically selects the best reasoning approach
+
+### 🔬 **Deep Research Mode**
+- **Comprehensive Research**: Multi-source analysis with academic rigor
+- **ChatGPT-Style Toggle**: Clean, intuitive interface for research mode
+- **Rich Results**: Executive summaries, key findings, detailed analysis, and sources
+- **Background Processing**: Long-running research tasks with progress tracking
+- **Source Citations**: Proper attribution and links to research sources
 
 ### 🛠️ **Powerful Built-in Tools**
 - **Enhanced Calculator**: Advanced mathematical operations with step-by-step reasoning
@@ -69,6 +76,25 @@
 - **Multi-Layer Caching**: Redis + Memory caching for 50-80% faster responses
 - **Connection Pooling**: Optimized HTTP connections with rate limiting
 - **Resource Management**: Automatic cleanup and memory optimization
+
+---
+
+## ⏳ Long-Running Tasks & Background Processing
+
+BasicChat supports **long-running tasks** for complex queries, deep research, and large document processing. These are handled in the background using a robust Celery + Redis task queue system, so you can continue chatting while heavy operations run asynchronously.
+
+- **Background Task UI**: See task progress, status, and results directly in the chat interface.
+- **Deep Research Tasks**: Comprehensive research with multiple sources and detailed analysis.
+- **Task Management**: Cancel running tasks, monitor metrics, and clean up old tasks from the sidebar.
+- **Performance**: Offloads heavy work to background workers, keeping the UI responsive.
+- **Monitoring**: Use [Flower](https://flower.readthedocs.io/) for real-time task monitoring and debugging.
+
+> **How it works:**
+> - Submitting a complex query, enabling deep research mode, or uploading a large document triggers a background task.
+> - Task status, progress, and results are shown in the chat and sidebar.
+> - You can cancel tasks or clean up completed/failed ones from the UI.
+
+See the [Architecture Overview](docs/ARCHITECTURE.md#background-task-system) for a diagram of the task queue and worker system.
 
 ---
 
@@ -109,17 +135,28 @@ ollama pull nomic-embed-text
 ollama pull llava
 ```
 
-### **Launch Application**
+### **Quick Start with Background Tasks**
+
+For full async/background processing, use the provided dev script or Docker Compose setup:
 
 ```bash
-# Start Ollama service (if not running)
-ollama serve
-
-# Launch BasicChat
-streamlit run app.py
+# Start all services (Redis, Celery workers, Flower, Streamlit app)
+./start_dev.sh
 ```
 
-**🌐 Access at:** `http://localhost:8501`
+Or with Docker Compose:
+
+```bash
+docker-compose up --build
+```
+
+- **Main App:** http://localhost:8501
+- **Task Monitor (Flower):** http://localhost:5555
+- **Redis:** localhost:6379
+
+> Flower provides a real-time dashboard for monitoring, retrying, or revoking tasks.
+
+For more details, see [Development Guide](docs/DEVELOPMENT.md#running-with-background-tasks).
 
 ---
 
