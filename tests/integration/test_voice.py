@@ -11,12 +11,12 @@ import base64
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import text_to_speech, get_professional_audio_html
+from utils.enhanced_tools import text_to_speech, get_professional_audio_html
 
 @pytest.fixture(autouse=True, scope="class")
 def mock_gtts_class(request):
     """Fixture to mock gTTS for all tests in this class."""
-    patcher = patch('app.gTTS')
+    patcher = patch('utils.enhanced_tools.gTTS')
     mock_gtts = patcher.start()
     mock_tts_instance = MagicMock()
     

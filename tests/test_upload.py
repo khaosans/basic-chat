@@ -70,8 +70,16 @@ def test_pdf_upload():
     doc_processor = DocumentProcessor()
     logger.info("Document processor created successfully")
     
-    # Use a text file instead of PDF to avoid PDF parsing issues
-    file_path = "tests/data/test_sample.txt"
+    # Use absolute path for test file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(current_dir, "data", "test_sample.txt")
+    
+    # Create test file if it doesn't exist
+    if not os.path.exists(file_path):
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        with open(file_path, 'w') as f:
+            f.write("This is a test sample text file for testing PDF upload functionality.")
+    
     with open(file_path, "rb") as f:
         file_content = f.read()
     mock_file = MockUploadedFile("test_sample.txt", file_content, "text/plain")
@@ -94,8 +102,23 @@ def test_image_upload():
     doc_processor = DocumentProcessor()
     logger.info("Document processor created successfully")
     
-    # Use the generated real PNG file
-    image_path = "tests/data/test_sample.png"
+    # Use absolute path for test file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    image_path = os.path.join(current_dir, "data", "test_sample.png")
+    
+    # Create test image if it doesn't exist
+    if not os.path.exists(image_path):
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        # Create a simple test image using PIL or fallback to a dummy file
+        try:
+            from PIL import Image
+            img = Image.new('RGB', (100, 100), color='white')
+            img.save(image_path)
+        except ImportError:
+            # Fallback: create a dummy PNG file
+            with open(image_path, 'wb') as f:
+                f.write(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00d\x00\x00\x00d\x08\x02\x00\x00\x00\x89\x1a\x16\xbc\x00\x00\x00\x0cIDATx\x9cc```\x00\x00\x00\x04\x00\x01\xf5\xd7\xd4\xc2\x00\x00\x00\x00IEND\xaeB`\x82')
+    
     with open(image_path, "rb") as f:
         image_content = f.read()
     mock_file = MockUploadedFile("test_sample.png", image_content, "image/png")
@@ -116,8 +139,23 @@ def test_image_qa_flow():
     
     doc_processor = DocumentProcessor()
     logger.info("Document processor created successfully")
-    # Use the generated real PNG file
-    image_path = "tests/data/test_sample.png"
+    
+    # Use absolute path for test file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    image_path = os.path.join(current_dir, "data", "test_sample.png")
+    
+    # Create test image if it doesn't exist
+    if not os.path.exists(image_path):
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        try:
+            from PIL import Image
+            img = Image.new('RGB', (100, 100), color='white')
+            img.save(image_path)
+        except ImportError:
+            # Fallback: create a dummy PNG file
+            with open(image_path, 'wb') as f:
+                f.write(b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00d\x00\x00\x00d\x08\x02\x00\x00\x00\x89\x1a\x16\xbc\x00\x00\x00\x0cIDATx\x9cc```\x00\x00\x00\x04\x00\x01\xf5\xd7\xd4\xc2\x00\x00\x00\x00IEND\xaeB`\x82')
+    
     with open(image_path, "rb") as f:
         image_content = f.read()
     mock_file = MockUploadedFile("test_sample.png", image_content, "image/png")
