@@ -758,3 +758,143 @@ python scripts/cleanup_chroma.py --force
 
 ## Core Features
 - **Background Task Management**: Run complex queries and document processing in the background. Monitor, cancel, and manage tasks directly from the chat UI and sidebar. Powered by Celery, Redis, and Flower for robust async processing. 
+
+## 🔄 Real-time UI & Enhanced Task Management
+
+### **Auto-refresh Interface**
+
+BasicChat features an intelligent auto-refresh system that provides real-time updates for long-running tasks without requiring manual page refreshes.
+
+<div align="center">
+
+| **Feature** | **Description** | **Benefits** |
+|:---|:---|:---|
+| **Auto-refresh UI** | Automatic page updates every 3 seconds for running tasks | No manual refresh needed |
+| **Progress Tracking** | Real-time progress bars and detailed status messages | Clear visibility into task progress |
+| **Task Notifications** | Celebration effects and notifications when tasks complete | Immediate feedback on completion |
+| **Smart Task Management** | Cancel, refresh, and monitor tasks from the interface | Full control over task execution |
+
+</div>
+
+**Auto-refresh Implementation:**
+The auto-refresh system intelligently monitors active tasks and triggers UI updates based on task status changes. The system uses Streamlit's session state management to track task progress and automatically refreshes the interface every 3 seconds when tasks are running. This provides a seamless user experience where progress is visible in real-time without manual intervention.
+
+**Key Features:**
+- **🔄 Automatic Updates**: UI refreshes every 3 seconds for running tasks
+- **📊 Progress Visualization**: Real-time progress bars and percentage indicators
+- **🎉 Completion Celebrations**: Balloon effects and success notifications
+- **🛠️ Task Controls**: Cancel and refresh buttons for each task
+- **📱 Status Indicators**: Detailed status messages and timestamps
+
+### **Enhanced Task Status Display**
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "📊 Task Status Flow"
+        PENDING[⏳ Pending]
+        RUNNING[🔄 Running]
+        COMPLETED[✅ Completed]
+        FAILED[❌ Failed]
+        
+        PENDING --> RUNNING
+        RUNNING --> COMPLETED
+        RUNNING --> FAILED
+        
+        subgraph "🔄 Auto-refresh Loop"
+            CHECK[Check Task Status]
+            UPDATE[Update UI]
+            WAIT[Wait 3s]
+            
+            CHECK --> UPDATE
+            UPDATE --> WAIT
+            WAIT --> CHECK
+        end
+    end
+    
+    classDef pending fill:#FFF3E0,stroke:#F57C00,stroke-width:2px
+    classDef running fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    classDef completed fill:#E8F5E8,stroke:#388E3C,stroke-width:2px
+    classDef failed fill:#FFEBEE,stroke:#D32F2F,stroke-width:2px
+    classDef refresh fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
+    
+    class PENDING pending
+    class RUNNING running
+    class COMPLETED completed
+    class FAILED failed
+    class CHECK,UPDATE,WAIT refresh
+```
+
+</div>
+
+**Diagram Narrative: Enhanced Task Status Flow**
+
+This diagram illustrates the enhanced task status management system with auto-refresh capabilities. The system monitors task states and automatically updates the UI every 3 seconds when tasks are running, providing real-time progress feedback. Task completion triggers celebration effects and automatic result display, while failed tasks show detailed error information for debugging.
+
+**Task Status Features:**
+- **⏳ Pending**: Task is queued and waiting to start
+- **🔄 Running**: Task is actively processing with progress updates
+- **✅ Completed**: Task finished successfully with celebration effects
+- **❌ Failed**: Task failed with detailed error information
+- **🚫 Cancelled**: Task was cancelled by user
+
+### **Smart Task Management**
+
+The enhanced task management system provides comprehensive control over background tasks with intuitive UI controls.
+
+**Task Controls:**
+- **❌ Cancel**: Stop running tasks immediately
+- **🔄 Refresh**: Manually update task status
+- **📊 Progress**: Real-time progress bars and percentage indicators
+- **⏰ Timestamps**: Last update time for running tasks
+- **📋 Results**: Automatic display of task results upon completion
+
+**Sidebar Integration:**
+The sidebar provides a comprehensive task monitoring dashboard:
+- **Active Tasks**: Real-time list of running and pending tasks
+- **Task Metrics**: Count of active, completed, failed, and cancelled tasks
+- **Quick Actions**: Cancel and refresh buttons for each task
+- **Status Overview**: Visual indicators for task states
+
+### **Resilient Architecture**
+
+The enhanced system includes robust error handling and recovery mechanisms to ensure reliable operation.
+
+**Error Handling:**
+- **Graceful Failures**: Tasks fail gracefully with detailed error messages
+- **Automatic Recovery**: System attempts to recover from transient failures
+- **Fallback Mechanisms**: Alternative processing paths when primary methods fail
+- **User Feedback**: Clear error messages and recovery suggestions
+
+**Performance Optimizations:**
+- **Efficient Polling**: Smart polling that only refreshes when needed
+- **Memory Management**: Automatic cleanup of completed tasks
+- **Resource Optimization**: Efficient use of system resources
+- **Scalable Design**: Architecture supports multiple concurrent tasks
+
+### **User Experience Improvements**
+
+The enhanced UI provides a significantly improved user experience for long-running tasks.
+
+**Real-time Feedback:**
+- **Live Progress**: See task progress as it happens
+- **Status Updates**: Detailed status messages for each task phase
+- **Completion Notifications**: Immediate feedback when tasks complete
+- **Error Reporting**: Clear error messages with debugging information
+
+**Intuitive Controls:**
+- **One-click Actions**: Simple buttons for common actions
+- **Visual Indicators**: Clear visual feedback for all task states
+- **Contextual Help**: Helpful information and tooltips
+- **Responsive Design**: UI adapts to different screen sizes
+
+**Accessibility Features:**
+- **Keyboard Navigation**: Full keyboard support for all controls
+- **Screen Reader Support**: Proper ARIA labels and descriptions
+- **High Contrast**: Clear visual distinction between elements
+- **Error Prevention**: Validation and confirmation for destructive actions
+
+---
+
+## �� Deep Research Mode 

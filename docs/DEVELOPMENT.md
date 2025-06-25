@@ -776,3 +776,230 @@ docker-compose up --build
 - **Fallback mode:** If Redis/Celery are unavailable, tasks run in-process (for dev/testing only)
 
 See the [README](../README.md#long-running-tasks--background-processing) and [Architecture](ARCHITECTURE.md#background-task-system) for more details. 
+
+---
+
+## 🔄 Enhanced UI Development
+
+### **Real-time UI Architecture**
+
+The enhanced UI system provides real-time updates for long-running tasks using Streamlit's session state management and intelligent polling mechanisms.
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🔄 Auto-refresh System"
+        TASK[Task Submission]
+        STATE[Session State]
+        POLL[Polling Loop]
+        UPDATE[UI Update]
+        RERUN[Streamlit Rerun]
+        
+        TASK --> STATE
+        STATE --> POLL
+        POLL --> UPDATE
+        UPDATE --> RERUN
+        RERUN --> POLL
+    end
+    
+    subgraph "📊 Task Status Management"
+        PENDING[⏳ Pending]
+        RUNNING[🔄 Running]
+        COMPLETED[✅ Completed]
+        FAILED[❌ Failed]
+        
+        PENDING --> RUNNING
+        RUNNING --> COMPLETED
+        RUNNING --> FAILED
+    end
+    
+    classDef system fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
+    classDef status fill:#FFF3E0,stroke:#F57C00,stroke-width:2px
+    
+    class TASK,STATE,POLL,UPDATE,RERUN system
+    class PENDING,RUNNING,COMPLETED,FAILED status
+```
+
+</div>
+
+**Auto-refresh Implementation Details:**
+The auto-refresh system uses Streamlit's session state to track task progress and automatically triggers UI updates every 3 seconds when tasks are running. The system intelligently monitors active tasks and only refreshes when necessary, optimizing performance while providing real-time feedback.
+
+**Key Components:**
+- **Session State Management**: Tracks task progress and refresh timing
+- **Intelligent Polling**: Only refreshes when tasks are active
+- **Progress Visualization**: Real-time progress bars and status messages
+- **Task Controls**: Cancel and refresh buttons for each task
+- **Completion Notifications**: Celebration effects and automatic result display
+
+### **Task Status Display Components**
+
+**Task Status Widget:**
+```python
+def display_task_status(task_id: str, task_manager: TaskManager, context: str = "default"):
+    """
+    Display task status with enhanced controls and real-time updates.
+    
+    Features:
+    - Real-time progress bars
+    - Status messages and timestamps
+    - Cancel and refresh controls
+    - Completion celebrations
+    - Error handling and recovery
+    """
+    task_status = task_manager.get_task_status(task_id)
+    
+    # Display status with emoji indicators
+    status_emoji = {
+        "pending": "⏳",
+        "running": "🔄", 
+        "completed": "✅",
+        "failed": "❌",
+        "cancelled": "🚫"
+    }.get(task_status.status, "❓")
+    
+    # Show progress for running tasks
+    if task_status.status == "running":
+        st.progress(task_status.progress)
+        st.caption(f"Progress: {int(task_status.progress * 100)}%")
+    
+    # Display completion celebration
+    if task_status.status == "completed":
+        st.success("🎉 Task completed successfully!")
+        st.balloons()
+```
+
+**Auto-refresh Logic:**
+```python
+def enhanced_chat_interface(doc_processor):
+    """Enhanced chat interface with auto-refresh capabilities."""
+    
+    # Initialize auto-refresh state
+    if "last_refresh_time" not in st.session_state:
+        st.session_state.last_refresh_time = 0
+    
+    # Auto-refresh for active tasks (every 3 seconds)
+    import time
+    current_time = time.time()
+    active_tasks = st.session_state.task_manager.get_active_tasks()
+    running_tasks = [task for task in active_tasks if task.status in ["pending", "running"]]
+    
+    if running_tasks and (current_time - st.session_state.last_refresh_time) > 3:
+        st.session_state.last_refresh_time = current_time
+        st.rerun()
+```
+
+### **UI Component Development**
+
+**Best Practices for Real-time UI:**
+- **Session State Management**: Use Streamlit session state for persistent data
+- **Efficient Polling**: Only refresh when necessary to avoid performance issues
+- **Visual Feedback**: Provide clear visual indicators for all task states
+- **Error Handling**: Graceful error handling with user-friendly messages
+- **Accessibility**: Ensure all components are accessible and keyboard-navigable
+
+**Component Guidelines:**
+- **Consistent Design**: Use consistent emoji indicators and color schemes
+- **Responsive Layout**: Ensure components work on different screen sizes
+- **Loading States**: Show appropriate loading indicators during operations
+- **User Controls**: Provide intuitive controls for task management
+- **Feedback Mechanisms**: Clear feedback for all user actions
+
+### **Testing UI Components**
+
+**UI Testing Strategy:**
+```python
+import pytest
+from unittest.mock import Mock, patch
+import streamlit as st
+
+class TestTaskStatusDisplay:
+    def test_pending_task_display(self):
+        """Test display of pending task status."""
+        task_status = Mock()
+        task_status.status = "pending"
+        task_status.progress = 0.0
+        
+        # Test pending task display
+        with patch('streamlit.info') as mock_info:
+            display_task_status("test-task", Mock())
+            mock_info.assert_called_with("⏳ Task is queued and waiting to start")
+    
+    def test_running_task_progress(self):
+        """Test progress bar display for running tasks."""
+        task_status = Mock()
+        task_status.status = "running"
+        task_status.progress = 0.5
+        
+        with patch('streamlit.progress') as mock_progress:
+            display_task_status("test-task", Mock())
+            mock_progress.assert_called_with(0.5)
+    
+    def test_completion_celebration(self):
+        """Test celebration effects for completed tasks."""
+        task_status = Mock()
+        task_status.status = "completed"
+        
+        with patch('streamlit.success') as mock_success:
+            with patch('streamlit.balloons') as mock_balloons:
+                display_task_status("test-task", Mock())
+                mock_success.assert_called_with("🎉 Task completed successfully!")
+                mock_balloons.assert_called_once()
+```
+
+**Integration Testing:**
+```python
+class TestAutoRefreshIntegration:
+    def test_auto_refresh_trigger(self):
+        """Test that auto-refresh triggers for running tasks."""
+        with patch('time.time') as mock_time:
+            mock_time.return_value = 100.0
+            
+            # Simulate running task
+            task_manager = Mock()
+            task_manager.get_active_tasks.return_value = [
+                Mock(status="running")
+            ]
+            
+            # Test auto-refresh logic
+            with patch('streamlit.rerun') as mock_rerun:
+                enhanced_chat_interface(Mock())
+                mock_rerun.assert_called_once()
+```
+
+### **Performance Optimization**
+
+**UI Performance Best Practices:**
+- **Efficient State Management**: Minimize session state updates
+- **Smart Polling**: Only poll when tasks are active
+- **Component Caching**: Cache expensive UI components
+- **Lazy Loading**: Load components only when needed
+- **Memory Management**: Clean up completed tasks automatically
+
+**Optimization Techniques:**
+```python
+# Efficient polling with state management
+def optimized_auto_refresh():
+    """Optimized auto-refresh with minimal overhead."""
+    current_time = time.time()
+    
+    # Only check if we have active tasks
+    if not st.session_state.get('active_tasks'):
+        return
+    
+    # Only refresh if enough time has passed
+    if current_time - st.session_state.get('last_refresh', 0) > 3:
+        st.session_state.last_refresh = current_time
+        st.rerun()
+
+# Component caching for expensive operations
+@st.cache_data
+def get_task_metrics(task_manager):
+    """Cache task metrics to avoid repeated calculations."""
+    return {
+        'active': len([t for t in task_manager.get_active_tasks() if t.status in ['pending', 'running']]),
+        'completed': len([t for t in task_manager.get_active_tasks() if t.status == 'completed']),
+        'failed': len([t for t in task_manager.get_active_tasks() if t.status == 'failed'])
+    }
+``` 
