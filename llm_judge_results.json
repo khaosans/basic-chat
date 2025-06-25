@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-06-23T13:56:53.478010",
+  "timestamp": "2025-06-24T21:24:39.345002",
   "scores": {
     "code_quality": {
       "score": 5.0,
@@ -62,7 +62,7 @@
   "recommendations": [],
   "overall_score": 5.0,
   "evaluation_mode": "quick",
-  "model_used": "microsoft/phi-3.5",
+  "model_used": "microsoft/phi-3.5-mini",
   "api_calls": 0,
   "rate_limited": false,
   "summary": "Evaluation failed: All GitHub Models failed - no access to any models",
