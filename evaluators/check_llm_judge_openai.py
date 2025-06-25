@@ -107,7 +107,13 @@ class OpenAIEvaluator:
             'test_coverage': 0.0,
             'documentation_files': 0,
             'dependencies': [],
-            'recent_changes': []
+            'recent_changes': [],
+            'test_analysis': {
+                'test_files_content': [],
+                'test_functions': [],
+                'test_categories': {},
+                'test_coverage_details': {}
+            }
         }
         
         # In quick mode, focus on key files only
@@ -128,13 +134,58 @@ class OpenAIEvaluator:
                     except Exception:
                         pass
             
-            # Count test files in test directories
+            # Enhanced test directory analysis
             for test_dir in test_dirs:
                 if os.path.exists(test_dir):
                     for root, dirs, files in os.walk(test_dir):
                         for file in files:
                             if file.endswith('.py') and ('test' in file.lower() or file.startswith('test_')):
                                 info['test_files'] += 1
+                                file_path = os.path.join(root, file)
+                                
+                                # Read and analyze test file content
+                                try:
+                                    with open(file_path, 'r', encoding='utf-8') as f:
+                                        content = f.read()
+                                        lines = content.split('\n')
+                                        
+                                        # Extract test functions
+                                        test_functions = []
+                                        test_categories = set()
+                                        
+                                        for i, line in enumerate(lines):
+                                            # Find test function definitions
+                                            if line.strip().startswith('def test_'):
+                                                func_name = line.strip().split('def ')[1].split('(')[0]
+                                                test_functions.append({
+                                                    'name': func_name,
+                                                    'file': file,
+                                                    'line': i + 1
+                                                })
+                                            
+                                            # Find test categories/markers
+                                            if '@pytest.mark.' in line:
+                                                marker = line.strip().split('@pytest.mark.')[1].split('(')[0]
+                                                test_categories.add(marker)
+                                        
+                                        # Store test file analysis
+                                        info['test_analysis']['test_files_content'].append({
+                                            'file': file,
+                                            'path': file_path,
+                                            'lines': len(lines),
+                                            'test_functions': test_functions,
+                                            'categories': list(test_categories),
+                                            'content_preview': content[:1000] + '...' if len(content) > 1000 else content
+                                        })
+                                        
+                                        # Update test categories
+                                        for category in test_categories:
+                                            if category not in info['test_analysis']['test_categories']:
+                                                info['test_analysis']['test_categories'][category] = 0
+                                            info['test_analysis']['test_categories'][category] += 1
+                                        
+                                except Exception as e:
+                                    print(f"Warning: Could not read test file {file_path}: {e}")
         else:
             # Full mode - scan entire codebase
             for root, dirs, files in os.walk('.'):
@@ -153,9 +204,53 @@ class OpenAIEvaluator:
                         except Exception:
                             pass
                         
-                        # Count test files
+                        # Enhanced test file analysis for full mode
                         if 'test' in file.lower() or file.startswith('test_'):
                             info['test_files'] += 1
+                            
+                            # Read and analyze test file content
+                            try:
+                                with open(file_path, 'r', encoding='utf-8') as f:
+                                    content = f.read()
+                                    lines = content.split('\n')
+                                    
+                                    # Extract test functions
+                                    test_functions = []
+                                    test_categories = set()
+                                    
+                                    for i, line in enumerate(lines):
+                                        # Find test function definitions
+                                        if line.strip().startswith('def test_'):
+                                            func_name = line.strip().split('def ')[1].split('(')[0]
+                                            test_functions.append({
+                                                'name': func_name,
+                                                'file': file,
+                                                'line': i + 1
+                                            })
+                                        
+                                        # Find test categories/markers
+                                        if '@pytest.mark.' in line:
+                                            marker = line.strip().split('@pytest.mark.')[1].split('(')[0]
+                                            test_categories.add(marker)
+                                    
+                                    # Store test file analysis
+                                    info['test_analysis']['test_files_content'].append({
+                                        'file': file,
+                                        'path': file_path,
+                                        'lines': len(lines),
+                                        'test_functions': test_functions,
+                                        'categories': list(test_categories),
+                                        'content_preview': content[:1000] + '...' if len(content) > 1000 else content
+                                    })
+                                    
+                                    # Update test categories
+                                    for category in test_categories:
+                                        if category not in info['test_analysis']['test_categories']:
+                                            info['test_analysis']['test_categories'][category] = 0
+                                        info['test_analysis']['test_categories'][category] += 1
+                                    
+                            except Exception as e:
+                                print(f"Warning: Could not read test file {file_path}: {e}")
         
         # Get test coverage if available (skip in quick mode for speed)
         if not self.quick_mode:
@@ -166,6 +261,7 @@ class OpenAIEvaluator:
                     coverage_data = json.loads(result.stdout)
                     if coverage_data and 'totals' in coverage_data:
                         info['test_coverage'] = coverage_data['totals'].get('percent', 0.0)
+                        info['test_analysis']['test_coverage_details'] = coverage_data
             except Exception:
                 pass
         
@@ -187,6 +283,28 @@ class OpenAIEvaluator:
         mode_note = "QUICK EVALUATION MODE - Focus on critical issues only" if self.quick_mode else "FULL EVALUATION MODE"
         rubric_md = self.consistency.rubric_text()
         version = self.consistency.version
+        
+        # Build detailed test analysis section
+        test_analysis = codebase_info.get('test_analysis', {})
+        test_files_content = test_analysis.get('test_files_content', [])
+        test_categories = test_analysis.get('test_categories', {})
+        
+        test_analysis_text = f"""
+TEST ANALYSIS:
+- Test files found: {len(test_files_content)}
+- Test categories: {dict(test_categories)}
+- Total test functions: {sum(len(tf.get('test_functions', [])) for tf in test_files_content)}
+
+Test Files Details:"""
+        
+        for tf in test_files_content:
+            test_analysis_text += f"""
+  - {tf['file']} ({tf['lines']} lines)
+    - Test functions: {len(tf['test_functions'])}
+    - Categories: {tf['categories']}
+    - Functions: {[f['name'] for f in tf['test_functions']]}
+    - Content preview: {tf['content_preview'][:200]}..."""
+        
         return f"""
 You are an expert software engineer evaluating a Python codebase for quality, maintainability, and best practices.
 
@@ -202,9 +320,13 @@ Codebase Information:
 - Documentation files: {codebase_info['documentation_files']}
 - Dependencies: {len(codebase_info['dependencies'])} packages
 
+{test_analysis_text}
+
 Please evaluate the following aspects and provide scores from 1-10 (where 10 is excellent):
 
 {rubric_md}
+
+**IMPORTANT: Pay special attention to test coverage and quality based on the detailed test analysis above.**
 
 For each category, provide:
 - Score (1-10)
@@ -217,6 +339,7 @@ For each category, provide:
 - Prioritize the most impactful actions first
 - Use concise, direct language
 - If relevant, provide a brief example or filename
+- For test coverage issues, reference specific test files and functions that need improvement
 
 Respond in the following JSON format:
 {{
