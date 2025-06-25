@@ -9,6 +9,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io)
 [![Ollama](https://img.shields.io/badge/Ollama-Local%20LLMs-green.svg)](https://ollama.ai)
+[![Redis](https://img.shields.io/badge/Redis-Task%20Queue-orange.svg)](https://redis.io)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 *An intelligent, private AI assistant that runs entirely on your local machine*
@@ -106,6 +107,7 @@ See the [Architecture Overview](docs/ARCHITECTURE.md#background-task-system) for
 # Required Software
 - Python 3.11+ 
 - Ollama (for local LLMs)
+- Redis (for background tasks)
 - Git (for cloning)
 ```
 
@@ -124,6 +126,20 @@ source venv/bin/activate  # On Windows: .\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
+### **Start Required Services**
+
+```bash
+# Start Redis (macOS with Homebrew)
+brew services start redis
+
+# Start Ollama
+ollama serve
+
+# Verify services are running
+redis-cli ping  # Should return PONG
+curl http://localhost:11434/api/tags  # Should return model list
+```
+
 ### **Download AI Models**
 
 ```bash
@@ -137,7 +153,7 @@ ollama pull llava
 
 ### **Quick Start with Background Tasks**
 
-For full async/background processing, use the provided dev script or Docker Compose setup:
+For full async/background processing, use the provided dev script:
 
 ```bash
 # Start all services (Redis, Celery workers, Flower, Streamlit app)
@@ -150,6 +166,7 @@ Or with Docker Compose:
 docker-compose up --build
 ```
 
+**Application URLs:**
 - **Main App:** http://localhost:8501
 - **Task Monitor (Flower):** http://localhost:5555
 - **Redis:** localhost:6379
@@ -157,6 +174,53 @@ docker-compose up --build
 > Flower provides a real-time dashboard for monitoring, retrying, or revoking tasks.
 
 For more details, see [Development Guide](docs/DEVELOPMENT.md#running-with-background-tasks).
+
+---
+
+## 🧹 Document & Database Cleanup
+
+BasicChat includes comprehensive cleanup tools for maintaining optimal performance:
+
+### **ChromaDB Cleanup**
+
+```bash
+# Check current status
+python scripts/cleanup_chroma.py --status
+
+# Clean all ChromaDB directories
+python scripts/cleanup_chroma.py
+
+# Clean directories older than 24 hours
+python scripts/cleanup_chroma.py --age 24
+
+# Dry run (see what would be cleaned)
+python scripts/cleanup_chroma.py --dry-run
+
+# Force cleanup even if in use
+python scripts/cleanup_chroma.py --force
+```
+
+### **Manual Cleanup**
+
+```bash
+# Remove ChromaDB directories
+rm -rf chroma_db*
+
+# Clean temporary files
+rm -rf temp_audio/*
+rm -rf uploads/*
+
+# Restart services after cleanup
+./start_dev.sh
+```
+
+### **Automatic Cleanup**
+
+The app automatically cleans up:
+- Temporary audio files after processing
+- Old task results from Redis
+- Expired cache entries
+- Unused document embeddings
 
 ---
 
@@ -186,6 +250,7 @@ graph TB
     subgraph "🗄️ Storage"
         CHROMA[Vector Database]
         CACHE[Memory Cache]
+        REDIS[Redis Task Queue]
     end
     
     subgraph "🌐 External"
@@ -206,6 +271,7 @@ graph TB
     AO --> OLLAMA
     VS --> CHROMA
     CS --> CACHE
+    CS --> REDIS
     
     %% Styling
     classDef ui fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
@@ -217,7 +283,7 @@ graph TB
     class UI,AUDIO ui
     class RE,DP,TR core
     class AO,VS,CS service
-    class CHROMA,CACHE storage
+    class CHROMA,CACHE,REDIS storage
     class OLLAMA external
 ```
 
@@ -280,6 +346,18 @@ mypy .
 python scripts/cleanup_chroma.py --status
 python scripts/cleanup_chroma.py --dry-run
 python scripts/cleanup_chroma.py --force
+```
+
+### **Service Management**
+```bash
+# Start all services
+./start_dev.sh
+
+# Stop all services
+pkill -f "streamlit\|celery\|flower"
+
+# Check service status
+ps aux | grep -E "(streamlit|celery|flower)" | grep -v grep
 ```
 
 ---
