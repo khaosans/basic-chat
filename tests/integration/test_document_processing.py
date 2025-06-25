@@ -36,7 +36,7 @@ def create_test_document():
         f.write(content)
         return f.name
 
-def test_document_processing():
+def test_document_processing(mock_external_services):
     """Test the document processing functionality"""
     print("🧪 Testing Document Processing...")
     
