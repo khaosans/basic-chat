@@ -11,7 +11,7 @@ from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 
 # Add the parent directory to the path to import modules
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from task_manager import TaskManager, TaskStatus
 from task_ui import (
