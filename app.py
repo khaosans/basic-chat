@@ -525,17 +525,29 @@ def display_reasoning_result(result: ReasoningResult):
         st.write("**Sources:**", ", ".join(result.sources))
 
 def enhanced_chat_interface(doc_processor):
-    """
-    Main chat interface using Streamlit, with enhanced features.
-    """
+    """Enhanced chat interface with reasoning modes and document processing"""
     
-    # Initialize task manager
-    if "task_manager" not in st.session_state:
-        st.session_state.task_manager = TaskManager()
+    # Initialize session state for reasoning mode if not exists
+    if "reasoning_mode" not in st.session_state:
+        st.session_state.reasoning_mode = "Auto"
     
     # Initialize deep research mode
     if "deep_research_mode" not in st.session_state:
         st.session_state.deep_research_mode = False
+    
+    # Initialize last refresh time
+    if "last_refresh_time" not in st.session_state:
+        st.session_state.last_refresh_time = 0
+    
+    # Auto-refresh for active tasks (every 3 seconds)
+    import time
+    current_time = time.time()
+    active_tasks = st.session_state.task_manager.get_active_tasks()
+    running_tasks = [task for task in active_tasks if task.status in ["pending", "running"]]
+    
+    if running_tasks and (current_time - st.session_state.last_refresh_time) > 3:
+        st.session_state.last_refresh_time = current_time
+        st.rerun()
     
     # Sidebar Configuration
     with st.sidebar:
@@ -683,7 +695,7 @@ def enhanced_chat_interface(doc_processor):
                             st.error(f"Task failed: {task_status.error}")
                         else:
                             # Show task status
-                            display_task_status(task_id, st.session_state.task_manager)
+                            display_task_status(task_id, st.session_state.task_manager, "message_loop")
             
             # Add audio button for assistant messages
             if msg["role"] == "assistant" and not msg.get("is_task"):
@@ -743,7 +755,7 @@ def enhanced_chat_interface(doc_processor):
             # Display task message
             with st.chat_message("assistant"):
                 st.write(task_message["content"])
-                display_task_status(task_id, st.session_state.task_manager)
+                display_task_status(task_id, st.session_state.task_manager, "new_task")
             
             st.rerun()
         elif should_be_long_task:
@@ -768,7 +780,7 @@ def enhanced_chat_interface(doc_processor):
             # Display task message
             with st.chat_message("assistant"):
                 st.write(task_message["content"])
-                display_task_status(task_id, st.session_state.task_manager)
+                display_task_status(task_id, st.session_state.task_manager, "new_task")
             
             st.rerun()
         else:
