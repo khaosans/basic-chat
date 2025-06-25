@@ -406,3 +406,61 @@ Malkov, Yury A., and Dmitry A. Yashunin. "Efficient and Robust Approximate Neare
 [![GitHub Forks](https://img.shields.io/github/forks/khaosans/basic-chat-template?style=social)](https://github.com/khaosans/basic-chat-template)
 
 </div>
+
+## 📝 Project Overview
+
+BasicChat is a privacy-first, local AI assistant that supports advanced reasoning, document analysis, and research workflows. It runs entirely on your machine, ensuring your data never leaves your environment. The app supports multiple reasoning modes, background task processing, and integrates with local LLMs via Ollama.
+
+## 🚀 Setup & Usage
+
+### Prerequisites
+- Python 3.11+
+- Ollama (for local LLMs)
+- Redis (for background tasks)
+
+### Installation
+```bash
+git clone https://github.com/khaosans/basic-chat-template.git
+cd basic-chat-template
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Running the App
+```bash
+# Start Ollama and pull required models
+ollama serve &
+ollama pull mistral
+ollama pull nomic-embed-text
+
+# Start Redis (for background tasks)
+redis-server &
+
+# Start the app
+./start_dev.sh
+# or
+streamlit run app.py
+```
+
+### Example Usage
+- Upload a PDF, text, or image file and ask questions about its content.
+- Use the sidebar to select reasoning modes (Auto, Chain-of-Thought, Agent-Based, etc).
+- Enable Deep Research Mode for multi-source, academic-style answers.
+
+## 🔒 Security Best Practices
+- All processing is local; no data is sent to external APIs.
+- Input validation is performed on file uploads and text inputs.
+- Only trusted file types are accepted (PDF, TXT, PNG, JPG, JPEG).
+- Session state is isolated per user.
+
+## 🧪 Testing
+Run all tests with:
+```bash
+pytest
+```
+
+## 🛡️ Input Validation
+- File uploads are checked for type and size.
+- Text inputs are sanitized before processing.
+- Configuration values are validated at startup.
