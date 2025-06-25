@@ -1,0 +1,23 @@
+[Unit]
+Description=BasicChat AI Assistant
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/path/to/basic-chat-template
+Environment=PATH=/path/to/basic-chat-template/venv/bin
+ExecStart=/path/to/basic-chat-template/venv/bin/python -m streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+Restart=always
+RestartSec=10
+
+# Environment variables
+Environment=REDIS_ENABLED=true
+Environment=REDIS_URL=redis://localhost:6379
+Environment=CELERY_BROKER_URL=redis://localhost:6379/0
+Environment=CELERY_RESULT_BACKEND=redis://localhost:6379/0
+Environment=ENABLE_BACKGROUND_TASKS=true
+
+[Install]
+WantedBy=multi-user.target 

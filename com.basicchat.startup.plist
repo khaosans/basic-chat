@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.basicchat.startup</string>
+    
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/YOUR_USERNAME/Documents/basic-chat-template/launch_basicchat.sh</string>
+    </array>
+    
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <key>KeepAlive</key>
+    <true/>
+    
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USERNAME/Documents/basic-chat-template/basicchat.log</string>
+    
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USERNAME/Documents/basic-chat-template/basicchat_error.log</string>
+    
+    <key>WorkingDirectory</key>
+    <string>/Users/YOUR_USERNAME/Documents/basic-chat-template</string>
+    
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>REDIS_ENABLED</key>
+        <string>true</string>
+        <key>REDIS_URL</key>
+        <string>redis://localhost:6379</string>
+        <key>CELERY_BROKER_URL</key>
+        <string>redis://localhost:6379/0</string>
+        <key>CELERY_RESULT_BACKEND</key>
+        <string>redis://localhost:6379/0</string>
+        <key>ENABLE_BACKGROUND_TASKS</key>
+        <string>true</string>
+    </dict>
+</dict>
+</plist> 
