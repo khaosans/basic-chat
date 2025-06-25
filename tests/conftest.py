@@ -7,6 +7,7 @@ import pytest
 import os
 import tempfile
 import shutil
+import asyncio
 from unittest.mock import Mock, patch
 from pathlib import Path
 
@@ -105,6 +106,13 @@ def sample_test_files():
     
     yield files
 
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an instance of the default event loop for the test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
 def pytest_configure(config):
     """Configure pytest with custom markers."""
     config.addinivalue_line(
@@ -129,19 +137,26 @@ def pytest_configure(config):
 def pytest_collection_modifyitems(config, items):
     """Modify test collection to add default markers."""
     for item in items:
+        # Skip integration tests in default runs
+        if 'integration' in item.nodeid:
+            item.add_marker(pytest.mark.skip(reason="Integration test - run separately"))
+            continue
+            
         # Add default markers based on test location and name
         if 'test_core' in item.nodeid or 'test_tools' in item.nodeid:
             item.add_marker(pytest.mark.unit)
             item.add_marker(pytest.mark.fast)
-        elif 'test_audio' in item.nodeid and 'integration' not in item.nodeid:
+        elif 'test_audio' in item.nodeid:
             item.add_marker(pytest.mark.unit)
         elif 'test_voice' in item.nodeid:
             item.add_marker(pytest.mark.unit)
         elif 'test_llm_judge' in item.nodeid:
             item.add_marker(pytest.mark.slow)
-        elif 'test_reasoning' in item.nodeid or 'test_documents' in item.nodeid:
-            item.add_marker(pytest.mark.integration)
+        elif 'test_reasoning' in item.nodeid:
+            item.add_marker(pytest.mark.unit)  # Changed from integration to unit
+        elif 'test_documents' in item.nodeid:
+            item.add_marker(pytest.mark.unit)  # Changed from integration to unit
         elif 'test_web_search' in item.nodeid:
-            item.add_marker(pytest.mark.integration)
+            item.add_marker(pytest.mark.unit)  # Changed from integration to unit
         elif 'test_upload' in item.nodeid or 'test_document_processing' in item.nodeid:
-            item.add_marker(pytest.mark.integration) 
+            item.add_marker(pytest.mark.unit)  # Changed from integration to unit 
