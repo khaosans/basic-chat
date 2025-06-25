@@ -137,52 +137,143 @@ The privacy-first design is implemented through multiple layers of protection. A
 - Session isolation ensures no cross-user data access
 - Automatic cleanup removes temporary files and cache entries
 
-**Diagram Narrative: Advanced RAG Pipeline**
+---
 
-This diagram shows the retrieval-augmented generation pipeline where documents are processed through extraction, chunking, embedding, and storage phases, then retrieved for contextual answer generation. The RAG approach combines the reliability of document-based information with the flexibility of LLM reasoning, providing accurate answers grounded in specific source material (Lewis et al.). Optimize chunk sizes and embedding parameters based on your document types for optimal retrieval accuracy.
+## 🔄 Real-time UI & Enhanced Task Management
 
-**RAG Performance Optimization:**
-The RAG pipeline is optimized for both accuracy and speed through several key design decisions. The chunk size of 1000 characters balances retrieval precision with processing efficiency, while the 200-character overlap maintains context continuity across chunks. The system uses nomic-embed-text embeddings which provide excellent semantic understanding while maintaining reasonable computational requirements. Retrieval is optimized using a hybrid approach that combines dense vector similarity with sparse keyword matching, ensuring comprehensive coverage of relevant information (Johnson et al.).
+### **Auto-refresh Interface**
 
-**Chunking Strategy:**
-The intelligent chunking algorithm uses a hierarchical approach that first attempts to split on natural boundaries (paragraphs, sentences), then falls back to character-based splitting when necessary. This approach maintains semantic coherence while ensuring optimal chunk sizes for retrieval. The system also implements metadata preservation, tracking source information and chunk relationships to enable accurate attribution and context reconstruction.
+BasicChat features an intelligent auto-refresh system that provides real-time updates for long-running tasks without requiring manual page refreshes.
 
-### **Intelligent Text Chunking**
+<div align="center">
 
-- **Recursive Splitting**: Maintains semantic coherence
-- **Overlap Strategy**: 200-character overlap for context continuity
-- **Size Optimization**: 1000-character chunks for optimal retrieval
-- **Metadata Preservation**: Source tracking and chunk relationships
+| **Feature** | **Description** | **Benefits** |
+|:---|:---|:---|
+| **Auto-refresh UI** | Automatic page updates every 3 seconds for running tasks | No manual refresh needed |
+| **Progress Tracking** | Real-time progress bars and detailed status messages | Clear visibility into task progress |
+| **Task Notifications** | Celebration effects and notifications when tasks complete | Immediate feedback on completion |
+| **Smart Task Management** | Cancel, refresh, and monitor tasks from the interface | Full control over task execution |
 
-### **Vision Model Integration**
+</div>
+
+**Auto-refresh Implementation:**
+The auto-refresh system intelligently monitors active tasks and triggers UI updates based on task status changes. The system uses Streamlit's session state management to track task progress and automatically refreshes the interface every 3 seconds when tasks are running. This provides a seamless user experience where progress is visible in real-time without manual intervention.
+
+**Key Features:**
+- **🔄 Automatic Updates**: UI refreshes every 3 seconds for running tasks
+- **📊 Progress Visualization**: Real-time progress bars and percentage indicators
+- **🎉 Completion Celebrations**: Balloon effects and success notifications
+- **🛠️ Task Controls**: Cancel and refresh buttons for each task
+- **📱 Status Indicators**: Detailed status messages and timestamps
+
+### **Enhanced Task Status Display**
+
+<div align="center">
 
 ```mermaid
 graph TB
-    subgraph "🖼️ Image Processing"
-        IMG[Image Upload]
-        ENCODE[Base64 Encoding]
-        VISION[Vision Model Analysis]
-        DESC[Description Generation]
-        TEXT[Text Extraction]
+    subgraph "📊 Task Status Flow"
+        PENDING[⏳ Pending]
+        RUNNING[🔄 Running]
+        COMPLETED[✅ Completed]
+        FAILED[❌ Failed]
+        
+        PENDING --> RUNNING
+        RUNNING --> COMPLETED
+        RUNNING --> FAILED
+        
+        subgraph "🔄 Auto-refresh Loop"
+            CHECK[Check Task Status]
+            UPDATE[Update UI]
+            WAIT[Wait 3s]
+            
+            CHECK --> UPDATE
+            UPDATE --> WAIT
+            WAIT --> CHECK
+        end
     end
     
-    IMG --> ENCODE
-    ENCODE --> VISION
-    VISION --> DESC
-    VISION --> TEXT
-    DESC --> CHUNK
-    TEXT --> CHUNK
+    classDef pending fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef running fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef completed fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef failed fill:#FFEBEE,stroke:#D32F2F,stroke-width:2px,color:#C62828
+    classDef refresh fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    
+    class PENDING pending
+    class RUNNING running
+    class COMPLETED completed
+    class FAILED failed
+    class CHECK,UPDATE,WAIT refresh
 ```
 
-**Diagram Narrative: Vision Model Integration**
+</div>
 
-This diagram illustrates how images are processed through vision models to extract both textual and visual information, enabling comprehensive understanding of image content for RAG applications. The dual-output approach combines OCR capabilities with visual description generation, ensuring complete content analysis regardless of image type. Ensure the vision model (llava) is properly installed and configured for optimal image processing performance and accuracy.
+**Diagram Narrative: Enhanced Task Status Flow**
 
-**Capabilities:**
-- **Text Recognition**: OCR for text within images
-- **Visual Analysis**: Understanding of diagrams and charts
-- **Context Awareness**: Integration with document processing pipeline
-- **Multi-Modal Search**: Combined text and visual content search
+This diagram illustrates the enhanced task status management system with auto-refresh capabilities. The system monitors task states and automatically updates the UI every 3 seconds when tasks are running, providing real-time progress feedback. Task completion triggers celebration effects and automatic result display, while failed tasks show detailed error information for debugging.
+
+**Task Status Features:**
+- **⏳ Pending**: Task is queued and waiting to start
+- **🔄 Running**: Task is actively processing with progress updates
+- **✅ Completed**: Task finished successfully with celebration effects
+- **❌ Failed**: Task failed with detailed error information
+- **🚫 Cancelled**: Task was cancelled by user
+
+### **Smart Task Management**
+
+The enhanced task management system provides comprehensive control over background tasks with intuitive UI controls.
+
+**Task Controls:**
+- **❌ Cancel**: Stop running tasks immediately
+- **🔄 Refresh**: Manually update task status
+- **📊 Progress**: Real-time progress bars and percentage indicators
+- **⏰ Timestamps**: Last update time for running tasks
+- **📋 Results**: Automatic display of task results upon completion
+
+**Sidebar Integration:**
+The sidebar provides a comprehensive task monitoring dashboard:
+- **Active Tasks**: Real-time list of running and pending tasks
+- **Task Metrics**: Count of active, completed, failed, and cancelled tasks
+- **Quick Actions**: Cancel and refresh buttons for each task
+- **Status Overview**: Visual indicators for task states
+
+### **Resilient Architecture**
+
+The enhanced system includes robust error handling and recovery mechanisms to ensure reliable operation.
+
+**Error Handling:**
+- **Graceful Failures**: Tasks fail gracefully with detailed error messages
+- **Automatic Recovery**: System attempts to recover from transient failures
+- **Fallback Mechanisms**: Alternative processing paths when primary methods fail
+- **User Feedback**: Clear error messages and recovery suggestions
+
+**Performance Optimizations:**
+- **Efficient Polling**: Smart polling that only refreshes when needed
+- **Memory Management**: Automatic cleanup of completed tasks
+- **Resource Optimization**: Efficient use of system resources
+- **Scalable Design**: Architecture supports multiple concurrent tasks
+
+### **User Experience Improvements**
+
+The enhanced UI provides a significantly improved user experience for long-running tasks.
+
+**Real-time Feedback:**
+- **Live Progress**: See task progress as it happens
+- **Status Updates**: Detailed status messages for each task phase
+- **Completion Notifications**: Immediate feedback when tasks complete
+- **Error Reporting**: Clear error messages with debugging information
+
+**Intuitive Controls:**
+- **One-click Actions**: Simple buttons for common actions
+- **Visual Indicators**: Clear visual feedback for all task states
+- **Contextual Help**: Helpful information and tooltips
+- **Responsive Design**: UI adapts to different screen sizes
+
+**Accessibility Features:**
+- **Keyboard Navigation**: Full keyboard support for all controls
+- **Screen Reader Support**: Proper ARIA labels and descriptions
+- **High Contrast**: Clear visual distinction between elements
+- **Error Prevention**: Validation and confirmation for destructive actions
 
 ---
 
@@ -449,6 +540,8 @@ The calculator implements a multi-layered security approach that begins with reg
 
 Comprehensive time management with full timezone support.
 
+<div align="center">
+
 ```mermaid
 graph TD
     subgraph "🕐 Time Tool Capabilities"
@@ -480,7 +573,15 @@ graph TD
     
     DIFF --> UTC
     INFO --> UTC
+    
+    classDef capabilities fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef timezones fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    
+    class CURRENT,CONVERT,DIFF,INFO capabilities
+    class UTC,EST,GMT,JST,CUSTOM timezones
 ```
+
+</div>
 
 **Diagram Narrative: Time Tool Capabilities**
 
@@ -495,6 +596,8 @@ This diagram shows the comprehensive time management capabilities across multipl
 ### **Web Search Integration**
 
 Real-time information retrieval powered by DuckDuckGo.
+
+<div align="center">
 
 ```mermaid
 sequenceDiagram
@@ -514,6 +617,8 @@ sequenceDiagram
     end
     BasicChat-->>User: Formatted results
 ```
+
+</div>
 
 **Diagram Narrative: Web Search Integration Flow**
 
@@ -536,9 +641,184 @@ The web search integration is optimized for both performance and privacy. The sy
 
 ---
 
+## 📄 Document & Image Analysis
+
+### **Advanced RAG Pipeline**
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "📄 Document Processing"
+        UPLOAD[File Upload]
+        EXTRACT[Text Extraction]
+        CHUNK[Intelligent Chunking]
+        EMBED[Embedding Generation]
+        STORE[Vector Storage]
+    end
+    
+    subgraph "🔍 Retrieval & Generation"
+        QUERY[User Query]
+        SEARCH[Semantic Search]
+        RETRIEVE[Context Retrieval]
+        GENERATE[Answer Generation]
+        OUTPUT[Formatted Response]
+    end
+    
+    UPLOAD --> EXTRACT
+    EXTRACT --> CHUNK
+    CHUNK --> EMBED
+    EMBED --> STORE
+    
+    QUERY --> SEARCH
+    SEARCH --> STORE
+    STORE --> RETRIEVE
+    RETRIEVE --> GENERATE
+    GENERATE --> OUTPUT
+    
+    classDef processing fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef retrieval fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef storage fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    
+    class UPLOAD,EXTRACT,CHUNK,EMBED processing
+    class QUERY,SEARCH,RETRIEVE,GENERATE,OUTPUT retrieval
+    class STORE storage
+```
+
+</div>
+
+**Diagram Narrative: Advanced RAG Pipeline**
+
+This diagram shows the retrieval-augmented generation pipeline where documents are processed through extraction, chunking, embedding, and storage phases, then retrieved for contextual answer generation. The RAG approach combines the reliability of document-based information with the flexibility of LLM reasoning, providing accurate answers grounded in specific source material (Lewis et al.). Optimize chunk sizes and embedding parameters based on your document types for optimal retrieval accuracy.
+
+**RAG Performance Optimization:**
+The RAG pipeline is optimized for both accuracy and speed through several key design decisions. The chunk size of 1000 characters balances retrieval precision with processing efficiency, while the 200-character overlap maintains context continuity across chunks. The system uses nomic-embed-text embeddings which provide excellent semantic understanding while maintaining reasonable computational requirements. Retrieval is optimized using a hybrid approach that combines dense vector similarity with sparse keyword matching, ensuring comprehensive coverage of relevant information (Johnson et al.).
+
+**Chunking Strategy:**
+The intelligent chunking algorithm uses a hierarchical approach that first attempts to split on natural boundaries (paragraphs, sentences), then falls back to character-based splitting when necessary. This approach maintains semantic coherence while ensuring optimal chunk sizes for retrieval. The system also implements metadata preservation, tracking source information and chunk relationships to enable accurate attribution and context reconstruction.
+
+### **Intelligent Text Chunking**
+
+- **Recursive Splitting**: Maintains semantic coherence
+- **Overlap Strategy**: 200-character overlap for context continuity
+- **Size Optimization**: 1000-character chunks for optimal retrieval
+- **Metadata Preservation**: Source tracking and chunk relationships
+
+### **Vision Model Integration**
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🖼️ Image Processing"
+        IMG[Image Upload]
+        ENCODE[Base64 Encoding]
+        VISION[Vision Model Analysis]
+        DESC[Description Generation]
+        TEXT[Text Extraction]
+        CHUNK[Chunking & Storage]
+    end
+    
+    IMG --> ENCODE
+    ENCODE --> VISION
+    VISION --> DESC
+    VISION --> TEXT
+    DESC --> CHUNK
+    TEXT --> CHUNK
+    
+    classDef image fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef processing fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef output fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    
+    class IMG image
+    class ENCODE,VISION processing
+    class DESC,TEXT,CHUNK output
+```
+
+</div>
+
+**Diagram Narrative: Vision Model Integration**
+
+This diagram illustrates how images are processed through vision models to extract both textual and visual information, enabling comprehensive understanding of image content for RAG applications. The dual-output approach combines OCR capabilities with visual description generation, ensuring complete content analysis regardless of image type. Ensure the vision model (llava) is properly installed and configured for optimal image processing performance and accuracy.
+
+**Capabilities:**
+- **Text Recognition**: OCR for text within images
+- **Visual Analysis**: Understanding of diagrams and charts
+- **Context Awareness**: Integration with document processing pipeline
+- **Multi-Modal Search**: Combined text and visual content search
+
+### **Vector Database Management**
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🗄️ ChromaDB Vector Store"
+        CHROMA[ChromaDB Instance]
+        EMBEDDINGS[Embedding Storage]
+        SEARCH[Semantic Search]
+        PERSIST[Persistence Layer]
+    end
+    
+    subgraph "🧹 Management Tools"
+        CLEANUP[Cleanup Script]
+        STATUS[Status Monitoring]
+        BACKUP[Backup/Restore]
+        OPTIMIZE[Optimization]
+    end
+    
+    CHROMA --> EMBEDDINGS
+    CHROMA --> SEARCH
+    CHROMA --> PERSIST
+    
+    CLEANUP --> CHROMA
+    STATUS --> CHROMA
+    BACKUP --> CHROMA
+    OPTIMIZE --> CHROMA
+    
+    classDef storage fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef management fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    
+    class CHROMA,EMBEDDINGS,SEARCH,PERSIST storage
+    class CLEANUP,STATUS,BACKUP,OPTIMIZE management
+```
+
+</div>
+
+**Diagram Narrative: ChromaDB Vector Store Management**
+
+This diagram shows how vector storage and management tools work together to provide efficient document retrieval and storage capabilities. The comprehensive management approach ensures reliable vector database operations while providing tools for maintenance, monitoring, and optimization through cleanup scripts, backup systems, and health checks. Use the cleanup script regularly to manage database size, monitor status for health issues, and perform backups to ensure data integrity and system reliability.
+
+### **Database Utilities**
+
+**Cleanup Script Features:**
+- **Status Reporting**: View all ChromaDB directories
+- **Dry Run Mode**: Preview cleanup operations
+- **Age-based Cleanup**: Remove old directories
+- **Force Cleanup**: Complete database reset
+
+**Usage Examples:**
+```bash
+# Check database status
+python scripts/cleanup_chroma.py --status
+
+# Preview cleanup (dry run)
+python scripts/cleanup_chroma.py --dry-run
+
+# Clean up old directories (24+ hours)
+python scripts/cleanup_chroma.py --age 24
+
+# Force complete cleanup
+python scripts/cleanup_chroma.py --force
+```
+
+---
+
 ## ⚡ Performance & User Experience
 
 ### **Async Architecture**
+
+<div align="center">
 
 ```mermaid
 graph TB
@@ -560,7 +840,15 @@ graph TB
     POOL --> CONNECTIONS
     CACHE --> HIT_RATE
     STREAM --> RESPONSE
+    
+    classDef features fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef metrics fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    
+    class ASYNC,POOL,CACHE,STREAM features
+    class RESPONSE,HIT_RATE,CONNECTIONS,RATE_LIMIT metrics
 ```
+
+</div>
 
 **Diagram Narrative: Async Architecture Performance**
 
@@ -592,156 +880,52 @@ Cache keys are designed to balance uniqueness with efficiency. The system uses a
 
 ### **Connection Pooling**
 
+<div align="center">
+
 ```mermaid
 graph LR
     subgraph "🔗 Connection Management"
         POOL[Connection Pool]
         LIMITER[Rate Limiter]
+        MONITOR[Health Monitor]
         RETRY[Retry Logic]
-        HEALTH[Health Checks]
     end
     
-    subgraph "⚙️ Configuration"
-        TOTAL[100 Total Connections]
-        HOST[30 per Host]
-        TIMEOUT[30s Keepalive]
-        DNS[300s DNS Cache]
+    subgraph "📊 Pool Configuration"
+        MAX_CONN[100 Total]
+        PER_HOST[30/Host]
+        TIMEOUT[30s Timeout]
+        KEEPALIVE[Keep-Alive]
     end
     
-    POOL --> TOTAL
-    POOL --> HOST
-    POOL --> TIMEOUT
-    POOL --> DNS
+    POOL --> LIMITER
+    POOL --> MONITOR
+    POOL --> RETRY
     
-    LIMITER --> POOL
-    RETRY --> POOL
-    HEALTH --> POOL
+    LIMITER --> MAX_CONN
+    MONITOR --> PER_HOST
+    RETRY --> TIMEOUT
+    RETRY --> KEEPALIVE
+    
+    classDef management fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef config fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    
+    class POOL,LIMITER,MONITOR,RETRY management
+    class MAX_CONN,PER_HOST,TIMEOUT,KEEPALIVE config
 ```
+
+</div>
 
 **Diagram Narrative: Connection Pooling Architecture**
 
-This diagram illustrates the connection management strategy for optimizing network performance and reliability through pooling, rate limiting, and retry mechanisms. The comprehensive approach provides 10x throughput improvement while maintaining reliability through health monitoring and retry logic, with configurable parameters balancing speed and stability. Adjust connection pool settings based on your server capacity and expected load to optimize performance and resource utilization.
+This diagram illustrates the connection pooling system that manages HTTP connections efficiently across multiple hosts and services. The pool maintains optimal connection counts per host while implementing rate limiting, health monitoring, and retry logic to ensure reliable communication. The configuration parameters can be tuned based on your network conditions and service requirements for optimal performance and reliability.
 
-### **Modern UI/UX**
-
-- **🎨 Clean Interface**: Intuitive Streamlit-based design
-- **📱 Responsive**: Works on desktop and mobile
-- **🎵 Lightweight Audio**: Local text-to-speech without external APIs
-- **📊 Real-time Updates**: Live response streaming
-- **🔧 Easy Configuration**: Model and parameter selection
-
----
-
-## 🔒 Security & Privacy Features
-
-### **Data Privacy Model**
-
-```mermaid
-graph TB
-    subgraph "🔒 Privacy Controls"
-        LOCAL[Local Processing]
-        NO_EXTERNAL[No External APIs]
-        ENCRYPT[Encrypted Storage]
-        CLEANUP[Auto Cleanup]
-    end
-    
-    subgraph "🛡️ Security Measures"
-        VALIDATION[Input Validation]
-        SANITIZATION[Expression Sanitization]
-        RATE_LIMIT[Rate Limiting]
-        ERROR_HANDLING[Error Handling]
-    end
-    
-    subgraph "📊 Data Flow"
-        USER[User Input]
-        PROCESS[Local Processing]
-        STORE[Local Storage]
-        CLEAN[Auto Cleanup]
-    end
-    
-    USER --> VALIDATION
-    VALIDATION --> SANITIZATION
-    SANITIZATION --> PROCESS
-    
-    PROCESS --> LOCAL
-    PROCESS --> NO_EXTERNAL
-    
-    PROCESS --> STORE
-    STORE --> ENCRYPT
-    STORE --> CLEANUP
-    CLEANUP --> CLEAN
-```
-
-**Diagram Narrative: Data Privacy and Security Model**
-
-This diagram clarifies how data is protected at every stage through local processing, validation, encryption, and automatic cleanup, ensuring complete data sovereignty. The privacy-first design follows OWASP recommendations for robust security while maintaining system functionality and user experience. Regularly review and update security configurations, monitor for potential vulnerabilities, and ensure encryption keys are properly managed for optimal security posture.
-
-### **Security Features**
-
-- **Input Validation**: Comprehensive sanitization of all inputs
-- **Expression Safety**: Safe mathematical operation evaluation
-- **File Upload Security**: Type validation and size limits
-- **Rate Limiting**: Protection against abuse and DDoS
-- **Error Handling**: Graceful degradation with secure defaults
-
----
-
-## 🗄️ Database Management
-
-### **ChromaDB Vector Store**
-
-```mermaid
-graph TB
-    subgraph "🗄️ Vector Database"
-        CHROMA[ChromaDB]
-        EMBEDDINGS[Vector Embeddings]
-        SEARCH[Semantic Search]
-        PERSIST[Persistence]
-    end
-    
-    subgraph "🧹 Management Tools"
-        CLEANUP[Cleanup Script]
-        STATUS[Status Monitoring]
-        BACKUP[Backup/Restore]
-        OPTIMIZE[Optimization]
-    end
-    
-    CHROMA --> EMBEDDINGS
-    CHROMA --> SEARCH
-    CHROMA --> PERSIST
-    
-    CLEANUP --> CHROMA
-    STATUS --> CHROMA
-    BACKUP --> CHROMA
-    OPTIMIZE --> CHROMA
-```
-
-**Diagram Narrative: ChromaDB Vector Store Management**
-
-This diagram shows how vector storage and management tools work together to provide efficient document retrieval and storage capabilities. The comprehensive management approach ensures reliable vector database operations while providing tools for maintenance, monitoring, and optimization through cleanup scripts, backup systems, and health checks. Use the cleanup script regularly to manage database size, monitor status for health issues, and perform backups to ensure data integrity and system reliability.
-
-### **Database Utilities**
-
-**Cleanup Script Features:**
-- **Status Reporting**: View all ChromaDB directories
-- **Dry Run Mode**: Preview cleanup operations
-- **Age-based Cleanup**: Remove old directories
-- **Force Cleanup**: Complete database reset
-
-**Usage Examples:**
-```bash
-# Check database status
-python scripts/cleanup_chroma.py --status
-
-# Preview cleanup (dry run)
-python scripts/cleanup_chroma.py --dry-run
-
-# Clean up old directories (24+ hours)
-python scripts/cleanup_chroma.py --age 24
-
-# Force complete cleanup
-python scripts/cleanup_chroma.py --force
-```
+**Connection Pool Features:**
+- **Optimal Pooling**: 100 total connections, 30 per host
+- **Rate Limiting**: 10 requests per second default
+- **Health Monitoring**: Automatic connection health checks
+- **Retry Logic**: Exponential backoff with jitter
+- **Keep-Alive**: Persistent connections for efficiency
 
 ---
 
@@ -754,147 +938,4 @@ python scripts/cleanup_chroma.py --force
 
 ---
 
-[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 
-
-## Core Features
-- **Background Task Management**: Run complex queries and document processing in the background. Monitor, cancel, and manage tasks directly from the chat UI and sidebar. Powered by Celery, Redis, and Flower for robust async processing. 
-
-## 🔄 Real-time UI & Enhanced Task Management
-
-### **Auto-refresh Interface**
-
-BasicChat features an intelligent auto-refresh system that provides real-time updates for long-running tasks without requiring manual page refreshes.
-
-<div align="center">
-
-| **Feature** | **Description** | **Benefits** |
-|:---|:---|:---|
-| **Auto-refresh UI** | Automatic page updates every 3 seconds for running tasks | No manual refresh needed |
-| **Progress Tracking** | Real-time progress bars and detailed status messages | Clear visibility into task progress |
-| **Task Notifications** | Celebration effects and notifications when tasks complete | Immediate feedback on completion |
-| **Smart Task Management** | Cancel, refresh, and monitor tasks from the interface | Full control over task execution |
-
-</div>
-
-**Auto-refresh Implementation:**
-The auto-refresh system intelligently monitors active tasks and triggers UI updates based on task status changes. The system uses Streamlit's session state management to track task progress and automatically refreshes the interface every 3 seconds when tasks are running. This provides a seamless user experience where progress is visible in real-time without manual intervention.
-
-**Key Features:**
-- **🔄 Automatic Updates**: UI refreshes every 3 seconds for running tasks
-- **📊 Progress Visualization**: Real-time progress bars and percentage indicators
-- **🎉 Completion Celebrations**: Balloon effects and success notifications
-- **🛠️ Task Controls**: Cancel and refresh buttons for each task
-- **📱 Status Indicators**: Detailed status messages and timestamps
-
-### **Enhanced Task Status Display**
-
-<div align="center">
-
-```mermaid
-graph TB
-    subgraph "📊 Task Status Flow"
-        PENDING[⏳ Pending]
-        RUNNING[🔄 Running]
-        COMPLETED[✅ Completed]
-        FAILED[❌ Failed]
-        
-        PENDING --> RUNNING
-        RUNNING --> COMPLETED
-        RUNNING --> FAILED
-        
-        subgraph "🔄 Auto-refresh Loop"
-            CHECK[Check Task Status]
-            UPDATE[Update UI]
-            WAIT[Wait 3s]
-            
-            CHECK --> UPDATE
-            UPDATE --> WAIT
-            WAIT --> CHECK
-        end
-    end
-    
-    classDef pending fill:#FFF3E0,stroke:#F57C00,stroke-width:2px
-    classDef running fill:#E3F2FD,stroke:#1976D2,stroke-width:2px
-    classDef completed fill:#E8F5E8,stroke:#388E3C,stroke-width:2px
-    classDef failed fill:#FFEBEE,stroke:#D32F2F,stroke-width:2px
-    classDef refresh fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px
-    
-    class PENDING pending
-    class RUNNING running
-    class COMPLETED completed
-    class FAILED failed
-    class CHECK,UPDATE,WAIT refresh
-```
-
-</div>
-
-**Diagram Narrative: Enhanced Task Status Flow**
-
-This diagram illustrates the enhanced task status management system with auto-refresh capabilities. The system monitors task states and automatically updates the UI every 3 seconds when tasks are running, providing real-time progress feedback. Task completion triggers celebration effects and automatic result display, while failed tasks show detailed error information for debugging.
-
-**Task Status Features:**
-- **⏳ Pending**: Task is queued and waiting to start
-- **🔄 Running**: Task is actively processing with progress updates
-- **✅ Completed**: Task finished successfully with celebration effects
-- **❌ Failed**: Task failed with detailed error information
-- **🚫 Cancelled**: Task was cancelled by user
-
-### **Smart Task Management**
-
-The enhanced task management system provides comprehensive control over background tasks with intuitive UI controls.
-
-**Task Controls:**
-- **❌ Cancel**: Stop running tasks immediately
-- **🔄 Refresh**: Manually update task status
-- **📊 Progress**: Real-time progress bars and percentage indicators
-- **⏰ Timestamps**: Last update time for running tasks
-- **📋 Results**: Automatic display of task results upon completion
-
-**Sidebar Integration:**
-The sidebar provides a comprehensive task monitoring dashboard:
-- **Active Tasks**: Real-time list of running and pending tasks
-- **Task Metrics**: Count of active, completed, failed, and cancelled tasks
-- **Quick Actions**: Cancel and refresh buttons for each task
-- **Status Overview**: Visual indicators for task states
-
-### **Resilient Architecture**
-
-The enhanced system includes robust error handling and recovery mechanisms to ensure reliable operation.
-
-**Error Handling:**
-- **Graceful Failures**: Tasks fail gracefully with detailed error messages
-- **Automatic Recovery**: System attempts to recover from transient failures
-- **Fallback Mechanisms**: Alternative processing paths when primary methods fail
-- **User Feedback**: Clear error messages and recovery suggestions
-
-**Performance Optimizations:**
-- **Efficient Polling**: Smart polling that only refreshes when needed
-- **Memory Management**: Automatic cleanup of completed tasks
-- **Resource Optimization**: Efficient use of system resources
-- **Scalable Design**: Architecture supports multiple concurrent tasks
-
-### **User Experience Improvements**
-
-The enhanced UI provides a significantly improved user experience for long-running tasks.
-
-**Real-time Feedback:**
-- **Live Progress**: See task progress as it happens
-- **Status Updates**: Detailed status messages for each task phase
-- **Completion Notifications**: Immediate feedback when tasks complete
-- **Error Reporting**: Clear error messages with debugging information
-
-**Intuitive Controls:**
-- **One-click Actions**: Simple buttons for common actions
-- **Visual Indicators**: Clear visual feedback for all task states
-- **Contextual Help**: Helpful information and tooltips
-- **Responsive Design**: UI adapts to different screen sizes
-
-**Accessibility Features:**
-- **Keyboard Navigation**: Full keyboard support for all controls
-- **Screen Reader Support**: Proper ARIA labels and descriptions
-- **High Contrast**: Clear visual distinction between elements
-- **Error Prevention**: Validation and confirmation for destructive actions
-
----
-
-## �� Deep Research Mode 
+[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md)

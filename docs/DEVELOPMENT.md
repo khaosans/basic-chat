@@ -1003,3 +1003,6 @@ def get_task_metrics(task_manager):
         'failed': len([t for t in task_manager.get_active_tasks() if t.status == 'failed'])
     }
 ``` 
+---
+
+[← Back to README](../README.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Roadmap →](ROADMAP.md)
