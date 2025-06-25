@@ -9,6 +9,11 @@ import pytz
 from typing import Dict, List, Optional, Union, Any
 from dataclasses import dataclass
 import re
+import os
+import base64
+from gtts import gTTS
+import hashlib
+import threading
 
 @dataclass
 class CalculationResult:
@@ -424,4 +429,112 @@ class EnhancedTimeTools:
             "day_of_year": dt.timetuple().tm_yday,
             "is_weekend": dt.weekday() >= 5,
             "is_business_day": dt.weekday() < 5
-        } 
+        }
+
+def text_to_speech(text: Optional[str]) -> Optional[str]:
+    """Convert text to speech and return the audio file path."""
+    if not text or text.strip() == "":
+        return None
+    try:
+        text_hash = hashlib.md5(text.encode()).hexdigest()
+        audio_file = f"temp_{text_hash}.mp3"
+        if os.path.exists(audio_file) and os.path.getsize(audio_file) > 0:
+            return audio_file
+        generation_completed = threading.Event()
+        generation_error = None
+        result_file = None
+        def generate_audio():
+            nonlocal generation_error, result_file
+            try:
+                tts = gTTS(text=text, lang='en', slow=False)
+                tts.save(audio_file)
+                if os.path.exists(audio_file) and os.path.getsize(audio_file) > 0:
+                    result_file = audio_file
+                else:
+                    generation_error = Exception("Audio file was not created successfully")
+            except Exception as e:
+                generation_error = e
+            finally:
+                generation_completed.set()
+        audio_thread = threading.Thread(target=generate_audio)
+        audio_thread.daemon = True
+        audio_thread.start()
+        if generation_completed.wait(timeout=15):
+            if generation_error:
+                raise generation_error
+            return result_file
+        else:
+            raise Exception("Audio generation timed out after 15 seconds")
+    except Exception as e:
+        try:
+            if 'audio_file' in locals() and os.path.exists(audio_file):
+                os.remove(audio_file)
+        except:
+            pass
+        raise Exception(f"Failed to generate audio: {str(e)}")
+
+def get_professional_audio_html(file_path: str) -> str:
+    """Generate professional, minimal audio player HTML."""
+    if not file_path:
+        return '<p style="color: #4a5568; font-style: italic; text-align: center; margin: 8px 0;">No audio available</p>'
+    try:
+        with open(file_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            html = f"""
+            <div style="
+                background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                padding: 16px;
+                margin: 8px 0;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            ">
+                <audio 
+                    controls 
+                    style="
+                        width: 100%;
+                        height: 40px;
+                        border-radius: 8px;
+                        background: white;
+                        border: 1px solid #e2e8f0;
+                        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                    "
+                    preload="metadata"
+                    aria-label="Audio playback controls"
+                >
+                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+            """
+            return html
+    except FileNotFoundError:
+        return '<p style="color: #e53e3e; font-style: italic; text-align: center; margin: 8px 0;">Audio file not found</p>'
+    except Exception as e:
+        return f'<p style="color: #e53e3e; font-style: italic; text-align: center; margin: 8px 0;">Error loading audio</p>'
+
+def get_audio_file_size(file_path: str) -> str:
+    """Get human-readable file size for audio files."""
+    try:
+        size_bytes = os.path.getsize(file_path)
+        if size_bytes < 1024:
+            return f"{size_bytes} B"
+        elif size_bytes < 1024 * 1024:
+            return f"{size_bytes / 1024:.1f} KB"
+        else:
+            return f"{size_bytes / (1024 * 1024):.1f} MB"
+    except:
+        return "Unknown size"
+
+def cleanup_audio_files():
+    """Clean up temporary audio files from session state (for Streamlit)."""
+    import streamlit as st
+    for key in list(st.session_state.keys()):
+        if key.startswith("audio_state_"):
+            audio_state = st.session_state[key]
+            if audio_state.get("audio_file") and os.path.exists(audio_state["audio_file"]):
+                try:
+                    os.remove(audio_state["audio_file"])
+                except:
+                    pass 

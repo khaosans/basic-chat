@@ -1,6 +1,6 @@
 # LLM Judge Evaluator
 
-This directory contains the LLM-based code quality evaluator for the GitHub Actions CI pipeline.
+This document describes the LLM-based code quality evaluator for the GitHub Actions CI pipeline.
 
 ## Overview
 
@@ -8,9 +8,10 @@ The LLM Judge Evaluator uses the built-in Ollama setup to assess code quality, t
 
 ## Files
 
-- `check_llm_judge.py` - Main evaluator script
-- `evaluator.config.json` - Configuration file with thresholds and settings
-- `README.md` - This documentation
+- `evaluators/check_llm_judge.py` - Main evaluator script
+- `evaluators/evaluator.config.json` - Configuration file with thresholds and settings
+- `evaluators/check_llm_judge_github.py` - GitHub Models API evaluator
+- `evaluators/check_llm_judge_openai.py` - OpenAI API evaluator
 
 ## Configuration
 
@@ -79,8 +80,8 @@ The evaluator generates:
 ## Customization
 
 You can customize the evaluation by modifying:
-- `evaluator.config.json` for thresholds and weights
-- The evaluation prompt in `check_llm_judge.py`
+- `evaluators/evaluator.config.json` for thresholds and weights
+- The evaluation prompt in `evaluators/check_llm_judge.py`
 - The categories and criteria being assessed
 
 ## Troubleshooting
@@ -118,10 +119,21 @@ The evaluator integrates seamlessly with:
 - Documentation systems
 - Built-in Ollama setup
 
+## Related Documentation
+
+- [CI Optimization](CI_OPTIMIZATION.md) - CI/CD pipeline optimization details
+- [GitHub Models Integration](GITHUB_MODELS_INTEGRATION.md) - GitHub Models API integration
+- [LLM Judge Flow](LLM_JUDGE_FLOW.md) - Detailed evaluation workflow
+- [Testing Strategy](TESTING_STRATEGY.md) - Testing approach and methodology
+
 ## Support
 
 For issues or questions:
 1. Check the GitHub Actions logs
 2. Review the `llm_judge_results.json` output
 3. Verify Ollama is running and the model is available
-4. Check the configuration in `evaluator.config.json` 
+4. Check the configuration in `evaluators/evaluator.config.json`
+
+---
+
+[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) 

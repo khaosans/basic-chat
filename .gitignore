@@ -26,6 +26,7 @@ chroma_db/
 chroma_db_*/
 logs/
 *.log
+app.log
 
 # OS specific
 .DS_Store
@@ -40,6 +41,7 @@ Thumbs.db
 # Project specific
 temp/
 uploads/
+temp_audio/
 
 # Text-to-speech generated files
 temp_*.mp3
@@ -85,3 +87,21 @@ assets/*.temp
 
 # Latest Interface
 latest-interface.png
+
+# Celery
+celerybeat-schedule*
+celerybeat-schedule.db
+
+# Application specific
+basicchat.env
+*.service
+com.basicchat.startup.plist
+
+# LLM Judge Results
+llm_judge_results.json
+
+# Temporary test files
+tests/data/
+test_*.png
+test_*.txt
+test_*.pdf

@@ -10,11 +10,12 @@ import os
 import sys
 from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
+import tempfile
 
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import OllamaChat
+from app import OllamaChat, text_to_speech, get_professional_audio_html, get_audio_file_size
 from reasoning_engine import ReasoningEngine
 from document_processor import DocumentProcessor
 from utils.enhanced_tools import EnhancedCalculator
@@ -208,6 +209,45 @@ class TestConfiguration:
         assert isinstance(config.ollama_model, str)
         assert isinstance(config.ollama_url, str)
         assert isinstance(config.enable_caching, bool)
+
+
+@pytest.mark.unit
+@pytest.mark.fast
+class TestAudioUtils:
+    def test_text_to_speech_valid(self):
+        text = "Hello, test audio!"
+        audio_file = text_to_speech(text)
+        assert audio_file is not None
+        assert audio_file.endswith('.mp3')
+        assert os.path.exists(audio_file)
+        os.remove(audio_file)
+
+    def test_text_to_speech_empty(self):
+        assert text_to_speech("") is None
+        assert text_to_speech(None) is None
+
+    def test_get_professional_audio_html_valid(self):
+        text = "Audio HTML test"
+        audio_file = text_to_speech(text)
+        html = get_professional_audio_html(audio_file)
+        assert '<audio' in html
+        assert 'controls' in html
+        os.remove(audio_file)
+
+    def test_get_professional_audio_html_missing(self):
+        html = get_professional_audio_html("nonexistent_file.mp3")
+        assert "Audio file not found" in html
+
+    def test_get_audio_file_size(self):
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write(b"test data")
+            file_path = f.name
+        try:
+            size = get_audio_file_size(file_path)
+            assert "B" in size
+        finally:
+            os.unlink(file_path)
+        assert get_audio_file_size("nonexistent_file.mp3") == "Unknown size"
 
 
 if __name__ == "__main__":

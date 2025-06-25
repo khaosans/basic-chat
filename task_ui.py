@@ -7,67 +7,94 @@ import time
 from typing import Optional, Dict, Any
 from task_manager import TaskManager, TaskStatus
 
-def display_task_status(task_id: str, task_manager: TaskManager):
-    """Display task status with progress bar and controls"""
-    task_status = task_manager.get_task_status(task_id)
+def display_task_status(task_id: str, task_manager: TaskManager, context: str = "default"):
+    """
+    Display task status with controls.
     
+    Args:
+        task_id: The task ID
+        task_manager: The task manager instance
+        context: Context to make keys unique (e.g., "message_loop", "new_task")
+    """
+    task_status = task_manager.get_task_status(task_id)
     if not task_status:
-        st.error("Task not found")
+        st.warning("Task not found")
         return
     
-    # Create a container for the task
-    with st.container():
-        col1, col2, col3 = st.columns([3, 1, 1])
+    # Create unique keys based on context
+    cancel_key = f"cancel_{task_id}_{context}"
+    refresh_key = f"refresh_{task_id}_{context}"
+    
+    # Display status with emoji
+    status_emoji = {
+        "pending": "⏳",
+        "running": "🔄", 
+        "completed": "✅",
+        "failed": "❌",
+        "cancelled": "🚫"
+    }.get(task_status.status, "❓")
+    
+    col1, col2, col3 = st.columns([2, 1, 1])
+    
+    with col1:
+        st.markdown(f"{status_emoji} **{task_status.status.title()}**")
         
-        with col1:
-            # Task title and status
-            status_emoji = {
-                "pending": "⏳",
-                "running": "🔄", 
-                "completed": "✅",
-                "failed": "❌",
-                "cancelled": "🚫"
-            }.get(task_status.status, "❓")
-            
-            task_type = task_status.metadata.get('task_type', 'Task').title()
-            st.markdown(f"**{status_emoji} {task_type}**")
-            
-            # Progress bar
-            if task_status.status in ["pending", "running"]:
-                progress_bar = st.progress(task_status.progress)
-                
-                # Estimated time remaining
-                if task_status.progress > 0:
-                    elapsed = time.time() - task_status.created_at
-                    estimated_total = elapsed / task_status.progress
-                    remaining = estimated_total - elapsed
-                    st.caption(f"⏱️ Estimated {remaining:.0f}s remaining")
-            
-            # Status message
-            if task_status.status == "running":
-                status_msg = task_status.metadata.get('status', 'Processing...')
-                st.info(f"🔄 {status_msg}")
-            elif task_status.status == "completed":
-                st.success("✅ Task completed successfully!")
-            elif task_status.status == "failed":
-                st.error(f"❌ Task failed: {task_status.error}")
-            elif task_status.status == "cancelled":
-                st.warning("🚫 Task was cancelled")
+        # Show progress for running tasks
+        if task_status.status == "running":
+            if hasattr(task_status, 'progress') and task_status.progress:
+                st.progress(task_status.progress)
+            else:
+                st.progress(0.5)  # Indeterminate progress
         
-        with col2:
-            # Cancel button for running tasks
-            if task_status.status in ["pending", "running"]:
-                if st.button("❌ Cancel", key=f"cancel_{task_id}"):
-                    if task_manager.cancel_task(task_id):
-                        st.success("Task cancelled successfully!")
-                        st.rerun()
-                    else:
-                        st.error("Failed to cancel task")
-        
-        with col3:
-            # Refresh button
-            if st.button("🔄", key=f"refresh_{task_id}", help="Refresh task status"):
-                st.rerun()
+        # Show status messages
+        if task_status.status == "pending":
+            st.info("⏳ Task is queued and waiting to start")
+        elif task_status.status == "running":
+            # Show more detailed status for running tasks
+            status_msg = task_status.metadata.get('status', 'Running')
+            st.info(f"🔄 Task is currently running... ({status_msg})")
+            
+            # Show progress percentage
+            if hasattr(task_status, 'progress') and task_status.progress:
+                progress_pct = int(task_status.progress * 100)
+                st.caption(f"Progress: {progress_pct}%")
+            
+            # Show last update time
+            if hasattr(task_status, 'updated_at') and task_status.updated_at:
+                from datetime import datetime
+                last_update = datetime.fromtimestamp(task_status.updated_at).strftime('%H:%M:%S')
+                st.caption(f"Last update: {last_update}")
+        elif task_status.status == "completed":
+            st.success("✅ Task completed successfully!")
+            
+            # Automatically display results for completed tasks
+            if task_status.result:
+                st.markdown("### 📋 Results")
+                display_task_result(task_status)
+        elif task_status.status == "failed":
+            st.error(f"❌ Task failed: {task_status.error}")
+            
+            # Show error details if available
+            if hasattr(task_status, 'traceback') and task_status.traceback:
+                with st.expander("🔍 Error Details", expanded=False):
+                    st.code(task_status.traceback)
+        elif task_status.status == "cancelled":
+            st.warning("🚫 Task was cancelled")
+    
+    with col2:
+        # Cancel button for running tasks
+        if task_status.status in ["pending", "running"]:
+            if st.button("❌ Cancel", key=cancel_key):
+                if task_manager.cancel_task(task_id):
+                    st.success("Task cancelled successfully!")
+                    st.rerun()
+                else:
+                    st.error("Failed to cancel task")
+    
+    with col3:
+        # Refresh button
+        if st.button("🔄", key=refresh_key, help="Refresh task status"):
+            st.rerun()
 
 def create_task_message(task_id: str, task_type: str, **kwargs) -> Dict[str, Any]:
     """Create a special message for long-running tasks"""
@@ -283,18 +310,37 @@ def display_task_metrics(task_manager: TaskManager):
         st.sidebar.warning("🟡 Celery Unavailable (using fallback)")
 
 def display_active_tasks(task_manager: TaskManager):
-    """Display active tasks in the sidebar"""
+    """Display active tasks in sidebar"""
     active_tasks = task_manager.get_active_tasks()
     
-    if active_tasks:
-        st.sidebar.header("🔄 Active Tasks")
-        
-        for task in active_tasks:
-            with st.sidebar.expander(f"{task.metadata.get('task_type', 'Task')} ({task.task_id[:8]}...)", expanded=False):
-                display_task_status(task.task_id, task_manager)
-    else:
-        st.sidebar.header("🔄 Active Tasks")
+    if not active_tasks:
         st.sidebar.info("No active tasks")
+        return
+    
+    st.sidebar.subheader("🔄 Active Tasks")
+    
+    for task in active_tasks:
+        # Create a more informative expander title
+        status_emoji = {
+            "pending": "⏳",
+            "running": "🔄", 
+            "completed": "✅",
+            "failed": "❌",
+            "cancelled": "🚫"
+        }.get(task.status, "❓")
+        
+        task_type = task.metadata.get('task_type', 'Task')
+        short_id = task.task_id[:8]
+        
+        # Show progress in title for running tasks
+        if task.status == "running" and hasattr(task, 'progress') and task.progress:
+            progress_pct = int(task.progress * 100)
+            title = f"{status_emoji} {task_type} ({short_id}...) - {progress_pct}%"
+        else:
+            title = f"{status_emoji} {task_type} ({short_id}...)"
+        
+        with st.sidebar.expander(title, expanded=False):
+            display_task_status(task.task_id, task_manager, "sidebar")
 
 def is_long_running_query(query: str, reasoning_mode: str) -> bool:
     """Determine if a query should be processed as a long-running task"""

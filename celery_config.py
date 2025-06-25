@@ -21,6 +21,7 @@ enable_utc = True
 # Task routing
 task_routes = {
     'tasks.run_reasoning': {'queue': 'reasoning'},
+    'tasks.run_deep_research': {'queue': 'reasoning'},
     'tasks.analyze_document': {'queue': 'documents'},
     'tasks.process_document': {'queue': 'documents'},
 }
@@ -31,6 +32,11 @@ task_annotations = {
         'rate_limit': '10/m',  # 10 tasks per minute
         'time_limit': 300,     # 5 minutes
         'soft_time_limit': 240  # 4 minutes soft limit
+    },
+    'tasks.run_deep_research': {
+        'rate_limit': '5/m',   # 5 tasks per minute
+        'time_limit': 900,     # 15 minutes
+        'soft_time_limit': 840  # 14 minutes soft limit
     },
     'tasks.analyze_document': {
         'rate_limit': '5/m',   # 5 tasks per minute
