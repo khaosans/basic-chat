@@ -237,6 +237,7 @@ graph TB
 | **Development Guide** | Contributing and development workflows | [🛠️](docs/DEVELOPMENT.md) |
 | **Project Roadmap** | Future features and development plans | [🗺️](docs/ROADMAP.md) |
 | **Reasoning Features** | Advanced reasoning engine details | [🧠](docs/REASONING_FEATURES.md) |
+| **LLM Judge Evaluator** | Code quality evaluation and CI integration | [⚖️](docs/EVALUATORS.md) |
 
 </div>
 
