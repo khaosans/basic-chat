@@ -4,7 +4,7 @@
 
 ![BasicChat Logo](assets/brand/logo/elron-logo-full.png)
 
-**🔒 Privacy-First • 🧠 Advanced Reasoning • 🔬 Deep Research • ⚡ High Performance**
+**🔒 Privacy-First • 🧠 Advanced Reasoning • 🔬 Deep Research • ⚡ High Performance • 🔄 Real-time Updates**
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io)
@@ -12,7 +12,7 @@
 [![Redis](https://img.shields.io/badge/Redis-Task%20Queue-orange.svg)](https://redis.io)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-*An intelligent, private AI assistant that runs entirely on your local machine*
+*An intelligent, private AI assistant that runs entirely on your local machine with real-time progress updates*
 
 </div>
 
@@ -34,11 +34,11 @@
 
 <div align="center">
 
-| 🔒 **Privacy** | 🧠 **Intelligence** | 🔬 **Research** | 🛠️ **Tools** | 📄 **Documents** | ⚡ **Performance** |
-|:---:|:---:|:---:|:---:|:---:|:---:|
-| 100% Local Processing | 5 Reasoning Modes | Deep Research Mode | Smart Calculator | Multi-Format Support | Async Architecture |
-| No External APIs | Chain-of-Thought | Multi-Source Analysis | Time Tools | PDF, Text, Images | Multi-Layer Caching |
-| Data Never Leaves | Multi-Step Analysis | Academic Rigor | Web Search | Advanced RAG | Connection Pooling |
+| 🔒 **Privacy** | 🧠 **Intelligence** | 🔬 **Research** | 🛠️ **Tools** | 📄 **Documents** | ⚡ **Performance** | 🔄 **Real-time** |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 100% Local Processing | 5 Reasoning Modes | Deep Research Mode | Smart Calculator | Multi-Format Support | Async Architecture | Auto-refresh UI |
+| No External APIs | Chain-of-Thought | Multi-Source Analysis | Time Tools | PDF, Text, Images | Multi-Layer Caching | Progress Tracking |
+| Data Never Leaves | Multi-Step Analysis | Academic Rigor | Web Search | Advanced RAG | Connection Pooling | Task Notifications |
 
 </div>
 
@@ -59,6 +59,7 @@
 - **Rich Results**: Executive summaries, key findings, detailed analysis, and sources
 - **Background Processing**: Long-running research tasks with progress tracking
 - **Source Citations**: Proper attribution and links to research sources
+- **Real-time Progress**: Live progress bars and status updates during research
 
 ### 🛠️ **Powerful Built-in Tools**
 - **Enhanced Calculator**: Advanced mathematical operations with step-by-step reasoning
@@ -78,22 +79,41 @@
 - **Connection Pooling**: Optimized HTTP connections with rate limiting
 - **Resource Management**: Automatic cleanup and memory optimization
 
+### 🔄 **Real-time Updates & Enhanced UX**
+- **Auto-refresh UI**: Automatic page updates every 3 seconds for running tasks
+- **Progress Tracking**: Real-time progress bars and detailed status messages
+- **Task Notifications**: Celebration effects and notifications when tasks complete
+- **Smart Task Management**: Cancel, refresh, and monitor tasks from the UI
+- **Enhanced Sidebar**: Active task monitoring with detailed status information
+- **Resilient Architecture**: Robust error handling and recovery mechanisms
+
 ---
 
-## ⏳ Long-Running Tasks & Background Processing
+## ⏳ Enhanced Long-Running Tasks & Background Processing
 
-BasicChat supports **long-running tasks** for complex queries, deep research, and large document processing. These are handled in the background using a robust Celery + Redis task queue system, so you can continue chatting while heavy operations run asynchronously.
+BasicChat supports **long-running tasks** for complex queries, deep research, and large document processing. These are handled in the background using a robust Celery + Redis task queue system with **real-time UI updates**.
 
-- **Background Task UI**: See task progress, status, and results directly in the chat interface.
-- **Deep Research Tasks**: Comprehensive research with multiple sources and detailed analysis.
-- **Task Management**: Cancel running tasks, monitor metrics, and clean up old tasks from the sidebar.
-- **Performance**: Offloads heavy work to background workers, keeping the UI responsive.
-- **Monitoring**: Use [Flower](https://flower.readthedocs.io/) for real-time task monitoring and debugging.
+### **Key Improvements:**
+- **🔄 Auto-refresh UI**: Automatically updates every 3 seconds when tasks are running
+- **📊 Real-time Progress**: Live progress bars and detailed status messages
+- **🎉 Task Completion**: Celebration effects and automatic result display
+- **🛠️ Enhanced Controls**: Cancel, refresh, and monitor tasks from the interface
+- **📱 Smart Notifications**: Immediate updates when tasks complete
+- **🔧 Resilient Processing**: Robust error handling and recovery mechanisms
+
+### **Background Task Features:**
+- **Background Task UI**: See task progress, status, and results directly in the chat interface
+- **Deep Research Tasks**: Comprehensive research with multiple sources and detailed analysis
+- **Task Management**: Cancel running tasks, monitor metrics, and clean up old tasks from the sidebar
+- **Performance**: Offloads heavy work to background workers, keeping the UI responsive
+- **Monitoring**: Use [Flower](https://flower.readthedocs.io/) for real-time task monitoring and debugging
 
 > **How it works:**
-> - Submitting a complex query, enabling deep research mode, or uploading a large document triggers a background task.
-> - Task status, progress, and results are shown in the chat and sidebar.
-> - You can cancel tasks or clean up completed/failed ones from the UI.
+> - Submitting a complex query, enabling deep research mode, or uploading a large document triggers a background task
+> - Task status, progress, and results are shown in real-time in the chat and sidebar
+> - The UI automatically refreshes every 3 seconds to show current progress
+> - You can cancel tasks or clean up completed/failed ones from the UI
+> - Task completion triggers celebration effects and automatic result display
 
 See the [Architecture Overview](docs/ARCHITECTURE.md#background-task-system) for a diagram of the task queue and worker system.
 
@@ -485,60 +505,3 @@ Malkov, Yury A., and Dmitry A. Yashunin. "Efficient and Robust Approximate Neare
 
 </div>
 
-## 📝 Project Overview
-
-BasicChat is a privacy-first, local AI assistant that supports advanced reasoning, document analysis, and research workflows. It runs entirely on your machine, ensuring your data never leaves your environment. The app supports multiple reasoning modes, background task processing, and integrates with local LLMs via Ollama.
-
-## 🚀 Setup & Usage
-
-### Prerequisites
-- Python 3.11+
-- Ollama (for local LLMs)
-- Redis (for background tasks)
-
-### Installation
-```bash
-git clone https://github.com/khaosans/basic-chat-template.git
-cd basic-chat-template
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Running the App
-```bash
-# Start Ollama and pull required models
-ollama serve &
-ollama pull mistral
-ollama pull nomic-embed-text
-
-# Start Redis (for background tasks)
-redis-server &
-
-# Start the app
-./start_dev.sh
-# or
-streamlit run app.py
-```
-
-### Example Usage
-- Upload a PDF, text, or image file and ask questions about its content.
-- Use the sidebar to select reasoning modes (Auto, Chain-of-Thought, Agent-Based, etc).
-- Enable Deep Research Mode for multi-source, academic-style answers.
-
-## 🔒 Security Best Practices
-- All processing is local; no data is sent to external APIs.
-- Input validation is performed on file uploads and text inputs.
-- Only trusted file types are accepted (PDF, TXT, PNG, JPG, JPEG).
-- Session state is isolated per user.
-
-## 🧪 Testing
-Run all tests with:
-```bash
-pytest
-```
-
-## 🛡️ Input Validation
-- File uploads are checked for type and size.
-- Text inputs are sanitized before processing.
-- Configuration values are validated at startup.
