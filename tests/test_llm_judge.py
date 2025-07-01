@@ -2,6 +2,10 @@
 Tests for the LLM Judge Evaluator
 """
 import pytest
+
+# Skip if optional dependencies required for app import are missing
+pytest.importorskip("streamlit", reason="streamlit not installed")
+pytest.importorskip("requests", reason="requests not installed")
 import os
 import sys
 import json

@@ -5,7 +5,11 @@ Configuration management for BasicChat application
 import os
 from dataclasses import dataclass
 from typing import Optional, List
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except Exception:
+    def load_dotenv(*args, **kwargs):
+        pass
 
 # Load environment variables from .env file
 load_dotenv()

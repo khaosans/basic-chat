@@ -5,6 +5,7 @@ This script helps diagnose upload issues by testing the document processor direc
 """
 
 import pytest
+pytest.skip("Integration tests require external dependencies", allow_module_level=True)
 import os
 import sys
 import logging

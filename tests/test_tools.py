@@ -10,6 +10,14 @@ CHANGELOG:
 import pytest
 import math
 from unittest.mock import patch
+import os
+import sys
+
+# Skip if timezone library is missing
+pytest.importorskip("pytz", reason="pytz not installed")
+
+# Allow imports from project root
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils.enhanced_tools import EnhancedCalculator, EnhancedTimeTools, CalculationResult, TimeResult
 
 class TestEnhancedCalculator:

@@ -9,7 +9,10 @@ from typing import Optional, Any, Dict
 from abc import ABC, abstractmethod
 import logging
 
-from cachetools import TTLCache
+try:
+    from cachetools import TTLCache
+except Exception:
+    TTLCache = None
 from config import config
 
 logger = logging.getLogger(__name__)
@@ -39,15 +42,21 @@ class CacheInterface(ABC):
 
 class MemoryCache(CacheInterface):
     """In-memory cache implementation using TTLCache"""
-    
+
     def __init__(self, ttl: int = 3600, maxsize: int = 1000):
-        self.cache = TTLCache(maxsize=maxsize, ttl=ttl)
+        if TTLCache is not None:
+            self.cache = TTLCache(maxsize=maxsize, ttl=ttl)
+        else:
+            self.cache = {}
         self.ttl = ttl
     
     def get(self, key: str) -> Optional[str]:
         """Get value from memory cache"""
         try:
-            return self.cache.get(key)
+            if TTLCache is not None:
+                return self.cache.get(key)
+            else:
+                return self.cache.get(key)
         except Exception as e:
             logger.warning(f"Error getting from memory cache: {e}")
             return None
@@ -55,7 +64,10 @@ class MemoryCache(CacheInterface):
     def set(self, key: str, value: str, ttl: Optional[int] = None) -> bool:
         """Set value in memory cache"""
         try:
-            self.cache[key] = value
+            if TTLCache is not None:
+                self.cache[key] = value
+            else:
+                self.cache[key] = value
             return True
         except Exception as e:
             logger.warning(f"Error setting in memory cache: {e}")

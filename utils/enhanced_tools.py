@@ -5,13 +5,19 @@ Provides improved calculator and time tools with better functionality and safety
 
 import math
 import datetime
-import pytz
+try:
+    import pytz
+except Exception:
+    pytz = None
 from typing import Dict, List, Optional, Union, Any
 from dataclasses import dataclass
 import re
 import os
 import base64
-from gtts import gTTS
+try:
+    from gtts import gTTS  # type: ignore
+except Exception:
+    gTTS = None
 import hashlib
 import threading
 
@@ -258,6 +264,8 @@ class EnhancedTimeTools:
     
     def get_current_time(self, timezone: str = "UTC") -> TimeResult:
         """Get current time with timezone support"""
+        if pytz is None:
+            return TimeResult(current_time="", timezone=timezone, formatted_time="", unix_timestamp=0.0, success=False, error="pytz not installed")
         try:
             # Normalize timezone
             tz_name = self._normalize_timezone(timezone)
@@ -298,6 +306,8 @@ class EnhancedTimeTools:
     
     def convert_time(self, time_str: str, from_tz: str, to_tz: str) -> TimeResult:
         """Convert time between timezones"""
+        if pytz is None:
+            return TimeResult(current_time="", timezone=to_tz, formatted_time="", unix_timestamp=0.0, success=False, error="pytz not installed")
         try:
             # Parse input time
             from_tz_obj = pytz.timezone(self._normalize_timezone(from_tz))
@@ -333,6 +343,8 @@ class EnhancedTimeTools:
     
     def get_time_difference(self, time1: str, time2: str, timezone: str = "UTC") -> Dict[str, Any]:
         """Calculate time difference between two times"""
+        if pytz is None:
+            return {"difference_seconds": 0, "difference_days": 0, "difference_hours": 0, "difference_minutes": 0, "formatted_difference": "", "success": False, "error": "pytz not installed"}
         try:
             tz_obj = pytz.timezone(self._normalize_timezone(timezone))
             
@@ -387,12 +399,17 @@ class EnhancedTimeTools:
         # If it's a known abbreviation, use the mapping
         if timezone.upper() in tz_mappings:
             return tz_mappings[timezone.upper()]
-        
+
         # If it's already a valid timezone, return it
+        if pytz is not None:
+            try:
+                pytz.timezone(timezone)
+                return timezone
+            except Exception:
+                pass
         try:
-            pytz.timezone(timezone)
             return timezone
-        except pytz.exceptions.UnknownTimeZoneError:
+        except Exception:
             # Default to UTC if timezone is unknown
             return 'UTC'
     
@@ -434,6 +451,8 @@ class EnhancedTimeTools:
 def text_to_speech(text: Optional[str]) -> Optional[str]:
     """Convert text to speech and return the audio file path."""
     if not text or text.strip() == "":
+        return None
+    if gTTS is None:
         return None
     try:
         text_hash = hashlib.md5(text.encode()).hexdigest()

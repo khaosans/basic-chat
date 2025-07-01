@@ -6,6 +6,10 @@ These tests verify the task management functionality.
 """
 
 import pytest
+
+# Skip if Celery or Streamlit is missing
+pytest.importorskip("celery", reason="celery not installed")
+pytest.importorskip("streamlit", reason="streamlit not installed")
 import os
 import sys
 from unittest.mock import Mock, patch, MagicMock

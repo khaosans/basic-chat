@@ -8,6 +8,9 @@ CHANGELOG:
 """
 
 import pytest
+
+# Skip if optional dependencies are missing
+pytest.importorskip("streamlit", reason="streamlit not installed")
 from unittest.mock import Mock, patch, MagicMock
 from reasoning_engine import (
     ReasoningAgent, ReasoningChain, MultiStepReasoning, 

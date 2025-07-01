@@ -6,6 +6,11 @@ These tests verify the basic functionality of the application components.
 """
 
 import pytest
+
+# Skip tests if optional dependencies are missing
+pytest.importorskip("streamlit", reason="streamlit not installed")
+pytest.importorskip("gtts", reason="gTTS not installed")
+pytest.importorskip("requests", reason="requests not installed")
 import os
 import sys
 from unittest.mock import Mock, patch, MagicMock

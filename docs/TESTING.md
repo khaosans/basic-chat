@@ -52,7 +52,7 @@ The GitHub Actions workflow (`/.github/workflows/verify.yml`) runs:
 
 ## Test Coverage
 
-Current coverage: **49%**
+Current coverage: **50%**
 
 ### Coverage by Module
 

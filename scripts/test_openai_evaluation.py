@@ -8,6 +8,8 @@ This script tests the OpenAI evaluator with the cheapest model to ensure it work
 import os
 import sys
 import subprocess
+import pytest
+pytest.skip("OpenAI evaluator tests require API access", allow_module_level=True)
 from pathlib import Path
 
 def test_openai_evaluator():

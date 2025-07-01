@@ -3,7 +3,12 @@ Utility modules for BasicChat application
 """
 
 from .caching import ResponseCache, response_cache
-from .async_ollama import AsyncOllamaChat, AsyncOllamaClient, async_chat
+try:
+    from .async_ollama import AsyncOllamaChat, AsyncOllamaClient, async_chat
+except Exception:
+    AsyncOllamaChat = None
+    AsyncOllamaClient = None
+    async_chat = None
 
 __all__ = [
     "ResponseCache",
@@ -11,4 +16,4 @@ __all__ = [
     "AsyncOllamaChat",
     "AsyncOllamaClient",
     "async_chat"
-] 
+]

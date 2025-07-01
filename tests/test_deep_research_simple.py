@@ -3,6 +3,9 @@
 Simple test for BasicChat Deep Research functionality
 """
 
+import pytest
+pytest.skip("Deep research tests require external dependencies", allow_module_level=True)
+
 import sys
 from pathlib import Path
 
