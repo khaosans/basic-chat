@@ -17,3 +17,4 @@ __all__ = [
     "AsyncOllamaClient",
     "async_chat"
 ]
+
