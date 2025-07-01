@@ -126,7 +126,7 @@ streamlit run app.py
    ```bash
    # Replace paths and username
    sed -i 's|YOUR_USERNAME|'$USER'|g' basicchat.service
-   sed -i 's|/path/to/basic-chat-template|'$(pwd)'|g' basicchat.service
+   sed -i 's|/path/to/basic-chat|'$(pwd)'|g' basicchat.service
    ```
 
 2. Install the service:

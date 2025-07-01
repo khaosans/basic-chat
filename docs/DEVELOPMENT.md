@@ -25,8 +25,8 @@ This guide provides comprehensive instructions for developers contributing to Ba
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/khaosans/basic-chat-template.git
-cd basic-chat-template
+git clone https://github.com/khaosans/basic-chat.git
+cd basic-chat
 
 # 2. Create virtual environment
 python -m venv venv

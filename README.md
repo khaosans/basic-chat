@@ -115,8 +115,8 @@ See the [Architecture Overview](docs/ARCHITECTURE.md#background-task-system) for
 
 ```bash
 # Clone the repository
-git clone https://github.com/khaosans/basic-chat-template.git
-cd basic-chat-template
+git clone https://github.com/khaosans/basic-chat.git
+cd basic-chat
 
 # Create virtual environment
 python -m venv venv
@@ -480,8 +480,8 @@ Malkov, Yury A., and Dmitry A. Yashunin. "Efficient and Robust Approximate Neare
 
 **Made with ❤️ for privacy-conscious AI enthusiasts**
 
-[![GitHub Stars](https://img.shields.io/github/stars/khaosans/basic-chat-template?style=social)](https://github.com/khaosans/basic-chat-template)
-[![GitHub Forks](https://img.shields.io/github/forks/khaosans/basic-chat-template?style=social)](https://github.com/khaosans/basic-chat-template)
+[![GitHub Stars](https://img.shields.io/github/stars/khaosans/basic-chat?style=social)](https://github.com/khaosans/basic-chat)
+[![GitHub Forks](https://img.shields.io/github/forks/khaosans/basic-chat?style=social)](https://github.com/khaosans/basic-chat)
 
 </div>
 
@@ -498,8 +498,8 @@ BasicChat is a privacy-first, local AI assistant that supports advanced reasonin
 
 ### Installation
 ```bash
-git clone https://github.com/khaosans/basic-chat-template.git
-cd basic-chat-template
+git clone https://github.com/khaosans/basic-chat.git
+cd basic-chat
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -532,11 +532,6 @@ streamlit run app.py
 - Only trusted file types are accepted (PDF, TXT, PNG, JPG, JPEG).
 - Session state is isolated per user.
 
-## 🧪 Testing
-Run all tests with:
-```bash
-pytest
-```
 
 ## 🛡️ Input Validation
 - File uploads are checked for type and size.
