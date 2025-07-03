@@ -1,3 +1,7 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # LLM Judge Evaluator
 
 [← Back to Documentation](../README.md#documentation) | [CI Optimization →](CI_OPTIMIZATION.md)
@@ -234,4 +238,6 @@ For issues or questions:
 
 ---
 
-[← Back to Documentation](../README.md#documentation) | [CI Optimization →](CI_OPTIMIZATION.md)
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

@@ -1,3 +1,7 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # Development Guide
 
 [← Back to Documentation](../README.md#documentation) | [Technical Overview →](TECHNICAL_OVERVIEW.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) | [Reasoning Features →](REASONING_FEATURES.md) | [LLM Judge Evaluator →](EVALUATORS.md) | [CI Optimization →](CI_OPTIMIZATION.md) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md) | [Testing →](TESTING.md)
@@ -736,3 +740,8 @@ BasicChat supports background processing for long-running tasks (complex queries
 ### **Development Startup**
 
 To launch all services (Redis, Celery workers, Flower, Streamlit app) for local development:
+
+```
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._
