@@ -201,10 +201,17 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed diagrams, narrativ
 
 ---
 
-## 📑 MLA Citation
+## 📝 Citation
 
-If referencing this project in academic or professional work, please use:
+If you use this project in your research, please cite:
 
-> Khaosanga, Souriya. "BasicChat: Local AI Assistant." 2024. GitHub, https://github.com/khaosans/basic-chat.
+```bibtex
+@software{basicchat2024,
+  author = {Souriya Khaosanga},
+  title = {BasicChat: Local AI Assistant},
+  year = {2024},
+  url = {https://github.com/khaosans/basic-chat}
+}
+```
 
 ---
