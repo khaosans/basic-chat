@@ -70,12 +70,6 @@
 
 ---
 
-## �� Documentation
-
-[📊 Overview](docs/TECHNICAL_OVERVIEW.md) | [📄 Features](docs/FEATURES.md) | [🏗️ Architecture](docs/ARCHITECTURE.md) | [🛠️ Development](docs/DEVELOPMENT.md) | [🗺️ Roadmap](docs/ROADMAP.md) | [🧠 Reasoning](docs/REASONING_FEATURES.md) | [⚖️ LLM Judge](docs/EVALUATORS.md) | [🚦 CI Optimization](docs/CI_OPTIMIZATION.md) | [🔗 GitHub Models](docs/GITHUB_MODELS_INTEGRATION.md) | [🧪 Testing](docs/TESTING.md)
-
----
-
 ## 🚀 Quick Start
 
 ### Prerequisites
