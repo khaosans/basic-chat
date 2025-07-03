@@ -201,14 +201,19 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed diagrams, narrativ
 
 ---
 
-## 📚 References & Further Reading
+## 📚 Research & Technology Citations
 
-- [System Architecture](docs/ARCHITECTURE.md)
-- [Features Overview](docs/FEATURES.md)
-- [Development Guide](docs/DEVELOPMENT.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Reasoning Features](docs/REASONING_FEATURES.md)
-- [Technical Overview](docs/TECHNICAL_OVERVIEW.md)
+- Wei, J., et al. (2022). Chain-of-Thought Prompting Elicits Reasoning in Large Language Models. arXiv:2201.11903.
+- Lewis, P., et al. (2020). Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. arXiv:2005.11401.
+- Johnson, J., et al. (2019). Billion-scale similarity search with GPUs. IEEE Transactions on Big Data.
+- Martin, R. C. (2008). Clean Code: A Handbook of Agile Software Craftsmanship.
+- Beazley, D. M., & Jones, B. K. (2013). Python Cookbook (3rd ed.).
+- [Ollama](https://ollama.ai) - Local LLMs
+- [ChromaDB](https://www.trychroma.com/) - Vector Database
+- [Streamlit](https://streamlit.io) - UI Framework
+- [Redis](https://redis.io) - Task Queue & Caching
+- [DuckDuckGo](https://duckduckgo.com) - Web Search
+- [LangChain](https://langchain.com) - LLM Orchestration
 
 ---
 
