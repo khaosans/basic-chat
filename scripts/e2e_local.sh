@@ -42,18 +42,23 @@ print_status "Streamlit app started (PID $APP_PID)"
 # 4. Wait for app to be ready
 print_info "Waiting for app to be ready on http://0.0.0.0:8501..."
 for i in {1..60}; do
-  if curl -sSf http://0.0.0.0:8501 | grep -q "BasicChat"; then
+  if curl -sSf http://0.0.0.0:8501 | grep -q "Type a message..."; then
     print_status "Streamlit is up!"
     break
   fi
   sleep 2
 done
 
-# 5. Run Playwright E2E smoke test
-print_info "Running Playwright E2E smoke test..."
-npx playwright test tests/e2e/specs/smoke.spec.ts --project=chromium --reporter=dot,html --output=playwright-report
+# 5. Health check for all infra
+print_info "Running E2E infra health check..."
+poetry run python scripts/e2e_health_check.py
+print_status "All infrastructure healthy."
 
-# 6. Cleanup
+# 6. Run FULL Playwright E2E suite
+print_info "Running Playwright E2E tests (all specs)..."
+bunx playwright test --reporter=dot,html --output=playwright-report
+
+# 7. Cleanup
 print_info "Cleaning up background processes..."
 kill $OLLAMA_PID $APP_PID 2>/dev/null || true
-print_status "Done! View report with: npx playwright show-report" 
+print_status "Done! View report with: bunx playwright show-report" 
