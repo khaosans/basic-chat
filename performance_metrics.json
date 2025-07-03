@@ -1,7 +1,7 @@
 {
-  "backend": "OLLAMA",
-  "elapsed_seconds": 24.06,
-  "memory_mb": 0.0,
+  "backend": "OPENAI",
+  "elapsed_seconds": 4.6,
+  "memory_mb": 2.3,
   "threshold_seconds": 30.0,
   "threshold_mb": 600.0,
   "status": "PASS"
