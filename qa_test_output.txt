@@ -1,0 +1,205 @@
+
+Running 25 tests using 5 workers
+°°°⏳ E2E tests may take up to a minute or more. Please be patient and do not interrupt the test run.
+⏳ E2E tests may take up to a minute or more. Please be patient and do not interrupt the test run.
+⏳ E2E tests may take up to a minute or more. Please be patient and do not interrupt the test run.
+⏳ E2E tests may take up to a minute or more. Please be patient and do not interrupt the test run.
+··°°⏳ E2E tests may take up to a minute or more. Please be patient and do not interrupt the test run.
+TTT°°⏳ E2E tests may take up to a minute or more. Please be patient and do not interrupt the test run.
+⏳ E2E tests may take up to a minute or more. Please be patient and do not interrupt the test run.
+T⏳ E2E tests may take up to a minute or more. Please be patient and do not interrupt the test run.
+··°°⏳ E2E tests may take up to a minute or more. Please be patient and do not interrupt the test run.
+T
+[31mTesting stopped early after 5 maximum allowed failures.[39m
+
+
+  1) [chromium] › tests/e2e/specs/basic-e2e.spec.ts:63:7 › BasicChat E2E › should focus the message input 
+
+    [31mTest timeout of 60000ms exceeded while running "beforeEach" hook.[39m
+
+      47 |   });
+      48 |
+    > 49 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      50 |     chat = new ChatHelper(page);
+      51 |     await chat.waitForAppLoad();
+      52 |   });
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:49:8
+
+    Error: page.screenshot: Target page, context or browser has been closed
+
+       at ../helpers/chat-helpers.ts:27
+
+      25 |             }
+      26 |           }
+    > 27 |           await this.page.screenshot({ path: `debug-failure-${Date.now()}.png` });
+         |                           ^
+      28 |           throw err;
+      29 |         }
+      30 |         await this.page.reload();
+        at ChatHelper.waitForAppLoad (/Users/Sour/basic-chat/tests/e2e/helpers/chat-helpers.ts:27:27)
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:51:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-should-focus-the-message-input-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-should-focus-the-message-input-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › tests/e2e/specs/basic-e2e.spec.ts:84:7 › BasicChat E2E › minimal: should see the message input 
+
+    [31mTest timeout of 60000ms exceeded while running "beforeEach" hook.[39m
+
+      47 |   });
+      48 |
+    > 49 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      50 |     chat = new ChatHelper(page);
+      51 |     await chat.waitForAppLoad();
+      52 |   });
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:49:8
+
+    Error: page.screenshot: Target page, context or browser has been closed
+
+       at ../helpers/chat-helpers.ts:27
+
+      25 |             }
+      26 |           }
+    > 27 |           await this.page.screenshot({ path: `debug-failure-${Date.now()}.png` });
+         |                           ^
+      28 |           throw err;
+      29 |         }
+      30 |         await this.page.reload();
+        at ChatHelper.waitForAppLoad (/Users/Sour/basic-chat/tests/e2e/helpers/chat-helpers.ts:27:27)
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:51:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-minimal-should-see-the-message-input-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-minimal-should-see-the-message-input-chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [firefox] › tests/e2e/specs/basic-e2e.spec.ts:63:7 › BasicChat E2E › should focus the message input 
+
+    [31mTest timeout of 60000ms exceeded while running "beforeEach" hook.[39m
+
+      47 |   });
+      48 |
+    > 49 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      50 |     chat = new ChatHelper(page);
+      51 |     await chat.waitForAppLoad();
+      52 |   });
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:49:8
+
+    Error: page.screenshot: Target page, context or browser has been closed
+
+       at ../helpers/chat-helpers.ts:27
+
+      25 |             }
+      26 |           }
+    > 27 |           await this.page.screenshot({ path: `debug-failure-${Date.now()}.png` });
+         |                           ^
+      28 |           throw err;
+      29 |         }
+      30 |         await this.page.reload();
+        at ChatHelper.waitForAppLoad (/Users/Sour/basic-chat/tests/e2e/helpers/chat-helpers.ts:27:27)
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:51:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-should-focus-the-message-input-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-should-focus-the-message-input-firefox/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [firefox] › tests/e2e/specs/basic-e2e.spec.ts:84:7 › BasicChat E2E › minimal: should see the message input 
+
+    [31mTest timeout of 60000ms exceeded while running "beforeEach" hook.[39m
+
+      47 |   });
+      48 |
+    > 49 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      50 |     chat = new ChatHelper(page);
+      51 |     await chat.waitForAppLoad();
+      52 |   });
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:49:8
+
+    Error: page.screenshot: Target page, context or browser has been closed
+
+       at ../helpers/chat-helpers.ts:27
+
+      25 |             }
+      26 |           }
+    > 27 |           await this.page.screenshot({ path: `debug-failure-${Date.now()}.png` });
+         |                           ^
+      28 |           throw err;
+      29 |         }
+      30 |         await this.page.reload();
+        at ChatHelper.waitForAppLoad (/Users/Sour/basic-chat/tests/e2e/helpers/chat-helpers.ts:27:27)
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:51:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-minimal-should-see-the-message-input-firefox/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-minimal-should-see-the-message-input-firefox/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [webkit] › tests/e2e/specs/basic-e2e.spec.ts:63:7 › BasicChat E2E › should focus the message input 
+
+    [31mTest timeout of 60000ms exceeded while running "beforeEach" hook.[39m
+
+      47 |   });
+      48 |
+    > 49 |   test.beforeEach(async ({ page }) => {
+         |        ^
+      50 |     chat = new ChatHelper(page);
+      51 |     await chat.waitForAppLoad();
+      52 |   });
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:49:8
+
+    Error: page.screenshot: Target page, context or browser has been closed
+
+       at ../helpers/chat-helpers.ts:27
+
+      25 |             }
+      26 |           }
+    > 27 |           await this.page.screenshot({ path: `debug-failure-${Date.now()}.png` });
+         |                           ^
+      28 |           throw err;
+      29 |         }
+      30 |         await this.page.reload();
+        at ChatHelper.waitForAppLoad (/Users/Sour/basic-chat/tests/e2e/helpers/chat-helpers.ts:27:27)
+        at /Users/Sour/basic-chat/tests/e2e/specs/basic-e2e.spec.ts:51:5
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-should-focus-the-message-input-webkit/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/basic-e2e-BasicChat-E2E-should-focus-the-message-input-webkit/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5 failed
+    [chromium] › tests/e2e/specs/basic-e2e.spec.ts:63:7 › BasicChat E2E › should focus the message input 
+    [chromium] › tests/e2e/specs/basic-e2e.spec.ts:84:7 › BasicChat E2E › minimal: should see the message input 
+    [firefox] › tests/e2e/specs/basic-e2e.spec.ts:63:7 › BasicChat E2E › should focus the message input 
+    [firefox] › tests/e2e/specs/basic-e2e.spec.ts:84:7 › BasicChat E2E › minimal: should see the message input 
+    [webkit] › tests/e2e/specs/basic-e2e.spec.ts:63:7 › BasicChat E2E › should focus the message input 
+  4 interrupted
+    [webkit] › tests/e2e/specs/basic-e2e.spec.ts:84:7 › BasicChat E2E › minimal: should see the message input 
+    [Mobile Chrome] › tests/e2e/specs/basic-e2e.spec.ts:63:7 › BasicChat E2E › should focus the message input 
+    [Mobile Chrome] › tests/e2e/specs/basic-e2e.spec.ts:84:7 › BasicChat E2E › minimal: should see the message input 
+    [Mobile Safari] › tests/e2e/specs/basic-e2e.spec.ts:63:7 › BasicChat E2E › should focus the message input 
+  9 skipped
+  3 did not run
+  4 passed (1.1m)
+  1 error was not a part of any test, see above for details

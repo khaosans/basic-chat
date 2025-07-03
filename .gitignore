@@ -110,3 +110,11 @@ test_*.pdf
 final_test_report.md
 artifacts/
 ci_reports/
+test-results/
+
+# Playwright E2E test output
+playwright-report/
+test-results.json
+test-results.xml
+*.webm
+*.png
