@@ -37,7 +37,8 @@ jobs:
           mkdir -p test_chroma_db
       - name: Run unit tests only
         run: |
-          python -m pytest tests/ -m "unit or fast" --ignore=tests/integration -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov=task_manager --cov=task_ui --cov=tasks --cov-report=term-missing --cov-report=html:htmlcov
+          # Parallelize for speed
+          python -m pytest -n auto tests/ -m "unit or fast" --ignore=tests/integration -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov=task_manager --cov=task_ui --cov=tasks --cov-report=term-missing --cov-report=html:htmlcov
         env:
           # Task system configuration for testing
           ENABLE_BACKGROUND_TASKS: "true"
@@ -51,6 +52,23 @@ jobs:
         with:
           name: coverage-reports
           path: htmlcov/
+          retention-days: 30
+      - name: Generate Final Test Report
+        run: |
+          python scripts/generate_final_report.py || true
+      - name: Check Final Test Report Exists
+        run: |
+          if [ ! -f final_test_report.md ]; then
+            echo "❌ final_test_report.md not found! Report generation failed."
+            exit 1
+          fi
+      - name: Print Final Test Report (for debugging)
+        run: cat final_test_report.md
+      - name: Upload Final Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-test-report-unit-tests-${{ github.run_id }}
+          path: final_test_report.md
           retention-days: 30
 
   integration-tests:
@@ -87,7 +105,8 @@ jobs:
           python scripts/generate_assets.py || echo "Test assets generation failed, continuing..."
       - name: Run integration tests
         run: |
-          python -m pytest tests/ -m "integration" -v --tb=short --timeout=300
+          # Parallelize for speed
+          python -m pytest -n auto tests/ -m "integration" -v --tb=short --timeout=300
         env:
           # Mock external services for integration tests
           MOCK_EXTERNAL_SERVICES: "true"
@@ -104,6 +123,23 @@ jobs:
           rm -rf ./test_chroma_db
           rm -rf temp_*.mp3
           rm -rf tests/data/test_*
+      - name: Generate Final Test Report
+        run: |
+          python scripts/generate_final_report.py || true
+      - name: Check Final Test Report Exists
+        run: |
+          if [ ! -f final_test_report.md ]; then
+            echo "❌ final_test_report.md not found! Report generation failed."
+            exit 1
+          fi
+      - name: Print Final Test Report (for debugging)
+        run: cat final_test_report.md
+      - name: Upload Final Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-test-report-integration-tests-${{ github.run_id }}
+          path: final_test_report.md
+          retention-days: 30
 
   performance-regression:
     runs-on: ubuntu-latest
@@ -135,11 +171,29 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
         run: |
-          python scripts/test_performance_regression.py
+          # Parallelize for speed
+          python -m pytest -n auto tests/ -m "performance" -v --tb=short || python scripts/test_performance_regression.py
       - name: Upload Performance Metrics
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: performance-metrics
           path: performance_metrics.json
+          retention-days: 30
+      - name: Generate Final Test Report
+        run: |
+          python scripts/generate_final_report.py || true
+      - name: Check Final Test Report Exists
+        run: |
+          if [ ! -f final_test_report.md ]; then
+            echo "❌ final_test_report.md not found! Report generation failed."
+            exit 1
+          fi
+      - name: Print Final Test Report (for debugging)
+        run: cat final_test_report.md
+      - name: Upload Final Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-test-report-performance-regression-${{ github.run_id }}
+          path: final_test_report.md
           retention-days: 30
