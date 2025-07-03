@@ -12,6 +12,10 @@
 
 *An intelligent, private AI assistant that runs entirely on your local machine.*
 
+*Experience real-time reasoning and document analysis with local AI models.*
+
+[📊 Overview](docs/TECHNICAL_OVERVIEW.md) | [📄 Features](docs/FEATURES.md) | [🏗️ Architecture](docs/ARCHITECTURE.md) | [🛠️ Development](docs/DEVELOPMENT.md) | [🗺️ Roadmap](docs/ROADMAP.md) | [🧠 Reasoning](docs/REASONING_FEATURES.md) | [⚖️ LLM Judge](docs/EVALUATORS.md) | [🚦 CI Optimization](docs/CI_OPTIMIZATION.md) | [🔗 GitHub Models](docs/GITHUB_MODELS_INTEGRATION.md) | [🧪 Testing](docs/TESTING.md)
+
 ---
 
 ## 🌟 Key Features
@@ -64,11 +68,9 @@
 
 ![BasicChat Demo](assets/demo_seq_0.6s.gif)
 
-*Experience real-time reasoning and document analysis with local AI models.*
-
 ---
 
-## 📚 Documentation
+## �� Documentation
 
 [📊 Overview](docs/TECHNICAL_OVERVIEW.md) | [📄 Features](docs/FEATURES.md) | [🏗️ Architecture](docs/ARCHITECTURE.md) | [🛠️ Development](docs/DEVELOPMENT.md) | [🗺️ Roadmap](docs/ROADMAP.md) | [🧠 Reasoning](docs/REASONING_FEATURES.md) | [⚖️ LLM Judge](docs/EVALUATORS.md) | [🚦 CI Optimization](docs/CI_OPTIMIZATION.md) | [🔗 GitHub Models](docs/GITHUB_MODELS_INTEGRATION.md) | [🧪 Testing](docs/TESTING.md)
 
