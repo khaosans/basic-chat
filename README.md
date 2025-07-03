@@ -1,3 +1,4 @@
+<div align="center">
 
 [📊 Overview](docs/TECHNICAL_OVERVIEW.md) | [📄 Features](docs/FEATURES.md) | [🏗️ Architecture](docs/ARCHITECTURE.md) | [🛠️ Development](docs/DEVELOPMENT.md) | [🗺️ Roadmap](docs/ROADMAP.md) | [🧠 Reasoning](docs/REASONING_FEATURES.md) | [⚖️ LLM Judge](docs/EVALUATORS.md) | [🚦 CI Optimization](docs/CI_OPTIMIZATION.md) | [🔗 GitHub Models](docs/GITHUB_MODELS_INTEGRATION.md) | [🧪 Testing](docs/TESTING.md)
 
@@ -19,9 +20,13 @@
 
 *Experience real-time reasoning and document analysis with local AI models.*
 
+</div>
+
 ---
 
 ## 🌟 Key Features
+
+<div align="center">
 
 | 🔒 **Privacy** | 🧠 **Intelligence** | 🔬 **Research** | 🛠️ **Tools** | 📄 **Documents** | ⚡ **Performance** |
 |:---:|:---:|:---:|:---:|:---:|:---:|
@@ -29,18 +34,23 @@
 | No External APIs | Chain-of-Thought | Multi-Source Analysis | Time Tools | PDF, Text, Images | Multi-Layer Caching |
 | Data Never Leaves | Multi-Step Analysis | Academic Rigor | Web Search | Advanced RAG | Connection Pooling |
 
+</div>
+
 ### 🔒 Privacy First
+
 - **Local Processing**: All AI operations are executed on your machine.
 - **No Data Transmission**: Your data remains within your local environment.
 - **Secure by Design**: Privacy is a core principle.
 
 ### 🧠 Advanced Reasoning
+
 - **Multi-Modal Reasoning**: Five strategies for optimal problem-solving.
 - **Chain-of-Thought**: Step-by-step reasoning for complex issues.
 - **Agent-Based**: Intelligent tool selection and execution.
 - **Auto Mode**: Automatically selects the best reasoning approach.
 
 ### 🔬 Deep Research Mode
+
 - **Comprehensive Research**: Multi-source analysis with academic rigor.
 - **Intuitive Interface**: Clean, user-friendly research mode.
 - **Rich Results**: Summaries, key findings, detailed analysis, and sources.
@@ -48,18 +58,21 @@
 - **Source Citations**: Proper attribution and links to sources.
 
 ### 🛠️ Built-in Tools
+
 - **Enhanced Calculator**: Advanced operations with step-by-step reasoning.
 - **Time Tools**: Timezone-aware calculations and conversions.
 - **Web Search**: Real-time information retrieval.
 - **Document Analysis**: Summarization and Q&A.
 
 ### 📄 Document & Image Analysis
+
 - **Multi-Format Support**: PDF, text, markdown, and images.
 - **Advanced RAG**: Retrieval-Augmented Generation with semantic search.
 - **OCR Capabilities**: Text extraction from images.
 - **Vector Storage**: Efficient document indexing.
 
 ### ⚡ Performance Optimized
+
 - **Async Architecture**: Non-blocking request handling.
 - **Multi-Layer Caching**: Faster responses with Redis and memory caching.
 - **Connection Pooling**: Optimized HTTP connections.
@@ -69,13 +82,18 @@
 
 ## 🎥 Demo
 
+<div align="center">
+
 ![BasicChat Demo](assets/demo_seq_0.6s.gif)
+
+</div>
 
 ---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Python 3.11+ 
 - Ollama (for local LLMs)
 - Redis (for background tasks)
