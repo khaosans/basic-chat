@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Deterministic Performance Regression Test for LLM Judge
+Deterministic Performance Regression Test for LLM Judge (OpenAI version)
 
-Measures evaluation time and memory usage for the LLM Judge evaluator.
+Measures evaluation time and memory usage for the LLM Judge evaluator using OpenAI API.
 Fails if thresholds are exceeded. Designed for CI/CD pipelines.
 
+- Uses OpenAI's gpt-3.5-turbo by default for cost efficiency (frugal mode).
 - Uses psutil for cross-platform memory measurement if available, otherwise falls back to resource (Unix-only).
 
 Usage:
@@ -13,10 +14,13 @@ Usage:
 Environment Variables:
     PERF_TIME_THRESHOLD: Max allowed seconds (default: 30.0)
     PERF_MEM_THRESHOLD: Max allowed MB (default: 600.0)
+    OPENAI_API_KEY: Your OpenAI API key (required)
+    OPENAI_MODEL: OpenAI model to use (default: gpt-3.5-turbo)
 
 Notes:
     - The default memory threshold (600MB) is set based on typical LLM evaluation memory usage.
       Adjust this value if your model or workload changes.
+    - This script uses OpenAI for CI compatibility and cost control.
 """
 
 import time
@@ -36,12 +40,16 @@ except ImportError:
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from evaluators.check_llm_judge import LLMJudgeEvaluator
+from evaluators.check_llm_judge_openai import OpenAIEvaluator
 
 THRESHOLD_SECONDS = float(os.getenv("PERF_TIME_THRESHOLD", "30.0"))  # e.g., 30s
-# Default memory threshold set to 600MB for LLM evaluation workloads
 THRESHOLD_MB = float(os.getenv("PERF_MEM_THRESHOLD", "600.0"))      # e.g., 600MB
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+if not OPENAI_API_KEY:
+    print("Error: OPENAI_API_KEY environment variable is required.", file=sys.stderr)
+    sys.exit(1)
 
 def get_memory_mb():
     if _USE_PSUTIL:
@@ -57,7 +65,7 @@ def get_memory_mb():
         return mem
 
 def main():
-    evaluator = LLMJudgeEvaluator(quick_mode=True)
+    evaluator = OpenAIEvaluator(quick_mode=True, model=OPENAI_MODEL, api_key=OPENAI_API_KEY)
     start_time = time.time()
     start_mem = get_memory_mb()
 
