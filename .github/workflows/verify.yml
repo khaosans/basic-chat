@@ -52,6 +52,15 @@ jobs:
           name: coverage-reports
           path: htmlcov/
           retention-days: 30
+      - name: Generate Final Test Report
+        run: |
+          python scripts/generate_final_report.py || true
+      - name: Upload Final Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-test-report
+          path: final_test_report.md
+          retention-days: 30
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -104,6 +113,15 @@ jobs:
           rm -rf ./test_chroma_db
           rm -rf temp_*.mp3
           rm -rf tests/data/test_*
+      - name: Generate Final Test Report
+        run: |
+          python scripts/generate_final_report.py || true
+      - name: Upload Final Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-test-report
+          path: final_test_report.md
+          retention-days: 30
 
   performance-regression:
     runs-on: ubuntu-latest
@@ -142,4 +160,13 @@ jobs:
         with:
           name: performance-metrics
           path: performance_metrics.json
+          retention-days: 30
+      - name: Generate Final Test Report
+        run: |
+          python scripts/generate_final_report.py || true
+      - name: Upload Final Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-test-report
+          path: final_test_report.md
           retention-days: 30
