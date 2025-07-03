@@ -64,7 +64,7 @@ def main():
     args = parser.parse_args()
     
     # Base pytest command
-    cmd = ["python", "-m", "pytest", "tests/"]
+    cmd = ["python3", "-m", "pytest", "tests/"]
     
     # Add mode-specific options
     if args.mode == "unit":

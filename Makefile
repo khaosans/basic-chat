@@ -1,8 +1,8 @@
 test-fast:
-	pytest -n auto -m "unit or fast"
+	docker compose run --rm app python3 scripts/run_tests.py --mode fast --parallel
 
 test-all:
-	pytest -n auto
+	docker compose run --rm app python3 scripts/run_tests.py --mode all --parallel
 
 test-last-failed:
 	pytest --last-failed || pytest -n auto 
