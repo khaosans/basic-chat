@@ -100,3 +100,140 @@
 - Git (for cloning)
 
 ### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/khaosans/basic-chat.git
+cd basic-chat
+
+# 2. (Recommended) Create a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: .\\venv\\Scripts\\activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Download required models
+ollama pull mistral
+ollama pull nomic-embed-text
+ollama pull llava  # Optional: for image processing
+
+# 5. (Optional) Start Redis for background tasks
+docker-compose up -d redis
+```
+
+---
+
+## ⚡ Usage
+
+```bash
+# Start the application (with background tasks and Redis)
+./start_basicchat.sh
+
+# Or for development (with hot reload, Celery, Redis, Flower)
+./start_dev.sh
+```
+
+- Access the app at: `http://localhost:8501`
+- Flower dashboard (task monitoring): `http://localhost:5555`
+
+---
+
+## 🗑️ Database Cleanup
+
+To manage ChromaDB vector storage and avoid disk bloat:
+
+```bash
+# Check ChromaDB status
+python scripts/cleanup_chroma.py --status
+
+# Clean up old directories (older than 24 hours)
+python scripts/cleanup_chroma.py --age 24
+
+# Force cleanup
+python scripts/cleanup_chroma.py --force
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=app --cov-report=html --cov-report=term
+
+# Run integration tests
+pytest tests/integration/
+```
+
+---
+
+## 🏗️ System Architecture
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed diagrams, narratives, and technology stack.
+
+---
+
+## 🛠️ Configuration
+
+- Copy `.env.local.example` to `.env.local` and adjust as needed.
+- See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for environment variables and advanced config.
+
+---
+
+## 🧠 Reasoning Modes & Tools
+
+- Chain-of-Thought, Multi-Step, Agent-Based, Auto, Standard
+- Enhanced Calculator, Time Tools, Web Search, Document Analysis
+- See [docs/REASONING_FEATURES.md](docs/REASONING_FEATURES.md) and [docs/FEATURES.md](docs/FEATURES.md) for details and usage examples.
+
+---
+
+## 🚦 Troubleshooting
+
+- **Ollama not running:** Ensure `ollama` is started and models are pulled.
+- **Redis errors:** Start Redis with Docker or your system package manager.
+- **ChromaDB issues:** Use the cleanup script above.
+- **See:** [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#troubleshooting)
+
+---
+
+## 📚 References & Further Reading
+
+- [System Architecture](docs/ARCHITECTURE.md)
+- [Features Overview](docs/FEATURES.md)
+- [Development Guide](docs/DEVELOPMENT.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Reasoning Features](docs/REASONING_FEATURES.md)
+- [Technical Overview](docs/TECHNICAL_OVERVIEW.md)
+
+---
+
+## 📝 Citation
+
+If you use this project in your research, please cite:
+
+```
+@software{basicchat2024,
+  author = {Souriya Khaosanga},
+  title = {BasicChat: Local AI Assistant},
+  year = {2024},
+  url = {https://github.com/khaosans/basic-chat}
+}
+```
+
+---
+
+## 🏆 Acknowledgements
+
+- [Ollama](https://ollama.ai)
+- [ChromaDB](https://www.trychroma.com/)
+- [Streamlit](https://streamlit.io)
+- [Redis](https://redis.io)
+- [DuckDuckGo](https://duckduckgo.com)
+- [LangChain](https://langchain.com)
+
+---
