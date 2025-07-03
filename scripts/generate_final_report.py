@@ -10,8 +10,14 @@ def read_json(path):
     try:
         with open(path, 'r') as f:
             return json.load(f)
-    except Exception:
-        print(f"⚠️  Could not read {path}")
+    except FileNotFoundError:
+        print(f"⚠️  File not found: {path}")
+        return None
+    except json.JSONDecodeError as e:
+        print(f"⚠️  Failed to decode JSON from {path}: {e}")
+        return None
+    except Exception as e:
+        print(f"⚠️  Unexpected error reading {path}: {e}")
         return None
 
 def read_coverage():
@@ -44,20 +50,24 @@ def read_pytest_results():
     if not os.path.exists(log_path):
         return None
     summary = {}
-    with open(log_path) as f:
-        lines = f.readlines()
-    for line in lines:
-        if 'collected' in line and 'items' in line:
-            summary['collected'] = int(line.split('collected')[1].split('items')[0].strip())
-        if 'passed' in line and 'skipped' in line:
-            import re
-            m = re.findall(r'(\d+) passed', line)
-            if m:
-                summary['passed'] = int(m[0])
-            m = re.findall(r'(\d+) skipped', line)
-            if m:
-                summary['skipped'] = int(m[0])
-    return summary
+    try:
+        with open(log_path) as f:
+            lines = f.readlines()
+        for line in lines:
+            if 'collected' in line and 'items' in line:
+                summary['collected'] = int(line.split('collected')[1].split('items')[0].strip())
+            if 'passed' in line and 'skipped' in line:
+                import re
+                m = re.findall(r'(\d+) passed', line)
+                if m:
+                    summary['passed'] = int(m[0])
+                m = re.findall(r'(\d+) skipped', line)
+                if m:
+                    summary['skipped'] = int(m[0])
+        return summary
+    except Exception as e:
+        print(f"⚠️  Error parsing pytest log: {e}")
+        return {}
 
 def main():
     now = datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')
@@ -65,12 +75,15 @@ def main():
 
     # Test summary
     pytest_results = read_pytest_results()
-    if pytest_results:
-        report.append("## ✅ Test Results Summary\n")
-        report.append(f"- Total tests collected: {pytest_results.get('collected','?')}")
-        report.append(f"- Passed: {pytest_results.get('passed','?')}")
-        report.append(f"- Skipped: {pytest_results.get('skipped','?')}")
-        report.append("")
+    if pytest_results is not None:
+        if pytest_results:
+            report.append("## ✅ Test Results Summary\n")
+            report.append(f"- Total tests collected: {pytest_results.get('collected','?')}")
+            report.append(f"- Passed: {pytest_results.get('passed','?')}")
+            report.append(f"- Skipped: {pytest_results.get('skipped','?')}")
+            report.append("")
+        else:
+            report.append("## ✅ Test Results Summary\n- ⚠️  Pytest log found but no summary could be parsed.\n")
     else:
         report.append("## ✅ Test Results Summary\n- ⚠️  No pytest summary found.\n")
 
@@ -117,17 +130,21 @@ def main():
     else:
         report.append("## 🚦 Performance Metrics\n- ⚠️  No performance metrics found.\n")
 
-    # Recommendations
+    # Recommendations (consolidated, no duplicates)
     report.append("## 📝 Recommendations\n")
-    if llm_judge and 'recommendations' in llm_judge:
+    any_recommendation = False
+    if llm_judge and 'recommendations' in llm_judge and llm_judge['recommendations']:
         for rec in llm_judge['recommendations']:
             report.append(f"- {rec}")
-    else:
-        report.append("- No recommendations from LLM Judge.\n")
+        any_recommendation = True
     if coverage and coverage.get('total',0) < 50:
         report.append("- 🚨 Coverage is below 50%. Add more tests!")
+        any_recommendation = True
     if perf and perf.get('status') == 'FAIL':
         report.append("- 🚨 Performance regression detected. Optimize code or dependencies.")
+        any_recommendation = True
+    if not any_recommendation:
+        report.append("- No additional recommendations.\n")
     report.append("")
 
     # Comparison to previous run (stub)
