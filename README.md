@@ -508,3 +508,46 @@ Malkov, Yury A., and Dmitry A. Yashunin. "Efficient and Robust Approximate Neare
 [![GitHub Forks](https://img.shields.io/github/forks/khaosans/basic-chat-template?style=social)](https://github.com/khaosans/basic-chat-template)
 
 </div>
+
+# 🚦 Fast, Repeatable Test & Build Instructions
+
+## One-Liner (Fast, Parallel, Mocked)
+
+```sh
+make test-fast
+```
+
+- Runs only the fastest, mocked tests
+- Parallelized for speed (pytest-xdist)
+- Consistent & repeatable (Dockerized)
+- Unified Markdown report: see `final_test_report.md` artifact in CI
+
+For full coverage:
+```sh
+docker compose run --rm app python scripts/run_tests.py --mode all --parallel
+```
+
+## 🟣 Running Long/Integration/Slow Tests
+
+- To run just the long deep research test (for debugging or CI):
+
+```sh
+make test-long
+```
+
+- To run only integration or slow tests locally:
+
+```sh
+pytest tests/ -m "integration" -v --timeout=600
+pytest tests/ -m "slow" -v --timeout=1200
+```
+
+| Target/Command         | What it Runs                        | Use Case                |
+|------------------------|-------------------------------------|-------------------------|
+| `make test-fast`       | Fast, mocked, parallel tests        | Quick feedback          |
+| `make test-all`        | All tests, parallel                 | Full coverage           |
+| `make test-long`       | Just the deep research test (Docker)| Debugging long test     |
+| `pytest -m integration`| Only integration tests (local)      | Debugging integrations  |
+| `pytest -m slow`       | Only slow tests (local)             | Debugging LLM/web tests |
+
+See `progress.md` for more details and ASCII diagrams!
