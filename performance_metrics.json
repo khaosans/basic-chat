@@ -1,7 +1,7 @@
 {
-  "backend": "OPENAI",
-  "elapsed_seconds": 4.6,
-  "memory_mb": 2.3,
+  "backend": "HUGGINGFACE",
+  "elapsed_seconds": 0.77,
+  "memory_mb": 190.02,
   "threshold_seconds": 30.0,
   "threshold_mb": 600.0,
   "status": "PASS"

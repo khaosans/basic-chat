@@ -72,7 +72,6 @@ class HuggingFaceEvaluator:
 
     def _load_model(self):
         print(f"🤗 Loading Hugging Face model: {self.model}")
-        # Device selection
         device = self.device
         if device == 'auto':
             if self._torch.cuda.is_available():
@@ -83,7 +82,6 @@ class HuggingFaceEvaluator:
                 device = 'cpu'
         self.device = device
         print(f"🔧 Using device: {self.device}")
-        # Load tokenizer/model
         try:
             self.tokenizer = self._AutoTokenizer.from_pretrained(self.model)
             self.model_obj = self._AutoModelForCausalLM.from_pretrained(self.model)
@@ -95,10 +93,26 @@ class HuggingFaceEvaluator:
                 tokenizer=self.tokenizer,
                 device=0 if self.device == 'cuda' else -1
             )
-            print(f"✅ Model loaded: {self.model}")
+            # Detect max length from tokenizer or set default
+            self.max_length = getattr(self.tokenizer, 'model_max_length', 1024)
+            if self.max_length is None or self.max_length > 100_000:
+                self.max_length = 1024  # fallback for some tokenizers
+            print(f"✅ Model loaded: {self.model} (max context: {self.max_length} tokens)")
         except Exception as e:
             print(f"❌ Failed to load model: {e}", file=sys.stderr)
             sys.exit(1)
+
+    def _truncate_prompt(self, prompt: str) -> str:
+        # Truncate prompt to fit model's max context length
+        tokens = self.tokenizer.encode(prompt, add_special_tokens=False)
+        if len(tokens) > self.max_length:
+            # Try to keep the last part (rubric + JSON format)
+            # Heuristic: keep last 60% of tokens
+            keep_tokens = tokens[-int(self.max_length * 0.6):]
+            truncated_prompt = self.tokenizer.decode(keep_tokens, skip_special_tokens=True)
+            print(f"⚠️  Prompt truncated from {len(tokens)} to {len(keep_tokens)} tokens for model context window ({self.max_length}).")
+            return truncated_prompt
+        return prompt
 
     def collect_codebase_info(self) -> Dict[str, Any]:
         # Mimic OpenAI evaluator's quick/full mode
@@ -199,7 +213,8 @@ Respond in the following JSON format:
 """
 
     def evaluate_with_hf(self, prompt: str) -> Dict[str, Any]:
-        # Run the model and parse output as JSON
+        # Truncate prompt if needed
+        prompt = self._truncate_prompt(prompt)
         for attempt in range(MAX_RETRIES):
             try:
                 start = time.time()
@@ -207,7 +222,6 @@ Respond in the following JSON format:
                 end = time.time()
                 self.results['inference_time'] = round(end - start, 2)
                 content = outputs[0]['generated_text']
-                # Try to extract JSON
                 json_start = content.find('{')
                 json_end = content.rfind('}') + 1
                 if json_start != -1 and json_end != 0:
