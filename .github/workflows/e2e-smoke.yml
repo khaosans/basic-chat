@@ -24,6 +24,7 @@ jobs:
     env:
       E2E_HOST: 0.0.0.0
       E2E_PORT: 8501
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,14 +47,6 @@ jobs:
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
-
-      - name: Pull Ollama models
-        run: |
-          ollama pull mistral
-          ollama pull nomic-embed-text
-
-      - name: Start Ollama (background)
-        run: ollama serve &
 
       - name: Start Streamlit app (background)
         run: streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0 &
