@@ -65,7 +65,7 @@ def get_memory_mb():
         return mem
 
 def main():
-    evaluator = OpenAIEvaluator(quick_mode=True, model=OPENAI_MODEL, api_key=OPENAI_API_KEY)
+    evaluator = OpenAIEvaluator(quick_mode=True, model=OPENAI_MODEL)
     start_time = time.time()
     start_mem = get_memory_mb()
 
