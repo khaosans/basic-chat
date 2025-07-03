@@ -1,38 +1,34 @@
-FROM python:3.11-slim
-
-# Set working directory
-WORKDIR /app
+FROM ubuntu:22.04
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    software-properties-common \
-    git \
+    python3.11 python3.11-venv python3.11-dev python3-pip \
+    curl git build-essential unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Set python3.11 as default
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+RUN python3 --version
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+ENV PATH="/root/.local/bin:$PATH"
 
-# Copy application code
+# Install bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:$PATH"
+
+# Copy requirements and install Python dependencies
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Optionally install dev dependencies (uncomment if needed)
+# COPY pyproject.toml poetry.lock ./
+# RUN poetry install --no-root
+
+# Copy the rest of the codebase (for local dev/test)
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p chroma_db temp_audio uploads
-
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV PYTHONUNBUFFERED=1
-
-# Expose ports
-EXPOSE 8501 5555
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8501/_stcore/health || exit 1
-
-# Default command
-CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"] 
+# Default command (override in CI)
+CMD ["python3"] 

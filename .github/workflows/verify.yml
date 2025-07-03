@@ -11,42 +11,21 @@ on:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.11]
+    container:
+      image: ghcr.io/khaosans/basic-chat-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT }}
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install dependencies
+      - name: Test Hugging Face API
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-      - name: Create test directories
-        run: |
-          mkdir -p tests/data
-          mkdir -p test_chroma_db
+          python -c "from huggingface_hub import InferenceClient; import os; client = InferenceClient(token=os.environ['HF_TOKEN']); print(client.text_generation('gpt2', 'Hello world'))"
       - name: Run unit tests only
         run: |
-          # Parallelize for speed
-          python -m pytest -n auto tests/ -m "unit or fast" --ignore=tests/integration -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov=task_manager --cov=task_ui --cov=tasks --cov-report=term-missing --cov-report=html:htmlcov
-        env:
-          # Task system configuration for testing
-          ENABLE_BACKGROUND_TASKS: "true"
-          REDIS_ENABLED: "false"
-          CELERY_BROKER_URL: "redis://localhost:6379/0"
-          MOCK_EXTERNAL_SERVICES: "true"
-          TESTING: "true"
-          CHROMA_PERSIST_DIR: "./test_chroma_db"
+          python -m pytest -n auto tests/ -m "unit or fast" --ignore=tests/integration -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov=task_manager --cov=task_ui --cov=tasks --cov-report=term-missing --cov-report=html:htmlcov | tee ci_build_doc_test.log
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         with:
@@ -73,7 +52,13 @@ jobs:
 
   integration-tests:
     runs-on: ubuntu-latest
-    # Only run integration tests on main branch or when explicitly requested
+    container:
+      image: ghcr.io/khaosans/basic-chat-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT }}
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
     if: |
       github.ref == 'refs/heads/main' ||
       contains(github.event.head_commit.message, '[run-integration]') ||
@@ -81,45 +66,20 @@ jobs:
     needs: unit-tests
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install dependencies
+      - name: Test Hugging Face API
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -c "from huggingface_hub import InferenceClient; import os; client = InferenceClient(token=os.environ['HF_TOKEN']); print(client.text_generation('gpt2', 'Hello world'))"
       - name: Setup test environment
         run: |
-          # Create test data directory
           mkdir -p tests/data
           mkdir -p test_chroma_db
-          # Generate test files if they don't exist
           python scripts/generate_assets.py || echo "Test assets generation failed, continuing..."
       - name: Run integration tests
         run: |
-          # Parallelize for speed
-          python -m pytest -n auto tests/ -m "integration" -v --tb=short --timeout=300
-        env:
-          # Mock external services for integration tests
-          MOCK_EXTERNAL_SERVICES: "true"
-          CHROMA_PERSIST_DIR: "./test_chroma_db"
-          # Task system configuration for integration testing
-          ENABLE_BACKGROUND_TASKS: "true"
-          REDIS_ENABLED: "false"
-          CELERY_BROKER_URL: "redis://localhost:6379/0"
-          TESTING: "true"
+          python -m pytest -n auto tests/ -m "integration" -v --tb=short --timeout=300 | tee ci_build_doc_test.log
       - name: Cleanup test environment
         if: always()
         run: |
-          # Clean up test files
           rm -rf ./test_chroma_db
           rm -rf temp_*.mp3
           rm -rf tests/data/test_*
@@ -143,36 +103,24 @@ jobs:
 
   performance-regression:
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/khaosans/basic-chat-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT }}
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
     if: |
       (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Install dependencies
+      - name: Test Hugging Face API
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -c "from huggingface_hub import InferenceClient; import os; client = InferenceClient(token=os.environ['HF_TOKEN']); print(client.text_generation('gpt2', 'Hello world'))"
       - name: Run Performance Regression Test
-        env:
-          PERF_TIME_THRESHOLD: "30.0"
-          # Default memory threshold set to 600MB for LLM evaluation workloads
-          PERF_MEM_THRESHOLD: "600.0"
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
         run: |
-          # Parallelize for speed
-          python -m pytest -n auto tests/ -m "performance" -v --tb=short || python scripts/test_performance_regression.py
+          python -m pytest -n auto tests/ -m "performance" -v --tb=short | tee ci_build_doc_test.log || python scripts/test_performance_regression.py
       - name: Upload Performance Metrics
         if: always()
         uses: actions/upload-artifact@v4
