@@ -1,5 +1,9 @@
 # GitHub Models Integration Guide
 
+[← Back to Documentation](../README.md#documentation) | [CI Optimization →](CI_OPTIMIZATION.md)
+
+---
+
 ## Overview
 
 This guide explains how to use GitHub's Model feature for LLM Judge evaluation, providing the fastest and most cost-effective solution for CI/CD quality assessment.
@@ -316,3 +320,5 @@ GitHub Models integration provides the optimal solution for LLM Judge evaluation
 - **High-quality** models available
 
 This approach transforms the LLM Judge from a bottleneck into a fast, reliable quality gate that provides immediate feedback while maintaining high standards. 
+
+[← Back to Documentation](../README.md#documentation) | [CI Optimization →](CI_OPTIMIZATION.md)

@@ -1,5 +1,9 @@
 # LLM Judge Evaluation Flow
 
+[← Back to Documentation](../README.md#documentation) | [Evaluators →](EVALUATORS.md)
+
+---
+
 ## Overview
 
 The LLM Judge evaluation system uses OpenAI's cost-effective models to assess code quality, test coverage, documentation, and overall project health. This provides automated quality assurance for the codebase.
@@ -183,3 +187,5 @@ python evaluators/check_llm_judge_openai.py --quick
 - [ ] Historical trend analysis
 - [ ] Integration with code review tools
 - [ ] Automated fix suggestions 
+
+[← Back to Documentation](../README.md#documentation) | [Evaluators →](EVALUATORS.md)

@@ -1,5 +1,9 @@
 # CI/CD Optimization Strategy
 
+[← Back to Documentation](../README.md#documentation) | [Evaluators →](EVALUATORS.md)
+
+---
+
 ## Overview
 
 This document outlines the optimization strategy implemented to make the LLM Judge evaluation job faster, more cost-effective, and more reliable in our CI/CD pipeline.
@@ -324,3 +328,5 @@ The optimization strategy successfully addresses the original problems:
 - **Scalable**: Foundation for future enhancements
 
 The LLM Judge now provides immediate quality feedback while maintaining high standards and reducing operational costs. GitHub Models provides the optimal solution for most use cases, with Ollama as a reliable fallback option. 
+
+[← Back to Documentation](../README.md#documentation) | [Evaluators →](EVALUATORS.md)

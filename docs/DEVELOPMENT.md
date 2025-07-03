@@ -1,8 +1,6 @@
 # Development Guide
 
-This guide provides comprehensive instructions for developers contributing to BasicChat, including environment setup, testing, code quality, and project management workflows.
-
-[← Back to README](../README.md)
+[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md)
 
 ---
 
@@ -733,7 +731,7 @@ class ReasoningResult:
 
 ---
 
-[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Roadmap →](ROADMAP.md) 
+[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Roadmap →](ROADMAP.md) 
 
 ---
 

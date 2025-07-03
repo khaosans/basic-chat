@@ -1,8 +1,6 @@
 # System Architecture
 
-This document provides a comprehensive overview of BasicChat's technical architecture, including component interactions, data flows, and system design principles.
-
-[← Back to README](../README.md)
+[← Back to Documentation](../README.md#documentation) | [Features →](FEATURES.md)
 
 ---
 
@@ -625,4 +623,4 @@ This diagram explains how the system scales to support more users, with a load b
 
 ---
 
-[← Back to README](../README.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 
+[← Back to Documentation](../README.md#documentation) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 

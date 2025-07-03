@@ -1,5 +1,9 @@
 # GitHub Models API Troubleshooting Guide
 
+[← Back to Documentation](../README.md#documentation) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md)
+
+---
+
 ## Issue Summary
 
 The GitHub Models API is returning 404 errors, indicating that the API endpoints we're trying to use are not available or not correctly configured.
@@ -238,3 +242,5 @@ While GitHub Models API is not currently available, we have implemented a robust
 - ✅ Preserves performance benefits
 
 The mock mode ensures the pipeline continues to work while we wait for GitHub Models to become available, and the Ollama fallback provides real AI evaluation capabilities in the meantime. 
+
+[← Back to Documentation](../README.md#documentation) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md)

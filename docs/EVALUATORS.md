@@ -1,6 +1,8 @@
 # LLM Judge Evaluator
 
-This document describes the LLM-based code quality evaluator for the GitHub Actions CI pipeline.
+[← Back to Documentation](../README.md#documentation) | [CI Optimization →](CI_OPTIMIZATION.md)
+
+---
 
 ## Overview
 
@@ -136,4 +138,4 @@ For issues or questions:
 
 ---
 
-[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) 
+[← Back to Documentation](../README.md#documentation) | [CI Optimization →](CI_OPTIMIZATION.md)

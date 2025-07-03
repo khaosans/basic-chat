@@ -1,8 +1,6 @@
 # Technical Overview
 
-This document provides a comprehensive technical overview of BasicChat, summarizing the architecture, key components, design decisions, and technical characteristics.
-
-[← Back to README](../README.md)
+[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md)
 
 ---
 
@@ -490,4 +488,4 @@ The testing framework implements comprehensive quality assurance practices that 
 
 ---
 
-[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) 
+[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) 

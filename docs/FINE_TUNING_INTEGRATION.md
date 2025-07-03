@@ -1,5 +1,9 @@
 # Fine-Tuning Integration Analysis
 
+[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md)
+
+---
+
 ## Overview
 
 This document analyzes the integration of fine-tuning capabilities into our AI chat application. Fine-tuning allows us to customize our language models for specific use cases, improving performance on domain-specific tasks and user interaction patterns.
@@ -626,3 +630,5 @@ Fine-tuning integration offers significant potential for improving our AI chat a
 - 30%+ improvement in task completion rates
 
 The investment in fine-tuning infrastructure will provide long-term benefits through improved AI capabilities and enhanced user experience. 
+
+[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md)

@@ -1,5 +1,9 @@
 # LLM Judge Improvements: Enhanced Test Directory Analysis
 
+[← Back to Documentation](../README.md#documentation) | [LLM Judge Flow →](LLM_JUDGE_FLOW.md)
+
+---
+
 ## Overview
 
 The LLM Judge evaluator has been significantly enhanced to provide better analysis of test coverage and quality by examining the actual content of test files in the `tests/` directory.
@@ -128,4 +132,6 @@ Potential improvements for future versions:
 - [LLM Judge Evaluator](../evaluators/check_llm_judge_openai.py)
 - [GitHub Workflow](../.github/workflows/verify.yml)
 - [Test Directory](../tests/)
-- [Evaluation Results](../llm_judge_results.json) 
+- [Evaluation Results](../llm_judge_results.json)
+
+[← Back to Documentation](../README.md#documentation) | [LLM Judge Flow →](LLM_JUDGE_FLOW.md) 

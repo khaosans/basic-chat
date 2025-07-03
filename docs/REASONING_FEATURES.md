@@ -1,5 +1,9 @@
 # Reasoning Capabilities - Feature Summary
 
+[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md)
+
+---
+
 ## Core Features
 
 ### **Reasoning Engine Architecture**
@@ -790,7 +794,7 @@ ENABLE_STRUCTURED_LOGGING=true
 
 ---
 
-[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) 
+[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) 
 
 ## 📝 Recent Updates
 
