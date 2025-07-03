@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const E2E_HOST = process.env.E2E_HOST || 'localhost';
+const E2E_PORT = process.env.E2E_PORT || '8501';
+const BASE_URL = `http://${E2E_HOST}:${E2E_PORT}`;
+
 export default defineConfig({
   testDir: './tests/e2e/specs',
   fullyParallel: true,
@@ -12,7 +16,7 @@ export default defineConfig({
     ['junit', { outputFile: 'test-results.xml' }]
   ],
   use: {
-    baseURL: 'http://localhost:8501',
+    baseURL: BASE_URL,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
@@ -40,8 +44,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'streamlit run app.py --server.port 8501 --server.headless true',
-    url: 'http://localhost:8501',
+    command: `streamlit run app.py --server.port ${E2E_PORT} --server.headless true --server.address 0.0.0.0`,
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
   },

@@ -1,0 +1,73 @@
+# E2E Smoke Test Workflow for BasicChat
+#
+# This workflow runs a lightweight Playwright smoke test to verify the app loads in CI.
+# It runs as a separate job for fast feedback and can be used as a required check.
+#
+# To view the report, download the artifact or run `npx playwright show-report` locally.
+
+name: E2E Smoke Test
+
+on:
+  push:
+    branches: [main, develop, feature/*]
+  pull_request:
+    branches: [main, develop, feature/*]
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      redis:
+        image: redis
+        ports: [6379:6379]
+    env:
+      E2E_HOST: localhost
+      E2E_PORT: 8501
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Start Ollama (background)
+        run: ollama serve &
+
+      - name: Start Streamlit app (background)
+        run: streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0 &
+
+      - name: Wait for Streamlit to be ready
+        run: |
+          for i in {1..30}; do
+            if curl -sSf http://localhost:8501 >/dev/null; then
+              echo 'Streamlit is up!'; break
+            fi
+            sleep 2
+          done
+
+      - name: Run Playwright smoke test
+        run: npx playwright test tests/e2e/specs/smoke.spec.ts --project=chromium --reporter=dot,html --output=playwright-report
+
+      - name: Upload Playwright HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-report
+          path: playwright-report
+          retention-days: 7 
