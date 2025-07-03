@@ -734,6 +734,38 @@ The speculative decoding implementation will leverage recent advances in LLM inf
 - **Learning Capabilities**: Tools that improve with usage
 - **Custom Tool Creation**: User-defined tool creation interface
 
+### 5. **Enhanced LCEL Reasoning**
+
+**What is LCEL?**
+
+LCEL (LangChain Expression Language) is a modern, composable way to build reasoning chains using LangChain's pipe (`|`) syntax. It enables flexible, modular, and structured reasoning workflows by chaining together prompts, models, and output parsers.
+
+**How We Use It:**
+
+BasicChat's `Enhanced LCEL` mode leverages LCEL to produce structured, step-by-step reasoning with confidence scores and key insights. This mode uses a Pydantic model for output and a JSON parser for robust, machine-readable results.
+
+**Example:**
+```python
+from reasoning_engine import ReasoningEngine
+
+engine = ReasoningEngine("mistral")
+result = engine.run(
+    "Summarize the main findings of the paper on Chain-of-Thought reasoning.",
+    mode="Enhanced LCEL"
+)
+
+# result.content: Final answer
+# result.reasoning_steps: List of reasoning steps
+# result.thought_process: Step-by-step explanation
+# result.confidence: Confidence score (0-1)
+# result.sources: Sources used
+```
+
+**Technical Details:**
+- Uses `ChatPromptTemplate | LLM | JsonOutputParser` (LCEL pipe syntax)
+- Output is validated against a Pydantic schema for reliability
+- Designed for advanced, explainable, and auditable reasoning
+
 ## 🎯 Best Practices
 
 ### 1. **Choosing Reasoning Modes**
