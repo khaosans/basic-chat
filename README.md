@@ -1,4 +1,3 @@
-
 # BasicChat: Your Intelligent Local AI Assistant
 
 <div align="center">
