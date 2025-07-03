@@ -2,6 +2,11 @@
 
 ---
 
+> **Looking for a quick reference on the CI build process?**
+> See the new [CI Build Reference](./CI_BUILD.md) for a concise overview and links to all related docs and workflows.
+
+---
+
 # CI/CD Optimization Strategy
 
 > **TL;DR:** Optimize CI/CD with fast, parallel LLM evaluation jobs, model caching, and GitHub Models integration for speed and cost savings.
