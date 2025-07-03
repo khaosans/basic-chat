@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """
 Test runner script for BasicChat application.
+
+- Fast, repeatable, parallel test execution (uses pytest-xdist)
+- Supports unit, integration, slow, and full test modes
+- Produces a unified Markdown report (`final_test_report.md`) in CI
+- Fails fast if any test fails (exit code propagation)
+- See progress.md for usage and Makefile integration
+
 Provides different test execution modes for development and CI.
 """
 

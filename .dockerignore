@@ -1,0 +1,16 @@
+.git
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.md
+*.log
+chroma_db/
+temp_audio/
+uploads/
+# tests/
+htmlcov/
+*.env
+.env*
+*.DS_Store
+*.swp 

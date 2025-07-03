@@ -50,8 +50,9 @@ def celery_worker_available():
 @pytest.mark.integration
 @pytest.mark.long  # Mark as long-running for special handling
 def test_deep_research():
+    log("[yellow][Test Notice] Deep research test may take several minutes. Please be patient while the system completes a comprehensive research task. Long-running tasks are expected in this phase.[/yellow]")
     if not celery_worker_available():
-        log("[yellow][AI/CI] Skipping test_deep_research: Celery worker not running or not available[/yellow]")
+        log("[red][Test Skipped] Celery worker not running or not available. Deep research test skipped. Please ensure all services are up (docker compose up) and try again.[/red]")
         pytest.skip("Celery worker not running or not available")
     log("[cyan]🔬 Testing BasicChat Deep Research Functionality[/cyan]")
     log("[cyan]=" * 50 + "[/cyan]")
@@ -113,7 +114,7 @@ def test_deep_research():
             break
         time.sleep(5)
     log("[cyan]=" * 50 + "[/cyan]")
-    log("[green]🎉 Deep research test finished![/green]")
+    log("[green]🎉 Deep research test finished! If this took a while, that's normal for comprehensive research tasks.[/green]")
 
 def test_web_search():
     """Test web search functionality"""

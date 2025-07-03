@@ -1,4 +1,4 @@
-# 🚦 Fast Test Automation with Docker 🐳
+# 🚦 Fast, Repeatable Test Automation with Docker 🐳
 
 ## ✅ One-Liner (Fast, Parallel, Mocked)
 
@@ -8,8 +8,9 @@ docker compose run --rm app python scripts/run_tests.py --mode fast --parallel
 ```
 
 - **Runs only the fastest, mocked tests**
-- **Parallelized** for speed
-- **Consistent**: Works locally and in CI
+- **Parallelized** for speed (uses pytest-xdist)
+- **Consistent & repeatable**: Works locally and in CI
+- **Unified Markdown report**: See `final_test_report.md` artifact after each CI run
 
 ---
 
@@ -55,6 +56,7 @@ docker compose run --rm app python scripts/run_tests.py --mode all --parallel
 - Use `--mode all` in CI for full coverage
 - All test logic is in `scripts/run_tests.py` (supports unit, integration, slow, coverage, etc.)
 - No need to run `pytest` directly!
+- **Unified test report**: Download `final_test_report.md` from CI artifacts for a full summary
 
 ---
 
@@ -68,9 +70,11 @@ docker compose run --rm app python scripts/run_tests.py --mode all --parallel
 
 # Progress Log
 
-## [Date: YYYY-MM-DD]
+## [2025-07-03]
 
 - Added `scripts/generate_final_report.py` to aggregate test, coverage, LLM Judge, and performance results into a single Markdown report (`final_test_report.md`).
 - Updated `.github/workflows/verify.yml` to run the report script after all tests and upload the report as an artifact for every job.
 - The report includes: test summary, coverage, LLM Judge results, performance metrics, recommendations, and a stub for comparisons to previous runs.
-- All steps are robust to missing files and always generate a report for CI/CD visibility. 
+- All steps are robust to missing files and always generate a report for CI/CD visibility.
+- **Parallelized all tests** for speed and reliability.
+- **Documented fast, repeatable build process** in this file. 
