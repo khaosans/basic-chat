@@ -1,3 +1,10 @@
+## 2025-07-03 — Release Candidate v0.2.0-rc.1
+
+- Performance regression testing implemented
+- LLM Judge evaluation system enhanced
+- Background task processing optimized
+- Comprehensive test reporting
+
 ## 2025-07-03 — Deterministic Performance Regression Test for LLM Judge (by SourC)
 
 - Added `scripts/test_performance_regression.py` to measure LLM Judge evaluation time and memory usage.
