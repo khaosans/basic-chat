@@ -237,3 +237,25 @@ If you use this project in your research, please cite:
 - [LangChain](https://langchain.com)
 
 ---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!
+- Please see our [Development Guide](docs/DEVELOPMENT.md) for setup and best practices.
+- Open an issue or pull request to get started.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## 🌐 Community & Contact
+
+- Twitter: [@souriyak](https://twitter.com/souriyak)
+- Email: souriya.khaosanga@gmail.com
+- [GitHub Issues](https://github.com/khaosans/basic-chat/issues) for support and feedback
+
+---
