@@ -6,6 +6,12 @@
 - Thresholds and rationale are documented in both the script and workflow.
 - Ensures no performance regressions are merged.
 
+## 2025-07-03 — Playwright E2E Testing Setup (by SourC)
+
+- Created branch feature/playwright-e2e-testing for Playwright E2E testing setup
+- Added package.json and playwright.config.ts for Playwright
+- To be followed by E2E test suites, fixtures, and CI integration
+
 # Progress Log
 
 ## [Date: YYYY-MM-DD]
