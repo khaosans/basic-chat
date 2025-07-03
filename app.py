@@ -1,8 +1,16 @@
 import streamlit as st
+from config import (
+    APP_TITLE,
+    FAVICON_PATH,
+    DEFAULT_MODEL,
+    VISION_MODEL,
+    REASONING_MODES,
+    DEFAULT_REASONING_MODE
+)
 # Must be first Streamlit command
 st.set_page_config(
-    page_title="Ollama Chatbot",
-    page_icon="🤖",
+    page_title=APP_TITLE,
+    page_icon=FAVICON_PATH,
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -54,16 +62,6 @@ from task_ui import (
     display_active_tasks,
     should_use_background_task,
     create_deep_research_message
-)
-
-# Import configuration constants
-from config import (
-    APP_TITLE,
-    FAVICON_PATH,
-    DEFAULT_MODEL,
-    VISION_MODEL,
-    REASONING_MODES,
-    DEFAULT_REASONING_MODE
 )
 
 # Import Ollama API functions
@@ -887,11 +885,11 @@ def enhanced_chat_interface(doc_processor):
 # Main Function
 def main():
     """Main application entry point"""
-    st.set_page_config(
-        page_title=APP_TITLE,
-        page_icon=FAVICON_PATH,
-        layout="wide"
-    )
+    # st.set_page_config(  # <-- REMOVE THIS BLOCK
+    #     page_title=APP_TITLE,
+    #     page_icon=FAVICON_PATH,
+    #     layout="wide"
+    # )
 
     # Clean up audio files on app start
     if "audio_cleanup_done" not in st.session_state:

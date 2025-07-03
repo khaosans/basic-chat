@@ -110,3 +110,4 @@ test_*.pdf
 final_test_report.md
 artifacts/
 ci_reports/
+test-results/
