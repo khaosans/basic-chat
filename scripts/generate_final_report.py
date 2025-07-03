@@ -84,8 +84,24 @@ def main():
             report.append("")
         else:
             report.append("## ✅ Test Results Summary\n- ⚠️  Pytest log found but no summary could be parsed.\n")
+            # Try to show last lines of pytest output for debugging
+            try:
+                with open('ci_build_doc_test.log', 'r') as f:
+                    lines = f.readlines()
+                report.append('### Last 40 lines of pytest output:\n')
+                report.extend(['    ' + line.rstrip() for line in lines[-40:]])
+            except Exception:
+                report.append('    (No pytest log available)')
     else:
         report.append("## ✅ Test Results Summary\n- ⚠️  No pytest summary found.\n")
+        # Try to show last lines of pytest output for debugging
+        try:
+            with open('ci_build_doc_test.log', 'r') as f:
+                lines = f.readlines()
+            report.append('### Last 40 lines of pytest output:\n')
+            report.extend(['    ' + line.rstrip() for line in lines[-40:]])
+        except Exception:
+            report.append('    (No pytest log available)')
 
     # Coverage summary
     coverage = read_coverage()
