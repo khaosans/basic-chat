@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Deterministic Performance Regression Test for LLM Judge (OpenAI version)
+Deterministic Performance Regression Test for LLM Judge (OpenAI or Ollama)
 
-Measures evaluation time and memory usage for the LLM Judge evaluator using OpenAI API.
-Fails if thresholds are exceeded. Designed for CI/CD pipelines.
+Measures evaluation time and memory usage for the LLM Judge evaluator using either OpenAI API or local Ollama.
+Fails if thresholds are exceeded. Designed for CI/CD pipelines and local dev.
 
 - Uses OpenAI's gpt-3.5-turbo by default for cost efficiency (frugal mode).
 - Uses psutil for cross-platform memory measurement if available, otherwise falls back to resource (Unix-only).
+- Select backend with LLM_JUDGE_BACKEND env var: "OPENAI" (default) or "OLLAMA"
 
 Usage:
     python scripts/test_performance_regression.py
@@ -14,13 +15,14 @@ Usage:
 Environment Variables:
     PERF_TIME_THRESHOLD: Max allowed seconds (default: 30.0)
     PERF_MEM_THRESHOLD: Max allowed MB (default: 600.0)
-    OPENAI_API_KEY: Your OpenAI API key (required)
+    OPENAI_API_KEY: Your OpenAI API key (required for OpenAI backend)
     OPENAI_MODEL: OpenAI model to use (default: gpt-3.5-turbo)
+    LLM_JUDGE_BACKEND: "OPENAI" (default) or "OLLAMA"
 
 Notes:
     - The default memory threshold (600MB) is set based on typical LLM evaluation memory usage.
       Adjust this value if your model or workload changes.
-    - This script uses OpenAI for CI compatibility and cost control.
+    - This script uses OpenAI for CI compatibility and cost control, but can use Ollama locally.
 """
 
 import time
@@ -41,15 +43,14 @@ except ImportError:
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from evaluators.check_llm_judge_openai import OpenAIEvaluator
+from evaluators.check_llm_judge import LLMJudgeEvaluator
 
 THRESHOLD_SECONDS = float(os.getenv("PERF_TIME_THRESHOLD", "30.0"))  # e.g., 30s
 THRESHOLD_MB = float(os.getenv("PERF_MEM_THRESHOLD", "600.0"))      # e.g., 600MB
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-3.5-turbo")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+BACKEND = os.getenv("LLM_JUDGE_BACKEND", "OPENAI").upper()
 
-if not OPENAI_API_KEY:
-    print("Error: OPENAI_API_KEY environment variable is required.", file=sys.stderr)
-    sys.exit(1)
 
 def get_memory_mb():
     if _USE_PSUTIL:
@@ -65,7 +66,16 @@ def get_memory_mb():
         return mem
 
 def main():
-    evaluator = OpenAIEvaluator(quick_mode=True, model=OPENAI_MODEL)
+    if BACKEND == "OLLAMA":
+        print("[Performance Test] Using Ollama backend (local LLM)")
+        evaluator = LLMJudgeEvaluator(quick_mode=True)
+    else:
+        print("[Performance Test] Using OpenAI backend (frugal, CI-friendly)")
+        if not OPENAI_API_KEY:
+            print("Error: OPENAI_API_KEY environment variable is required for OpenAI backend.", file=sys.stderr)
+            sys.exit(1)
+        evaluator = OpenAIEvaluator(quick_mode=True, model=OPENAI_MODEL)
+
     start_time = time.time()
     start_mem = get_memory_mb()
 
@@ -79,6 +89,7 @@ def main():
     mem_used = max(0.0, end_mem - start_mem)
 
     metrics = {
+        "backend": BACKEND,
         "elapsed_seconds": round(elapsed, 2),
         "memory_mb": round(mem_used, 2),
         "threshold_seconds": THRESHOLD_SECONDS,

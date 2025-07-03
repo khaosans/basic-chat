@@ -1,7 +1,8 @@
 {
-  "elapsed_seconds": 23.12,
-  "memory_mb": 448.0,
+  "backend": "OLLAMA",
+  "elapsed_seconds": 24.06,
+  "memory_mb": 0.0,
   "threshold_seconds": 30.0,
-  "threshold_mb": 150.0,
-  "status": "FAIL"
+  "threshold_mb": 600.0,
+  "status": "PASS"
 }

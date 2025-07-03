@@ -326,6 +326,30 @@ pytest tests/test_enhanced_tools.py     # Tool functionality tests
 
 ---
 
+## 🏎️ Performance Regression Testing
+
+A deterministic performance regression test ensures that LLM Judge evaluation remains fast and efficient. This test runs automatically in CI and can be run locally.
+
+- **Thresholds:** Fails if evaluation takes >30s or uses >600MB memory (configurable via env vars).
+- **Backends:**
+  - **OpenAI (default, frugal, CI-friendly):** Uses gpt-3.5-turbo for cost efficiency.
+  - **Ollama (local):** Uses your local Ollama model for offline/local testing.
+- **Backend selection:** Set `LLM_JUDGE_BACKEND=OLLAMA` to use Ollama, otherwise defaults to OpenAI.
+- **Script:** `python scripts/test_performance_regression.py`
+
+Example:
+```bash
+# Run with OpenAI (default, requires OPENAI_API_KEY)
+python scripts/test_performance_regression.py
+
+# Run with Ollama (local dev)
+LLM_JUDGE_BACKEND=OLLAMA python scripts/test_performance_regression.py
+```
+
+See also: `.github/workflows/verify.yml` for CI integration.
+
+---
+
 ## 🛠️ Development
 
 ### **Code Quality**
