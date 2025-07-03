@@ -200,3 +200,11 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed diagrams, narrativ
 - **See:** [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#troubleshooting)
 
 ---
+
+## 📑 MLA Citation
+
+If referencing this project in academic or professional work, please use:
+
+> Khaosanga, Souriya. "BasicChat: Local AI Assistant." 2024. GitHub, https://github.com/khaosans/basic-chat.
+
+---
