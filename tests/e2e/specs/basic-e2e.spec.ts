@@ -50,7 +50,7 @@ test.describe('BasicChat E2E', () => {
     await chat.waitForAppLoad();
   });
 
-  test('should send a message and receive a response', async ({ page }) => {
+  test.only('should send a message and receive a response', async ({ page }) => {
     await chat.sendMessage('Hello, BasicChat!');
     await chat.waitForResponse();
     await expect(await chat.getLastResponse()).toContainText('Hello');
@@ -70,4 +70,10 @@ test.describe('BasicChat E2E', () => {
   //   const response = await chat.getLastResponse();
   //   expect(await response.textContent()).toBeTruthy();
   // });
+
+  test('should focus the message input', async ({ page }) => {
+    const input = await page.waitForSelector('textarea[placeholder="Type a message..."]', { timeout: 10000 });
+    await input.focus();
+    await expect(input).toBeFocused();
+  });
 }); 

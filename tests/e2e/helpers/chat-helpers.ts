@@ -4,8 +4,7 @@ export class ChatHelper {
   constructor(private page: Page) {}
 
   async waitForAppLoad() {
-    await this.page.waitForSelector('[data-testid="stAppViewContainer"]', { timeout: 30000 });
-    await this.page.waitForSelector('textarea[data-testid="stTextInput"]', { timeout: 10000 });
+    await this.page.waitForSelector('textarea[placeholder="Type a message..."]', { timeout: 30000 });
   }
 
   async sendMessage(message: string) {
