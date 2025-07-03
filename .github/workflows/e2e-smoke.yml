@@ -22,7 +22,7 @@ jobs:
         image: redis
         ports: [6379:6379]
     env:
-      E2E_HOST: localhost
+      E2E_HOST: 0.0.0.0
       E2E_PORT: 8501
     steps:
       - name: Checkout code
@@ -61,7 +61,7 @@ jobs:
       - name: Wait for Streamlit to be ready
         run: |
           for i in {1..60}; do
-            if curl -sSf http://localhost:8501 | grep -q "BasicChat"; then
+            if curl -sSf http://0.0.0.0:8501 | grep -q "BasicChat"; then
               echo 'Streamlit is up!'; break
             fi
             sleep 2
