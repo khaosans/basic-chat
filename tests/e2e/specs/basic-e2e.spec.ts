@@ -1,12 +1,33 @@
 /**
- * Basic E2E Tests for BasicChat
+ * BasicChat E2E Test Suite
  *
- * 1. Sends a message and checks for a response.
- * 2. Switches reasoning mode and verifies the change.
- * 3. Uploads a document and checks for upload success.
+ * This file contains end-to-end (E2E) tests for the BasicChat Streamlit application.
  *
- * To run:
+ * ## What is Covered
+ * - Sending a message and verifying a response
+ * - Switching reasoning modes and verifying the UI
+ * - Uploading a document and checking for upload success
+ *
+ * ## Best Practices
+ * - Uses robust, always-present selectors (e.g., input placeholders)
+ * - Waits for UI readiness before interacting
+ * - Logs page content on failure for easier debugging
+ * - Uses fixtures with real, extractable text for upload tests
+ *
+ * ## How to Run Locally
  *   npx playwright test tests/e2e/specs/basic-e2e.spec.ts --project=chromium
+ *
+ * ## How to Run in CI
+ *   - The test will run automatically via GitHub Actions on PRs and pushes.
+ *   - Reports are uploaded as artifacts for review.
+ *
+ * ## Troubleshooting
+ * - If a test fails, open the Playwright HTML report for screenshots, video, and logs.
+ * - Ensure the test PDF contains real text (not blank or image-only).
+ * - If selectors change in the UI, update them here.
+ *
+ * ## Maintainers
+ * - See progress.md for E2E test history and updates.
  */
 import { test, expect } from '@playwright/test';
 import path from 'path';
