@@ -238,6 +238,93 @@ For issues or questions:
 
 ---
 
+# 🚦 Deterministic Performance Regression Test
+
+## Overview
+
+To ensure that updates do not introduce performance regressions, we have added a deterministic performance regression test to CI. This test measures the time and memory usage of the LLM Judge evaluation and fails the build if thresholds are exceeded.
+
+- **Time threshold:** Default 30 seconds (configurable)
+- **Memory threshold:** Default 600MB (configurable)
+- **Artifact:** `performance_metrics.json` (for historical tracking)
+
+## How It Works
+
+The test wraps the LLM Judge evaluation and records:
+- Total elapsed time
+- Peak memory usage
+
+If either metric exceeds the threshold, the test fails and CI blocks the merge.
+
+### CI Integration
+
+- Runs after the LLM Judge job in `.github/workflows/verify.yml`
+- Uploads `performance_metrics.json` as an artifact
+- Thresholds can be tuned via environment variables
+
+## What It Catches
+
+- Model upgrades that increase load time or memory
+- Code changes that slow down evaluation or leak memory
+- Dependency updates that impact performance
+
+## Diagrams
+
+### 1. Performance Regression Test Flow
+
+```mermaid
+graph TD
+    A[Code Change] --> B[LLM Judge Runs]
+    B --> C[Performance Test Measures]
+    C --> D{Within Thresholds?}
+    D -->|Yes| E[✅ Pass - No Regression]
+    D -->|No| F[❌ Fail - Regression Detected]
+    F --> G[CI Blocks Merge]
+```
+
+### 2. Quality + Performance Gate
+
+```mermaid
+graph LR
+    A[Code Change] --> B[LLM Judge: Quality Assessment]
+    A --> C[Performance Test: Speed/Memory]
+    B --> D[Quality Score]
+    C --> E[Performance Metrics]
+    D --> F[Overall CI Status]
+    E --> F
+    F --> G{Both Pass?}
+    G -->|Yes| H[✅ Merge Allowed]
+    G -->|No| I[❌ Blocked]
+```
+
+## Example Output
+
+```json
+{
+  "elapsed_seconds": 23.12,
+  "memory_mb": 448.0,
+  "threshold_seconds": 30.0,
+  "threshold_mb": 600.0,
+  "status": "PASS"
+}
+```
+
+## How to Tune
+
+You can adjust thresholds in CI or locally:
+
+```bash
+export PERF_TIME_THRESHOLD="20.0"  # 20s max
+export PERF_MEM_THRESHOLD="400.0"  # 400MB max
+```
+
+## File Reference
+- `scripts/test_performance_regression.py`: The test script
+- `.github/workflows/verify.yml`: CI integration
+- `performance_metrics.json`: Output artifact
+
+---
+
 [🏠 Documentation Home](../README.md#documentation)
 
 _For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

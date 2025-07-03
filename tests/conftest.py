@@ -160,3 +160,46 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(pytest.mark.unit)  # Changed from integration to unit
         elif 'test_upload' in item.nodeid or 'test_document_processing' in item.nodeid:
             item.add_marker(pytest.mark.unit)  # Changed from integration to unit 
+
+@pytest.fixture(scope="function")
+def mock_all_external_services():
+    """Comprehensive mock for all external services in integration tests."""
+    with patch('document_processor.OllamaEmbeddings') as mock_embeddings, \
+         patch('document_processor.ChatOllama') as mock_chat, \
+         patch('document_processor.chromadb.PersistentClient') as mock_chroma, \
+         patch('app.gTTS') as mock_gtts, \
+         patch('web_search.DDGS') as mock_ddgs, \
+         patch('openai.OpenAI') as mock_openai, \
+         patch('langchain_ollama.OllamaEmbeddings') as mock_langchain_embeddings, \
+         patch('langchain_ollama.ChatOllama') as mock_langchain_chat:
+        
+        mock_embeddings.return_value = Mock()
+        mock_chat.return_value = Mock()
+        mock_chroma.return_value = Mock()
+        mock_gtts.return_value = Mock()
+        
+        mock_ddgs_instance = Mock()
+        mock_ddgs_instance.text.return_value = [
+            {'title': 'Test Result', 'link': 'https://test.com', 'body': 'Test content'}
+        ]
+        mock_ddgs.return_value = mock_ddgs_instance
+        
+        mock_openai_instance = Mock()
+        mock_openai_instance.chat.completions.create.return_value = Mock(
+            choices=[Mock(message=Mock(content="Mocked AI response"))]
+        )
+        mock_openai.return_value = mock_openai_instance
+        
+        mock_langchain_embeddings.return_value = Mock()
+        mock_langchain_chat.return_value = Mock()
+        
+        yield {
+            'embeddings': mock_embeddings,
+            'chat': mock_chat,
+            'chroma': mock_chroma,
+            'gtts': mock_gtts,
+            'ddgs': mock_ddgs,
+            'openai': mock_openai,
+            'langchain_embeddings': mock_langchain_embeddings,
+            'langchain_chat': mock_langchain_chat
+        } 
