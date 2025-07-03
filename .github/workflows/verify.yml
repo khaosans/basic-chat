@@ -55,10 +55,18 @@ jobs:
       - name: Generate Final Test Report
         run: |
           python scripts/generate_final_report.py || true
+      - name: Check Final Test Report Exists
+        run: |
+          if [ ! -f final_test_report.md ]; then
+            echo "❌ final_test_report.md not found! Report generation failed."
+            exit 1
+          fi
+      - name: Print Final Test Report (for debugging)
+        run: cat final_test_report.md
       - name: Upload Final Test Report
         uses: actions/upload-artifact@v4
         with:
-          name: final-test-report
+          name: final-test-report-unit-tests-${{ github.run_id }}
           path: final_test_report.md
           retention-days: 30
 
@@ -116,10 +124,18 @@ jobs:
       - name: Generate Final Test Report
         run: |
           python scripts/generate_final_report.py || true
+      - name: Check Final Test Report Exists
+        run: |
+          if [ ! -f final_test_report.md ]; then
+            echo "❌ final_test_report.md not found! Report generation failed."
+            exit 1
+          fi
+      - name: Print Final Test Report (for debugging)
+        run: cat final_test_report.md
       - name: Upload Final Test Report
         uses: actions/upload-artifact@v4
         with:
-          name: final-test-report
+          name: final-test-report-integration-tests-${{ github.run_id }}
           path: final_test_report.md
           retention-days: 30
 
@@ -164,9 +180,17 @@ jobs:
       - name: Generate Final Test Report
         run: |
           python scripts/generate_final_report.py || true
+      - name: Check Final Test Report Exists
+        run: |
+          if [ ! -f final_test_report.md ]; then
+            echo "❌ final_test_report.md not found! Report generation failed."
+            exit 1
+          fi
+      - name: Print Final Test Report (for debugging)
+        run: cat final_test_report.md
       - name: Upload Final Test Report
         uses: actions/upload-artifact@v4
         with:
-          name: final-test-report
+          name: final-test-report-performance-regression-${{ github.run_id }}
           path: final_test_report.md
           retention-days: 30

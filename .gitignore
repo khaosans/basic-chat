@@ -105,3 +105,8 @@ tests/data/
 test_*.png
 test_*.txt
 test_*.pdf
+
+# Ignore CI/CD and test report artifacts
+final_test_report.md
+artifacts/
+ci_reports/
