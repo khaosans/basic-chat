@@ -145,3 +145,15 @@ jobs:
           name: final-test-report-performance-regression-${{ github.run_id }}
           path: final_test_report.md
           retention-days: 30
+
+# Minimal test job to verify Docker image and CI setup
+  docker-image-test:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/khaosans/basic-chat-ci:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_PAT }}
+    steps:
+      - name: Echo Python version
+        run: python3 --version
