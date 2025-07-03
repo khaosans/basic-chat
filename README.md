@@ -92,7 +92,7 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.11+
+- Python 3.11+ 
 - Ollama (for local LLMs)
 - Redis (for background tasks)
 - Git (for cloning)
