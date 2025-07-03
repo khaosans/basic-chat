@@ -46,7 +46,7 @@ export default defineConfig({
   webServer: {
     command: `streamlit run app.py --server.port ${E2E_PORT} --server.headless true --server.address 0.0.0.0`,
     url: BASE_URL,
-    reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
+    reuseExistingServer: true,
   },
 }); 
