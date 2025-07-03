@@ -26,6 +26,9 @@ from web_search import search_web
 from utils.enhanced_tools import EnhancedCalculator, EnhancedTimeTools
 from config import DEFAULT_MODEL, OLLAMA_API_URL
 from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import JsonOutputParser
+from pydantic import BaseModel, Field
 
 # Configure logging for reasoning engine
 logger = logging.getLogger(__name__)
@@ -1107,9 +1110,107 @@ class AutoReasoning:
                 execution_time=time.time() - start_time if 'start_time' in locals() else 0.0
             )
 
+# --- Structured Output Model for LCEL ---
+class ReasoningOutput(BaseModel):
+    """Structured output for LCEL reasoning chains."""
+    thought_process: str = Field(description="Step-by-step reasoning process")
+    reasoning_steps: List[str] = Field(description="List of individual reasoning steps")
+    final_answer: str = Field(description="Clear, concise final answer")
+    confidence: float = Field(description="Confidence level between 0 and 1", ge=0.0, le=1.0)
+    key_insights: List[str] = Field(default_factory=list, description="Key insights derived from the reasoning")
+    sources_used: List[str] = Field(default_factory=list, description="Sources referenced in the reasoning")
+
+# --- Enhanced LCEL Chain Implementation ---
+class EnhancedReasoningChain:
+    """Enhanced Chain-of-Thought reasoning using advanced LCEL patterns."""
+    def __init__(self, model_name: str = DEFAULT_MODEL):
+        logger.info(f"Initializing EnhancedReasoningChain with model: {model_name}")
+        try:
+            self.llm = ChatOllama(
+                model=model_name,
+                base_url=OLLAMA_API_URL.replace("/api", "")
+            )
+            logger.info("LLM initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize LLM: {e}")
+            raise
+        # Enhanced prompt template with structured output
+        self.prompt_template = ChatPromptTemplate.from_messages([
+            ("system", (
+                "You are an expert assistant specializing in step-by-step reasoning. "
+                "Analyze the given question and context to provide a well-structured response.\n\n"
+                "Available Document Context:\n{context}\n\n"
+                "Follow this structure:\n"
+                "1. Break down the problem into key components\n"
+                "2. Apply relevant knowledge and reasoning\n"
+                "3. Synthesize a clear conclusion\n"
+                "4. Provide confidence level (0-1)\n"
+                "Respond in the following JSON format: {{\"thought_process\": ..., \"reasoning_steps\": [...], \"final_answer\": ..., \"confidence\": ..., \"key_insights\": [...], \"sources_used\": [...]}}"
+            )),
+            ("human", "Question: {question}")
+        ])
+        # Create structured output parser
+        self.output_parser = JsonOutputParser(pydantic_object=ReasoningOutput)
+        # Build the LCEL chain
+        self.chain = (
+            self.prompt_template | self.llm | self.output_parser
+        )
+        logger.info("Enhanced LCEL chain initialized successfully")
+
+    def execute_reasoning(self, question: str, context: str, stream_callback=None) -> ReasoningResult:
+        """Execute enhanced chain-of-thought reasoning using LCEL."""
+        start_time = time.time()
+        try:
+            if stream_callback:
+                stream_callback("\U0001f9e0 **Enhanced LCEL Reasoning**\nInitializing structured analysis...\n")
+            chain_input = {"question": question, "context": context}
+            result = self.chain.invoke(chain_input)
+            execution_time = time.time() - start_time
+            if stream_callback:
+                stream_callback("\u2705 **LCEL Chain Complete**\nProcessing structured output...\n")
+            # Handle both dict and object with attributes
+            if isinstance(result, dict):
+                content = result.get('final_answer', '')
+                reasoning_steps = result.get('reasoning_steps', [])
+                thought_process = result.get('thought_process', '')
+                final_answer = result.get('final_answer', '')
+                confidence = result.get('confidence', 0.0)
+                sources = result.get('sources_used', ["Enhanced LCEL Chain"])
+            else:
+                content = result.final_answer
+                reasoning_steps = result.reasoning_steps
+                thought_process = result.thought_process
+                final_answer = result.final_answer
+                confidence = result.confidence
+                sources = result.sources_used or ["Enhanced LCEL Chain"]
+            return ReasoningResult(
+                content=content,
+                reasoning_steps=reasoning_steps,
+                thought_process=thought_process,
+                final_answer=final_answer,
+                confidence=confidence,
+                sources=sources,
+                reasoning_mode="Enhanced LCEL",
+                execution_time=execution_time
+            )
+        except Exception as e:
+            logger.error(f"Enhanced LCEL reasoning failed: {e}")
+            return ReasoningResult(
+                content=f"Error in LCEL processing: {e}",
+                reasoning_steps=[],
+                thought_process="",
+                final_answer="",
+                confidence=0.0,
+                sources=[],
+                reasoning_mode="Enhanced LCEL",
+                success=False,
+                error=str(e),
+                execution_time=time.time() - start_time
+            )
+
 class ReasoningEngine:
     """Main reasoning engine"""
-    reasoning_modes = ["Agent", "Chain-of-Thought", "Multi-Step", "Standard", "Auto"]
+    reasoning_modes = ["Agent", "Chain-of-Thought", "Multi-Step", "Standard", "Auto", "Enhanced LCEL"]
 
     def __init__(self, model_name: str = DEFAULT_MODEL):
         logger.info(f"Initializing ReasoningEngine with model: {model_name}")
@@ -1118,6 +1219,7 @@ class ReasoningEngine:
         self.chain_reasoner = None
         self.multi_step_reasoner = None
         self.standard_reasoner = None
+        self.enhanced_lcel_reasoner = None
     
     def _retrieve_and_format_context(self, query: str, doc_processor: Optional[DocumentProcessor]) -> str:
         """Retrieve context from documents and format it for the prompt."""
@@ -1169,7 +1271,13 @@ class ReasoningEngine:
         
         context = self._retrieve_and_format_context(query, document_processor)
 
-        if mode == "Agent":
+        if mode == "Enhanced LCEL":
+            if self.enhanced_lcel_reasoner is None:
+                logger.info("Initializing enhanced LCEL reasoner")
+                self.enhanced_lcel_reasoner = EnhancedReasoningChain(model_name=self.model_name)
+            return self.enhanced_lcel_reasoner.execute_reasoning(query, context)
+        
+        elif mode == "Agent":
             if self.agent_reasoner is None:
                 logger.info("Initializing agent reasoner")
                 self.agent_reasoner = ReasoningAgent(model_name=self.model_name)

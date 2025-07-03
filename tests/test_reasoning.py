@@ -7,6 +7,9 @@ CHANGELOG:
 - Added parameterized tests for different reasoning modes
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from reasoning_engine import (
@@ -242,6 +245,37 @@ class TestReasoningEngine:
         
         with pytest.raises(ValueError, match="Unknown reasoning mode"):
             engine.run("Test question", mode="invalid_mode")
+
+    @patch('reasoning_engine.ChatOllama')
+    def test_should_reason_with_enhanced_lcel_mode(self, mock_chat_ollama):
+        """Should reason using Enhanced LCEL mode and parse structured output"""
+        # Mock the LLM to return an object with a .content attribute (like AIMessage) for .invoke,
+        # but return a JSON string directly when called as a function (for LCEL chain)
+        class MockAIMessage:
+            def __init__(self, content):
+                self.content = content
+        mock_llm = Mock()
+        json_str = (
+            '{"thought_process": "Step-by-step reasoning", '
+            '"reasoning_steps": ["Step 1", "Step 2"], '
+            '"final_answer": "The answer is 42.", '
+            '"confidence": 0.95, '
+            '"key_insights": ["Insight 1"], '
+            '"sources_used": ["TestSource"]}'
+        )
+        mock_llm.invoke.return_value = MockAIMessage(json_str)
+        mock_llm.side_effect = lambda *args, **kwargs: json_str  # Callable returns string for LCEL
+        mock_chat_ollama.return_value = mock_llm
+        engine = ReasoningEngine("test_model")
+        result = engine.run("What is the answer to life?", mode="Enhanced LCEL")
+        assert result.content == 'The answer is 42.'
+        assert result.thought_process == 'Step-by-step reasoning'
+        assert result.reasoning_steps == ['Step 1', 'Step 2']
+        assert result.final_answer == 'The answer is 42.'
+        assert result.confidence == 0.95
+        assert result.sources == ['TestSource']
+        assert result.reasoning_mode == 'Enhanced LCEL'
+        assert result.success is True
 
 class TestReasoningIntegration:
     """Test integration between reasoning components"""
