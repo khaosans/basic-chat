@@ -143,7 +143,6 @@ jobs:
           path: final_test_report.md
           retention-days: 30
 
-# Minimal test job to verify Docker image and CI setup
   docker-image-test:
     runs-on: ubuntu-latest
     container:
