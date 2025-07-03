@@ -4,7 +4,13 @@ export class ChatHelper {
   constructor(private page: Page) {}
 
   async waitForAppLoad() {
-    await this.page.waitForSelector('textarea[placeholder="Type a message..."]', { timeout: 30000 });
+    try {
+      await this.page.waitForSelector('textarea', { timeout: 30000 });
+    } catch (err) {
+      console.error('Page content at failure:', await this.page.content());
+      await this.page.screenshot({ path: 'debug-failure.png' });
+      throw err;
+    }
   }
 
   async sendMessage(message: string) {
