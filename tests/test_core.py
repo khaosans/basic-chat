@@ -22,6 +22,22 @@ from utils.enhanced_tools import EnhancedCalculator
 from config import config
 
 
+@pytest.fixture(autouse=True, scope="class")
+def mock_gtts_class(request):
+    patcher = patch('utils.enhanced_tools.gTTS')
+    mock_gtts = patcher.start()
+    mock_tts_instance = MagicMock()
+    def mock_save(filename):
+        with open(filename, 'wb') as f:
+            f.write(b'ID3')
+    mock_tts_instance.save.side_effect = mock_save
+    mock_gtts.return_value = mock_tts_instance
+    request.cls.mock_gtts = mock_gtts
+    request.cls.mock_tts_instance = mock_tts_instance
+    yield
+    patcher.stop()
+
+
 @pytest.mark.unit
 @pytest.mark.fast
 class TestCoreFunctionality:
@@ -214,6 +230,9 @@ class TestConfiguration:
 @pytest.mark.unit
 @pytest.mark.fast
 class TestAudioUtils:
+    @pytest.fixture(autouse=True, scope="class")
+    def _mock_gtts(self, mock_gtts_class):
+        pass
     def test_text_to_speech_valid(self):
         text = "Hello, test audio!"
         audio_file = text_to_speech(text)

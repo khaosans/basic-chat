@@ -37,7 +37,8 @@ jobs:
           mkdir -p test_chroma_db
       - name: Run unit tests only
         run: |
-          python -m pytest tests/ -m "unit or fast" --ignore=tests/integration -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov=task_manager --cov=task_ui --cov=tasks --cov-report=term-missing --cov-report=html:htmlcov
+          # Parallelize for speed
+          python -m pytest -n auto tests/ -m "unit or fast" --ignore=tests/integration -v --tb=short --cov=app --cov=reasoning_engine --cov=document_processor --cov=utils --cov=task_manager --cov=task_ui --cov=tasks --cov-report=term-missing --cov-report=html:htmlcov
         env:
           # Task system configuration for testing
           ENABLE_BACKGROUND_TASKS: "true"
@@ -104,7 +105,8 @@ jobs:
           python scripts/generate_assets.py || echo "Test assets generation failed, continuing..."
       - name: Run integration tests
         run: |
-          python -m pytest tests/ -m "integration" -v --tb=short --timeout=300
+          # Parallelize for speed
+          python -m pytest -n auto tests/ -m "integration" -v --tb=short --timeout=300
         env:
           # Mock external services for integration tests
           MOCK_EXTERNAL_SERVICES: "true"
@@ -169,7 +171,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
         run: |
-          python scripts/test_performance_regression.py
+          # Parallelize for speed
+          python -m pytest -n auto tests/ -m "performance" -v --tb=short || python scripts/test_performance_regression.py
       - name: Upload Performance Metrics
         if: always()
         uses: actions/upload-artifact@v4
