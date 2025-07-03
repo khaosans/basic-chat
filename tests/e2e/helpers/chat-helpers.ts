@@ -5,7 +5,10 @@ export class ChatHelper {
 
   async waitForAppLoad() {
     try {
-      await this.page.getByPlaceholder('Type a message...').waitFor({ timeout: 30000 });
+      // Wait for a unique app marker to ensure the app is loaded
+      await this.page.waitForSelector('text=BasicChat', { timeout: 40000 });
+      // Then wait for the message input
+      await this.page.getByPlaceholder('Type a message...').waitFor({ timeout: 10000 });
     } catch (err) {
       console.error('Page content at failure:', await this.page.content());
       await this.page.screenshot({ path: 'debug-failure.png' });
