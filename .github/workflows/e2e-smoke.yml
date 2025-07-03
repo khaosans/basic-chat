@@ -38,6 +38,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
 
       - name: Install Python dependencies
         run: pip install -r requirements.txt
@@ -64,7 +65,7 @@ jobs:
             if curl -sSf http://0.0.0.0:8501 | grep -q "BasicChat"; then
               echo 'Streamlit is up!'; break
             fi
-            sleep 2
+            sleep 1
           done
 
       - name: Run Playwright smoke test
@@ -75,4 +76,12 @@ jobs:
         with:
           name: playwright-smoke-report
           path: playwright-report
-          retention-days: 7 
+          retention-days: 7
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip- 
