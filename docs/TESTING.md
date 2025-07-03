@@ -4,7 +4,7 @@
 
 # Testing Guide
 
-[← Back to Documentation](../README.md#documentation) | [Technical Overview →](TECHNICAL_OVERVIEW.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) | [Reasoning Features →](REASONING_FEATURES.md) | [LLM Judge Evaluator →](EVALUATORS.md) | [CI Optimization →](CI_OPTIMIZATION.md) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md) | [Testing →](TESTING.md)
+> **TL;DR:** Comprehensive tests for all features, with clear structure, coverage goals, and CI integration for reliable development.
 
 ---
 

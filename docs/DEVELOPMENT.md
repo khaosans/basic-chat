@@ -4,7 +4,7 @@
 
 # Development Guide
 
-[← Back to Documentation](../README.md#documentation) | [Technical Overview →](TECHNICAL_OVERVIEW.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) | [Reasoning Features →](REASONING_FEATURES.md) | [LLM Judge Evaluator →](EVALUATORS.md) | [CI Optimization →](CI_OPTIMIZATION.md) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md) | [Testing →](TESTING.md)
+> **TL;DR:** Set up, develop, and contribute to BasicChat with clear instructions for local development, environment configuration, and testing.
 
 ---
 

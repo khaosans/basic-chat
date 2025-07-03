@@ -4,7 +4,7 @@
 
 # LLM Judge Evaluator
 
-[← Back to Documentation](../README.md#documentation) | [CI Optimization →](CI_OPTIMIZATION.md)
+> **TL;DR:** Automated code and project evaluation using local or cloud LLMs—integrated with CI for actionable, cost-effective quality checks.
 
 ---
 

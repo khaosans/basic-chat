@@ -4,7 +4,7 @@
 
 # CI/CD Optimization Strategy
 
-[← Back to Documentation](../README.md#documentation) | [Technical Overview →](TECHNICAL_OVERVIEW.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) | [Reasoning Features →](REASONING_FEATURES.md) | [LLM Judge Evaluator →](EVALUATORS.md) | [CI Optimization →](CI_OPTIMIZATION.md) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md) | [Testing →](TESTING.md)
+> **TL;DR:** Optimize CI/CD with fast, parallel LLM evaluation jobs, model caching, and GitHub Models integration for speed and cost savings.
 
 ---
 
