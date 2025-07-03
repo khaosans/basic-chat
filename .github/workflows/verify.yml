@@ -185,6 +185,8 @@ jobs:
           PERF_TIME_THRESHOLD: "30.0"
           # Default memory threshold set to 600MB for LLM evaluation workloads
           PERF_MEM_THRESHOLD: "600.0"
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
         run: |
           python scripts/test_performance_regression.py
       - name: Upload Performance Metrics
