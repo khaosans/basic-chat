@@ -5,7 +5,7 @@ export class ChatHelper {
 
   async waitForAppLoad() {
     try {
-      await this.page.waitForSelector('textarea', { timeout: 30000 });
+      await this.page.getByPlaceholder('Type a message...').waitFor({ timeout: 30000 });
     } catch (err) {
       console.error('Page content at failure:', await this.page.content());
       await this.page.screenshot({ path: 'debug-failure.png' });
@@ -14,16 +14,17 @@ export class ChatHelper {
   }
 
   async sendMessage(message: string) {
-    await this.page.fill('textarea[data-testid="stTextInput"]', message);
-    await this.page.click('button:has-text("Send")');
+    const chatInput = this.page.getByPlaceholder('Type a message...');
+    await chatInput.fill(message);
+    await this.page.keyboard.press('Enter');
   }
 
   async waitForResponse(timeout = 30000) {
-    await this.page.waitForSelector('.stMarkdown', { timeout });
+    await this.page.waitForSelector('[data-testid="stChatMessage"]', { timeout });
   }
 
   async getLastResponse() {
-    const responses = this.page.locator('.stMarkdown');
+    const responses = this.page.locator('[data-testid="stChatMessage"]');
     return responses.last();
   }
 

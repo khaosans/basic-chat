@@ -35,8 +35,11 @@ def test_environment():
     
     # Cleanup
     for dir_path in test_dirs:
-        if os.path.exists(dir_path):
-            shutil.rmtree(dir_path)
+        try:
+            if os.path.exists(dir_path):
+                shutil.rmtree(dir_path)
+        except FileNotFoundError:
+            pass
     
     # Restore original environment
     os.environ.clear()

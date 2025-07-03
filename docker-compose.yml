@@ -92,5 +92,15 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chroma_db:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+    restart: unless-stopped
+
 volumes:
   redis_data: 

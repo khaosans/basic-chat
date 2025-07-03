@@ -43,7 +43,10 @@ def check_ollama_models():
         resp.raise_for_status()
         tags = resp.json().get("models", [])
         tag_names = [m.get("name", "") for m in tags]
-        missing = [m for m in OLLAMA_MODELS if m not in tag_names]
+        missing = []
+        for m in OLLAMA_MODELS:
+            if m not in tag_names and f"{m}:latest" not in tag_names:
+                missing.append(m)
         if missing:
             failures.append(f"Ollama missing required models: {', '.join(missing)}")
             return False

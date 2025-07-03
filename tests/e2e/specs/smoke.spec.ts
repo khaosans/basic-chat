@@ -31,4 +31,12 @@ test.describe('Smoke Test', () => {
       throw err;
     }
   });
+});
+
+test.skip('smoke test: Streamlit app loads', async ({ page }) => {
+  await page.goto('http://localhost:8501');
+  // Check for the Streamlit title in the page
+  await expect(page).toHaveTitle(/Streamlit/i);
+  // Optionally, check for any visible text or element
+  await expect(page.locator('body')).toBeVisible();
 }); 

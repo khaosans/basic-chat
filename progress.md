@@ -63,4 +63,45 @@
 ## 🏁 Next Steps
 - Harden other E2E specs to use helpers/selectors (optional)
 - Add more health checks as needed (e.g., S3, Supabase)
-- Keep this doc updated with new E2E patterns 
+- Keep this doc updated with new E2E patterns
+
+# E2E Testing Progress & Best Practices
+
+## ✅ Always Use Local Code for E2E Tests
+
+- [x] Start the app using local scripts (e.g., `./start_basicchat.sh` or `./start_dev.sh`)
+- [x] Do NOT use Docker Compose or Docker images for E2E tests
+- [x] Run E2E tests with `bunx playwright test --reporter=list` against the local app
+- [x] In CI/CD, ensure the app is started from source, not from a Docker image
+- [x] Double-check with `docker ps` that no containers are running for the app during E2E
+
+---
+
+## E2E Test Run Steps
+
+1. Stop any running Docker containers for the app:
+   ```sh
+   docker ps
+   # If any containers are running for the app:
+   docker stop <container_id>
+   ```
+2. Start the app from source:
+   ```sh
+   ./start_basicchat.sh
+   # or
+   ./start_dev.sh
+   ```
+3. In a new terminal, run E2E tests:
+   ```sh
+   bunx playwright test --reporter=list
+   ```
+
+---
+
+## CI/CD Note
+- Ensure your pipeline installs dependencies and starts the app from source before running E2E tests.
+- Do not use Docker images for E2E unless you are explicitly testing the container build.
+
+---
+
+_Last updated: Ensured E2E always runs against local code, not Docker images._ 
