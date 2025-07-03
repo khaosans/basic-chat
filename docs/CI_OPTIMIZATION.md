@@ -32,11 +32,11 @@ llm-judge:
 
 **After**: Parallel execution
 ```yaml
-llm-judge:
-  # Runs independently, no dependencies
-  if: |
-    (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-    (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+# llm-judge job removed; replaced by performance-regression and other jobs under the 'verifyExpected' workflow.
+# Required checks are now:
+#   - verifyExpected / unit-tests (3.11)
+#   - verifyExpected / integration-tests
+#   - verifyExpected / performance-regression
 ```
 
 ### 2. Quick Evaluation Mode
@@ -336,3 +336,12 @@ The LLM Judge now provides immediate quality feedback while maintaining high sta
 [🏠 Documentation Home](../README.md#documentation)
 
 _For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._
+
+## Required Status Checks (2025+)
+
+> **Current required checks:**
+> - verifyExpected / unit-tests (3.11)
+> - verifyExpected / integration-tests
+> - verifyExpected / performance-regression
+
+> **Note:** The old `llm-judge` check is no longer required or present in the workflow. If you see a pending `llm-judge` check, remove it from your branch protection rules in GitHub settings.
