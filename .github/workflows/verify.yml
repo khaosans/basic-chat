@@ -133,20 +133,22 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
-          LLM_JUDGE_THRESHOLD: ${{ vars.LLM_JUDGE_THRESHOLD || '7.0' }}
+          LLM_JUDGE_THRESHOLD: "7.0"  # Explicitly set for determinism
           # Task system configuration for LLM judge
           ENABLE_BACKGROUND_TASKS: "true"
           REDIS_ENABLED: "false"
           CELERY_BROKER_URL: "redis://localhost:6379/0"
           TESTING: "true"
+          PYTHONHASHSEED: "42"  # Ensures deterministic hashing in Python
+          # For future: LLM_JUDGE_SEED or similar if supported by script
         run: |
           if [ -z "$OPENAI_API_KEY" ]; then
             echo "⚠️  No OpenAI API key found, skipping LLM Judge evaluation"
             exit 0
           fi
-          
           echo "🤖 Running OpenAI LLM Judge evaluation with $OPENAI_MODEL..."
-          python evaluators/check_llm_judge_openai.py --quick
+          # If the script supports a --seed flag, add it here for determinism
+          python evaluators/check_llm_judge_openai.py --quick # --seed 42 (add if supported)
       - name: Upload LLM Judge Results
         if: always()
         uses: actions/upload-artifact@v4
