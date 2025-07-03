@@ -205,6 +205,6 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed diagrams, narrativ
 
 If referencing this project, use:
 
-> "BasicChat: Local AI Assistant." 2024. GitHub, https://github.com/khaosans/basic-chat.
+> "BasicChat: Local AI Assistant." 2024. GitHub. https://github.com/khaosans/basic-chat.
 
 ---
