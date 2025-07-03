@@ -70,22 +70,7 @@
 
 ## 📚 Documentation
 
-<div align="center">
-
-| 📖 **Guide** | 📋 **Description** | 🔗 **Link** |
-|:---|:---|:---:|
-| **Technical Overview** | High-level system summary and characteristics | [📊](docs/TECHNICAL_OVERVIEW.md) |
-| **Features Overview** | Complete feature documentation and capabilities | [📄](docs/FEATURES.md) |
-| **System Architecture** | Technical architecture and component interactions | [🏗️](docs/ARCHITECTURE.md) |
-| **Development Guide** | Contributing and development workflows | [🛠️](docs/DEVELOPMENT.md) |
-| **Project Roadmap** | Future features and development plans | [🗺️](docs/ROADMAP.md) |
-| **Reasoning Features** | Advanced reasoning engine details | [🧠](docs/REASONING_FEATURES.md) |
-| **LLM Judge Evaluator & Flow** | Code quality evaluation, CI integration, and evaluation flow | [⚖️](docs/EVALUATORS.md) |
-| **CI Optimization** | CI/CD pipeline optimization details | [🚦](docs/CI_OPTIMIZATION.md) |
-| **GitHub Models Integration** | GitHub Models API integration | [🔗](docs/GITHUB_MODELS_INTEGRATION.md) |
-| **Testing** | Testing approach and methodology | [🧪](docs/TESTING.md) |
-
-</div>
+[📊 Overview](docs/TECHNICAL_OVERVIEW.md) | [📄 Features](docs/FEATURES.md) | [🏗️ Architecture](docs/ARCHITECTURE.md) | [🛠️ Development](docs/DEVELOPMENT.md) | [🗺️ Roadmap](docs/ROADMAP.md) | [🧠 Reasoning](docs/REASONING_FEATURES.md) | [⚖️ LLM Judge](docs/EVALUATORS.md) | [🚦 CI Optimization](docs/CI_OPTIMIZATION.md) | [🔗 GitHub Models](docs/GITHUB_MODELS_INTEGRATION.md) | [🧪 Testing](docs/TESTING.md)
 
 ---
 
