@@ -54,10 +54,11 @@ graph TD
     AUTO --> COT
     AUTO --> MULTI
     AUTO --> AGENT
-    COT --> CALC
-    MULTI --> DOCS
-    AGENT --> SEARCH
+    %% Only Agent-Based connects to tools
+    AGENT --> CALC
     AGENT --> TIME
+    AGENT --> SEARCH
+    AGENT --> DOCS
     CALC --> CACHE
     SEARCH --> ASYNC
     DOCS --> POOL
@@ -79,6 +80,8 @@ graph TD
     class CACHE,ASYNC,POOL performance
     class RESULT,STEPS,CONFIDENCE output
 ```
+
+> **Note:** Only Agent-Based reasoning has direct access to enhanced tools (calculator, time, web search, document tools). Chain-of-Thought and Multi-Step modes rely solely on the LLM's internal reasoning and do not invoke external tools.
 
 **Diagram Narrative: Reasoning Engine Architecture**
 
