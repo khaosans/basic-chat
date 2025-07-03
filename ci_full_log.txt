@@ -1,0 +1,78 @@
+unit-tests	Set up job	﻿2025-07-03T17:19:47.0785404Z Current runner version: '2.325.0'
+unit-tests	Set up job	2025-07-03T17:19:47.0808325Z ##[group]Runner Image Provisioner
+unit-tests	Set up job	2025-07-03T17:19:47.0809319Z Hosted Compute Agent
+unit-tests	Set up job	2025-07-03T17:19:47.0809913Z Version: 20250620.352
+unit-tests	Set up job	2025-07-03T17:19:47.0810489Z Commit: f262f3aba23b10ea191b2a62bdee1ca4c3d344da
+unit-tests	Set up job	2025-07-03T17:19:47.0811224Z Build Date: 2025-06-20T19:27:17Z
+unit-tests	Set up job	2025-07-03T17:19:47.0811810Z ##[endgroup]
+unit-tests	Set up job	2025-07-03T17:19:47.0812377Z ##[group]Operating System
+unit-tests	Set up job	2025-07-03T17:19:47.0812905Z Ubuntu
+unit-tests	Set up job	2025-07-03T17:19:47.0813460Z 24.04.2
+unit-tests	Set up job	2025-07-03T17:19:47.0813903Z LTS
+unit-tests	Set up job	2025-07-03T17:19:47.0814354Z ##[endgroup]
+unit-tests	Set up job	2025-07-03T17:19:47.0814899Z ##[group]Runner Image
+unit-tests	Set up job	2025-07-03T17:19:47.0815489Z Image: ubuntu-24.04
+unit-tests	Set up job	2025-07-03T17:19:47.0815993Z Version: 20250622.1.0
+unit-tests	Set up job	2025-07-03T17:19:47.0817047Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250622.1/images/ubuntu/Ubuntu2404-Readme.md
+unit-tests	Set up job	2025-07-03T17:19:47.0818564Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250622.1
+unit-tests	Set up job	2025-07-03T17:19:47.0819751Z ##[endgroup]
+unit-tests	Set up job	2025-07-03T17:19:47.0820805Z ##[group]GITHUB_TOKEN Permissions
+unit-tests	Set up job	2025-07-03T17:19:47.0822908Z Contents: read
+unit-tests	Set up job	2025-07-03T17:19:47.0823450Z Metadata: read
+unit-tests	Set up job	2025-07-03T17:19:47.0823963Z Packages: read
+unit-tests	Set up job	2025-07-03T17:19:47.0824548Z ##[endgroup]
+unit-tests	Set up job	2025-07-03T17:19:47.0826800Z Secret source: Actions
+unit-tests	Set up job	2025-07-03T17:19:47.0827733Z Prepare workflow directory
+unit-tests	Set up job	2025-07-03T17:19:47.1430932Z ##[error]The template is not valid. .github/workflows/verify.yml (Line: 18, Col: 19): Unexpected value ''
+performance-regression	Set up job	﻿2025-07-03T17:19:47.2789459Z Current runner version: '2.325.0'
+performance-regression	Set up job	2025-07-03T17:19:47.2815404Z ##[group]Runner Image Provisioner
+performance-regression	Set up job	2025-07-03T17:19:47.2816322Z Hosted Compute Agent
+performance-regression	Set up job	2025-07-03T17:19:47.2817019Z Version: 20250620.352
+performance-regression	Set up job	2025-07-03T17:19:47.2817698Z Commit: f262f3aba23b10ea191b2a62bdee1ca4c3d344da
+performance-regression	Set up job	2025-07-03T17:19:47.2818439Z Build Date: 2025-06-20T19:27:17Z
+performance-regression	Set up job	2025-07-03T17:19:47.2819154Z ##[endgroup]
+performance-regression	Set up job	2025-07-03T17:19:47.2819746Z ##[group]Operating System
+performance-regression	Set up job	2025-07-03T17:19:47.2820816Z Ubuntu
+performance-regression	Set up job	2025-07-03T17:19:47.2821427Z 24.04.2
+performance-regression	Set up job	2025-07-03T17:19:47.2821980Z LTS
+performance-regression	Set up job	2025-07-03T17:19:47.2822460Z ##[endgroup]
+performance-regression	Set up job	2025-07-03T17:19:47.2823059Z ##[group]Runner Image
+performance-regression	Set up job	2025-07-03T17:19:47.2823720Z Image: ubuntu-24.04
+performance-regression	Set up job	2025-07-03T17:19:47.2824257Z Version: 20250622.1.0
+performance-regression	Set up job	2025-07-03T17:19:47.2825359Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250622.1/images/ubuntu/Ubuntu2404-Readme.md
+performance-regression	Set up job	2025-07-03T17:19:47.2826779Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250622.1
+performance-regression	Set up job	2025-07-03T17:19:47.2828037Z ##[endgroup]
+performance-regression	Set up job	2025-07-03T17:19:47.2829196Z ##[group]GITHUB_TOKEN Permissions
+performance-regression	Set up job	2025-07-03T17:19:47.2831667Z Contents: read
+performance-regression	Set up job	2025-07-03T17:19:47.2832485Z Metadata: read
+performance-regression	Set up job	2025-07-03T17:19:47.2833021Z Packages: read
+performance-regression	Set up job	2025-07-03T17:19:47.2833577Z ##[endgroup]
+performance-regression	Set up job	2025-07-03T17:19:47.2835768Z Secret source: Actions
+performance-regression	Set up job	2025-07-03T17:19:47.2836793Z Prepare workflow directory
+performance-regression	Set up job	2025-07-03T17:19:47.3494670Z ##[error]The template is not valid. .github/workflows/verify.yml (Line: 110, Col: 19): Unexpected value ''
+docker-image-test	Set up job	﻿2025-07-03T17:19:47.2099077Z Current runner version: '2.325.0'
+docker-image-test	Set up job	2025-07-03T17:19:47.2126183Z ##[group]Runner Image Provisioner
+docker-image-test	Set up job	2025-07-03T17:19:47.2127268Z Hosted Compute Agent
+docker-image-test	Set up job	2025-07-03T17:19:47.2127799Z Version: 20250620.352
+docker-image-test	Set up job	2025-07-03T17:19:47.2128452Z Commit: f262f3aba23b10ea191b2a62bdee1ca4c3d344da
+docker-image-test	Set up job	2025-07-03T17:19:47.2129199Z Build Date: 2025-06-20T19:27:17Z
+docker-image-test	Set up job	2025-07-03T17:19:47.2129740Z ##[endgroup]
+docker-image-test	Set up job	2025-07-03T17:19:47.2130320Z ##[group]Operating System
+docker-image-test	Set up job	2025-07-03T17:19:47.2130860Z Ubuntu
+docker-image-test	Set up job	2025-07-03T17:19:47.2131334Z 24.04.2
+docker-image-test	Set up job	2025-07-03T17:19:47.2131731Z LTS
+docker-image-test	Set up job	2025-07-03T17:19:47.2132256Z ##[endgroup]
+docker-image-test	Set up job	2025-07-03T17:19:47.2132705Z ##[group]Runner Image
+docker-image-test	Set up job	2025-07-03T17:19:47.2133405Z Image: ubuntu-24.04
+docker-image-test	Set up job	2025-07-03T17:19:47.2133995Z Version: 20250622.1.0
+docker-image-test	Set up job	2025-07-03T17:19:47.2134956Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20250622.1/images/ubuntu/Ubuntu2404-Readme.md
+docker-image-test	Set up job	2025-07-03T17:19:47.2136286Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20250622.1
+docker-image-test	Set up job	2025-07-03T17:19:47.2137473Z ##[endgroup]
+docker-image-test	Set up job	2025-07-03T17:19:47.2138639Z ##[group]GITHUB_TOKEN Permissions
+docker-image-test	Set up job	2025-07-03T17:19:47.2140831Z Contents: read
+docker-image-test	Set up job	2025-07-03T17:19:47.2141357Z Metadata: read
+docker-image-test	Set up job	2025-07-03T17:19:47.2141931Z Packages: read
+docker-image-test	Set up job	2025-07-03T17:19:47.2142651Z ##[endgroup]
+docker-image-test	Set up job	2025-07-03T17:19:47.2145790Z Secret source: Actions
+docker-image-test	Set up job	2025-07-03T17:19:47.2146569Z Prepare workflow directory
+docker-image-test	Set up job	2025-07-03T17:19:47.2772005Z ##[error]The template is not valid. .github/workflows/verify.yml (Line: 156, Col: 19): Unexpected value ''
