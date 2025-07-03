@@ -1,7 +1,5 @@
 # BasicChat: Your Intelligent Local AI Assistant
 
-<div align="center">
-
 ![BasicChat Logo](assets/brand/logo/elron-logo-full.png)
 
 **🔒 Privacy-First • 🧠 Advanced Reasoning • 🔬 Deep Research • ⚡ High Performance**
@@ -10,29 +8,13 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.28+-red.svg)](https://streamlit.io)
 [![Ollama](https://img.shields.io/badge/Ollama-Local%20LLMs-green.svg)](https://ollama.ai)
 [![Redis](https://img.shields.io/badge/Redis-Task%20Queue-orange.svg)](https://redis.io)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-*An intelligent, private AI assistant that runs entirely on your local machine*
-
-</div>
-
----
-
-## 🎥 Demo
-
-<div align="center">
-
-![BasicChat Demo](assets/demo_seq_0.6s.gif)
-
-*Real-time reasoning and document analysis with local AI models*
-
-</div>
+*An intelligent, private AI assistant that runs entirely on your local machine.*
 
 ---
 
 ## 🌟 Key Features
-
-<div align="center">
 
 | 🔒 **Privacy** | 🧠 **Intelligence** | 🔬 **Research** | 🛠️ **Tools** | 📄 **Documents** | ⚡ **Performance** |
 |:---:|:---:|:---:|:---:|:---:|:---:|
@@ -40,108 +22,82 @@
 | No External APIs | Chain-of-Thought | Multi-Source Analysis | Time Tools | PDF, Text, Images | Multi-Layer Caching |
 | Data Never Leaves | Multi-Step Analysis | Academic Rigor | Web Search | Advanced RAG | Connection Pooling |
 
-</div>
+### 🔒 Privacy First
+- **Local Processing**: All AI operations are executed on your machine.
+- **No Data Transmission**: Your data remains within your local environment.
+- **Secure by Design**: Privacy is a core principle.
 
-### 🔒 **Privacy First**
-- **Complete Local Processing**: All AI operations run on your machine
-- **No Data Transmission**: Your data never leaves your local environment
-- **Secure by Design**: Built with privacy as a core principle
+### 🧠 Advanced Reasoning
+- **Multi-Modal Reasoning**: Five strategies for optimal problem-solving.
+- **Chain-of-Thought**: Step-by-step reasoning for complex issues.
+- **Agent-Based**: Intelligent tool selection and execution.
+- **Auto Mode**: Automatically selects the best reasoning approach.
 
-### 🧠 **Advanced Reasoning**
-- **Multi-Modal Reasoning**: 5 different reasoning strategies for optimal problem-solving
-- **Chain-of-Thought**: Step-by-step reasoning for complex problems (Wei et al.)
-- **Agent-Based**: Intelligent tool selection and execution
-- **Auto Mode**: Automatically selects the best reasoning approach
+### 🔬 Deep Research Mode
+- **Comprehensive Research**: Multi-source analysis with academic rigor.
+- **Intuitive Interface**: Clean, user-friendly research mode.
+- **Rich Results**: Summaries, key findings, detailed analysis, and sources.
+- **Background Processing**: Long-running tasks with progress tracking.
+- **Source Citations**: Proper attribution and links to sources.
 
-### 🔬 **Deep Research Mode**
-- **Comprehensive Research**: Multi-source analysis with academic rigor
-- **ChatGPT-Style Toggle**: Clean, intuitive interface for research mode
-- **Rich Results**: Executive summaries, key findings, detailed analysis, and sources
-- **Background Processing**: Long-running research tasks with progress tracking
-- **Source Citations**: Proper attribution and links to research sources
+### 🛠️ Built-in Tools
+- **Enhanced Calculator**: Advanced operations with step-by-step reasoning.
+- **Time Tools**: Timezone-aware calculations and conversions.
+- **Web Search**: Real-time information retrieval.
+- **Document Analysis**: Summarization and Q&A.
 
-### 🛠️ **Powerful Built-in Tools**
-- **Enhanced Calculator**: Advanced mathematical operations with step-by-step reasoning
-- **Time Tools**: Timezone-aware time calculations and conversions
-- **Web Search**: Real-time information retrieval via DuckDuckGo
-- **Document Analysis**: Intelligent document summarization and Q&A
+### 📄 Document & Image Analysis
+- **Multi-Format Support**: PDF, text, markdown, and images.
+- **Advanced RAG**: Retrieval-Augmented Generation with semantic search.
+- **OCR Capabilities**: Text extraction from images.
+- **Vector Storage**: Efficient document indexing.
 
-### 📄 **Document & Image Analysis**
-- **Multi-Format Support**: PDF, text, markdown, and image files
-- **Advanced RAG**: Retrieval-Augmented Generation with semantic search (Lewis et al.)
-- **OCR Capabilities**: Image text extraction using vision models
-- **Vector Storage**: Efficient ChromaDB-based document indexing
-
-### ⚡ **Performance Optimized**
-- **Async Architecture**: Non-blocking request handling
-- **Multi-Layer Caching**: Redis + Memory caching for 50-80% faster responses
-- **Connection Pooling**: Optimized HTTP connections with rate limiting
-- **Resource Management**: Automatic cleanup and memory optimization
+### ⚡ Performance Optimized
+- **Async Architecture**: Non-blocking request handling.
+- **Multi-Layer Caching**: Faster responses with Redis and memory caching.
+- **Connection Pooling**: Optimized HTTP connections.
+- **Resource Management**: Automatic cleanup and memory optimization.
 
 ---
 
-## ⏳ Long-Running Tasks & Background Processing
+## 🎥 Demo
 
-BasicChat supports **long-running tasks** for complex queries, deep research, and large document processing. These are handled in the background using a robust Celery + Redis task queue system, so you can continue chatting while heavy operations run asynchronously.
+![BasicChat Demo](assets/demo_seq_0.6s.gif)
 
-- **Background Task UI**: See task progress, status, and results directly in the chat interface.
-- **Deep Research Tasks**: Comprehensive research with multiple sources and detailed analysis.
-- **Task Management**: Cancel running tasks, monitor metrics, and clean up old tasks from the sidebar.
-- **Performance**: Offloads heavy work to background workers, keeping the UI responsive.
-- **Monitoring**: Use [Flower](https://flower.readthedocs.io/) for real-time task monitoring and debugging.
+*Experience real-time reasoning and document analysis with local AI models.*
 
-> **How it works:**
-> - Submitting a complex query, enabling deep research mode, or uploading a large document triggers a background task.
-> - Task status, progress, and results are shown in the chat and sidebar.
-> - You can cancel tasks or clean up completed/failed ones from the UI.
+---
 
-See the [Architecture Overview](docs/ARCHITECTURE.md#background-task-system) for a diagram of the task queue and worker system.
+## 📚 Documentation
+
+<div align="center">
+
+| 📖 **Guide** | 📋 **Description** | 🔗 **Link** |
+|:---|:---|:---:|
+| **Technical Overview** | High-level system summary and characteristics | [📊](docs/TECHNICAL_OVERVIEW.md) |
+| **Features Overview** | Complete feature documentation and capabilities | [📄](docs/FEATURES.md) |
+| **System Architecture** | Technical architecture and component interactions | [🏗️](docs/ARCHITECTURE.md) |
+| **Development Guide** | Contributing and development workflows | [🛠️](docs/DEVELOPMENT.md) |
+| **Project Roadmap** | Future features and development plans | [🗺️](docs/ROADMAP.md) |
+| **Reasoning Features** | Advanced reasoning engine details | [🧠](docs/REASONING_FEATURES.md) |
+| **LLM Judge Evaluator & Flow** | Code quality evaluation, CI integration, and evaluation flow | [⚖️](docs/EVALUATORS.md) |
+| **CI Optimization** | CI/CD pipeline optimization details | [🚦](docs/CI_OPTIMIZATION.md) |
+| **GitHub Models Integration** | GitHub Models API integration | [🔗](docs/GITHUB_MODELS_INTEGRATION.md) |
+| **Testing** | Testing approach and methodology | [🧪](docs/TESTING.md) |
+
+</div>
 
 ---
 
 ## 🚀 Quick Start
 
-### **Prerequisites**
-
-```bash
-# Required Software
-- Python 3.11+ 
+### Prerequisites
+- Python 3.11+
 - Ollama (for local LLMs)
 - Redis (for background tasks)
 - Git (for cloning)
-```
 
-### **Installation**
-
-```bash
-# Clone the repository
-git clone https://github.com/khaosans/basic-chat-template.git
-cd basic-chat-template
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: .\venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-```
-
-### **Start Required Services**
-
-```bash
-# Start Redis (macOS with Homebrew)
-brew services start redis
-
-# Start Ollama
-ollama serve
-
-# Verify services are running
-redis-cli ping  # Should return PONG
-curl http://localhost:11434/api/tags  # Should return model list
-```
-
-### **Download AI Models**
-
+### Installation
 ```bash
 # Core models for reasoning and embeddings
 ollama pull mistral
@@ -171,9 +127,74 @@ docker-compose up --build
 - **Task Monitor (Flower):** http://localhost:5555
 - **Redis:** localhost:6379
 
-> Flower provides a real-time dashboard for monitoring, retrying, or revoking tasks.
-
 For more details, see [Development Guide](docs/DEVELOPMENT.md#running-with-background-tasks).
+
+---
+
+## 🏗️ Architecture Overview
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "🎨 User Interface"
+        UI[Web Interface]
+        AUDIO[Audio Processing]
+    end
+    subgraph "🧠 Core Logic"
+        RE[Reasoning Engine]
+        DP[Document Processor]
+        TR[Tool Registry]
+    end
+    subgraph "⚡ Services"
+        AO[Ollama Client]
+        VS[Vector Store]
+        CS[Cache Service]
+    end
+    subgraph "🗄️ Storage"
+        CHROMA[Vector Database]
+        CACHE[Memory Cache]
+        REDIS[Redis Task Queue]
+    end
+    subgraph "🌐 External"
+        OLLAMA[LLM Server]
+    end
+    UI --> RE
+    UI --> DP
+    AUDIO --> RE
+    RE --> AO
+    RE --> TR
+    DP --> VS
+    AO --> OLLAMA
+    VS --> CHROMA
+    CS --> CACHE
+    CS --> REDIS
+    classDef ui fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
+    classDef core fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
+    classDef service fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
+    classDef storage fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
+    classDef external fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
+    class UI,AUDIO ui
+    class RE,DP,TR core
+    class AO,VS,CS service
+    class CHROMA,CACHE,REDIS storage
+    class OLLAMA external
+```
+
+</div>
+
+---
+
+## ⏳ Long-Running Tasks & Background Processing
+
+BasicChat handles **long-running tasks** for complex queries, deep research, and large document processing in the background using Celery + Redis, allowing uninterrupted chatting.
+
+- **Background Task UI**: Monitor task progress and results in the chat interface.
+- **Task Management**: Cancel tasks, monitor metrics, and clean up from the sidebar.
+- **Performance**: Offloads heavy work to background workers, keeping the UI responsive.
+- **Monitoring**: Use [Flower](https://flower.readthedocs.io/) for real-time task monitoring.
+
+Refer to the [Architecture Overview](docs/ARCHITECTURE.md#background-task-system) for a task queue and worker system diagram.
 
 ---
 
@@ -205,11 +226,9 @@ python scripts/cleanup_chroma.py --force
 ```bash
 # Remove ChromaDB directories
 rm -rf chroma_db*
-
 # Clean temporary files
 rm -rf temp_audio/*
 rm -rf uploads/*
-
 # Restart services after cleanup
 ./start_dev.sh
 ```
@@ -221,91 +240,6 @@ The app automatically cleans up:
 - Old task results from Redis
 - Expired cache entries
 - Unused document embeddings
-
----
-
-## 🏗️ Architecture Overview
-
-<div align="center">
-
-```mermaid
-graph TB
-    subgraph "🎨 User Interface"
-        UI[Web Interface]
-        AUDIO[Audio Processing]
-    end
-    
-    subgraph "🧠 Core Logic"
-        RE[Reasoning Engine]
-        DP[Document Processor]
-        TR[Tool Registry]
-    end
-    
-    subgraph "⚡ Services"
-        AO[Ollama Client]
-        VS[Vector Store]
-        CS[Cache Service]
-    end
-    
-    subgraph "🗄️ Storage"
-        CHROMA[Vector Database]
-        CACHE[Memory Cache]
-        REDIS[Redis Task Queue]
-    end
-    
-    subgraph "🌐 External"
-        OLLAMA[LLM Server]
-    end
-    
-    %% User Interface Connections
-    UI --> RE
-    UI --> DP
-    AUDIO --> RE
-    
-    %% Core Logic Connections
-    RE --> AO
-    RE --> TR
-    DP --> VS
-    
-    %% Service Connections
-    AO --> OLLAMA
-    VS --> CHROMA
-    CS --> CACHE
-    CS --> REDIS
-    
-    %% Styling
-    classDef ui fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
-    classDef core fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
-    classDef service fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
-    classDef storage fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
-    classDef external fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
-    
-    class UI,AUDIO ui
-    class RE,DP,TR core
-    class AO,VS,CS service
-    class CHROMA,CACHE,REDIS storage
-    class OLLAMA external
-```
-
-</div>
-
----
-
-## 📚 Documentation
-
-<div align="center">
-
-| 📖 **Guide** | 📋 **Description** | 🔗 **Link** |
-|:---|:---|:---:|
-| **Technical Overview** | High-level system summary and characteristics | [📊](docs/TECHNICAL_OVERVIEW.md) |
-| **Features Overview** | Complete feature documentation and capabilities | [📄](docs/FEATURES.md) |
-| **System Architecture** | Technical architecture and component interactions | [🏗️](docs/ARCHITECTURE.md) |
-| **Development Guide** | Contributing and development workflows | [🛠️](docs/DEVELOPMENT.md) |
-| **Project Roadmap** | Future features and development plans | [🗺️](docs/ROADMAP.md) |
-| **Reasoning Features** | Advanced reasoning engine details | [🧠](docs/REASONING_FEATURES.md) |
-| **LLM Judge Evaluator** | Code quality evaluation and CI integration | [⚖️](docs/EVALUATORS.md) |
-
-</div>
 
 ---
 
@@ -332,10 +266,8 @@ pytest tests/test_enhanced_tools.py     # Tool functionality tests
 ```bash
 # Format code
 black .
-
 # Lint code
 flake8 .
-
 # Type checking
 mypy .
 ```
@@ -352,10 +284,8 @@ python scripts/cleanup_chroma.py --force
 ```bash
 # Start all services
 ./start_dev.sh
-
 # Stop all services
 pkill -f "streamlit\|celery\|flower"
-
 # Check service status
 ps aux | grep -E "(streamlit|celery|flower)" | grep -v grep
 ```
@@ -484,61 +414,3 @@ Malkov, Yury A., and Dmitry A. Yashunin. "Efficient and Robust Approximate Neare
 [![GitHub Forks](https://img.shields.io/github/forks/khaosans/basic-chat-template?style=social)](https://github.com/khaosans/basic-chat-template)
 
 </div>
-
-## 📝 Project Overview
-
-BasicChat is a privacy-first, local AI assistant that supports advanced reasoning, document analysis, and research workflows. It runs entirely on your machine, ensuring your data never leaves your environment. The app supports multiple reasoning modes, background task processing, and integrates with local LLMs via Ollama.
-
-## 🚀 Setup & Usage
-
-### Prerequisites
-- Python 3.11+
-- Ollama (for local LLMs)
-- Redis (for background tasks)
-
-### Installation
-```bash
-git clone https://github.com/khaosans/basic-chat-template.git
-cd basic-chat-template
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### Running the App
-```bash
-# Start Ollama and pull required models
-ollama serve &
-ollama pull mistral
-ollama pull nomic-embed-text
-
-# Start Redis (for background tasks)
-redis-server &
-
-# Start the app
-./start_dev.sh
-# or
-streamlit run app.py
-```
-
-### Example Usage
-- Upload a PDF, text, or image file and ask questions about its content.
-- Use the sidebar to select reasoning modes (Auto, Chain-of-Thought, Agent-Based, etc).
-- Enable Deep Research Mode for multi-source, academic-style answers.
-
-## 🔒 Security Best Practices
-- All processing is local; no data is sent to external APIs.
-- Input validation is performed on file uploads and text inputs.
-- Only trusted file types are accepted (PDF, TXT, PNG, JPG, JPEG).
-- Session state is isolated per user.
-
-## 🧪 Testing
-Run all tests with:
-```bash
-pytest
-```
-
-## 🛡️ Input Validation
-- File uploads are checked for type and size.
-- Text inputs are sanitized before processing.
-- Configuration values are validated at startup.

@@ -1,6 +1,6 @@
 # Project Roadmap
 
-[← Back to Documentation](../README.md#documentation) | [Features →](FEATURES.md)
+[← Back to Documentation](../README.md#documentation) | [Technical Overview →](TECHNICAL_OVERVIEW.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) | [Reasoning Features →](REASONING_FEATURES.md) | [LLM Judge Evaluator →](EVALUATORS.md) | [CI Optimization →](CI_OPTIMIZATION.md) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md) | [Testing →](TESTING.md)
 
 ---
 
@@ -92,7 +92,7 @@ The security enhancements will implement enterprise-grade protection mechanisms 
 
 ```mermaid
 graph TB
-    subgraph "�� Enhanced Reasoning"
+    subgraph "🎯 Enhanced Reasoning"
         MULTI_MODEL[Multi-Model Reasoning]
         ENSEMBLE[Ensemble Methods]
         ADAPTIVE[Adaptive Reasoning]
@@ -517,4 +517,4 @@ This diagram shows the community and ecosystem strategy that fosters open source
 
 ---
 
-[← Back to Documentation](../README.md#documentation) | [Features →](FEATURES.md)
+[← Back to Documentation](../README.md#documentation) | [Technical Overview →](TECHNICAL_OVERVIEW.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) | [Reasoning Features →](REASONING_FEATURES.md) | [LLM Judge Evaluator →](EVALUATORS.md) | [CI Optimization →](CI_OPTIMIZATION.md) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md) | [Testing →](TESTING.md)
