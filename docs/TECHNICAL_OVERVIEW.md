@@ -1,8 +1,10 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # Technical Overview
 
-This document provides a comprehensive technical overview of BasicChat, summarizing the architecture, key components, design decisions, and technical characteristics.
-
-[← Back to README](../README.md)
+> **TL;DR:** BasicChat is a privacy-first, local AI assistant with a modular microservices architecture, supporting advanced reasoning, document processing, and tool integration—all running on your machine.
 
 ---
 
@@ -490,4 +492,6 @@ The testing framework implements comprehensive quality assurance practices that 
 
 ---
 
-[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) 
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

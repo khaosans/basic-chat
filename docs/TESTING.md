@@ -1,3 +1,13 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
+# Testing Guide
+
+> **TL;DR:** Comprehensive tests for all features, with clear structure, coverage goals, and CI integration for reliable development.
+
+---
+
 # Testing Documentation
 
 ## Overview
@@ -182,3 +192,7 @@ python -m pytest --collect-only
 3. **Performance Tests**: Add benchmarks for critical operations
 4. **Property-Based Testing**: Use hypothesis for more thorough testing
 5. **Visual Regression Tests**: For UI components when applicable 
+
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

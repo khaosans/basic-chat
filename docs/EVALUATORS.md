@@ -1,10 +1,113 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # LLM Judge Evaluator
 
-This document describes the LLM-based code quality evaluator for the GitHub Actions CI pipeline.
+> **TL;DR:** Automated code and project evaluation using local or cloud LLMs—integrated with CI for actionable, cost-effective quality checks.
+
+---
 
 ## Overview
 
 The LLM Judge Evaluator uses the built-in Ollama setup to assess code quality, test coverage, documentation, architecture, security, and performance of the codebase. It runs as a separate job in the CI pipeline after unit tests pass.
+
+---
+
+## LLM Judge Evaluation Flow (OpenAI)
+
+> **Note:** This section was merged from the former `LLM_JUDGE_FLOW.md` for unified documentation.
+
+### Overview
+
+The LLM Judge evaluation system can also use OpenAI's cost-effective models to assess code quality, test coverage, documentation, and overall project health. This provides automated quality assurance for the codebase.
+
+#### Current Setup
+
+- **Default Model:** `gpt-3.5-turbo`
+- **Cost:** ~$0.0015 per 1K input tokens
+- **Quality:** Good for code evaluation
+- **Speed:** Fast response times
+
+#### Configuration
+
+The evaluation can be configured via GitHub Actions variables:
+
+```yaml
+OPENAI_MODEL: gpt-3.5-turbo  # Default: cheapest chat model
+LLM_JUDGE_THRESHOLD: 7.0     # Default: minimum passing score
+```
+
+#### Available Models
+
+| Model | Cost per 1K tokens | Quality | Speed | Max Tokens |
+|-------|-------------------|---------|-------|------------|
+| `gpt-3.5-turbo` | $0.0015 | Good | Fast | 4,096 |
+| `gpt-3.5-turbo-16k` | $0.003 | Good | Fast | 16,384 |
+| `gpt-4-turbo` | $0.01 | Excellent | Fast | 128,000 |
+| `gpt-4` | $0.03 | Excellent | Medium | 8,192 |
+
+#### Workflow Integration
+
+- **Main branch pushes:** Full evaluation
+- **PRs from same repo:** Quick evaluation
+- **External PRs:** Skipped for security
+
+#### Quick Mode
+
+For faster CI runs, the evaluator supports a `--quick` flag that:
+- Focuses on critical files only
+- Skips detailed test coverage analysis
+- Provides faster feedback
+- Reduces API costs
+
+#### Evaluation Criteria
+
+The LLM Judge evaluates the following aspects (1-10 scale):
+1. **Code Quality**: Structure, naming, complexity, Python best practices
+2. **Test Coverage**: Comprehensiveness, quality, effectiveness
+3. **Documentation**: README quality, inline docs, project documentation
+4. **Architecture**: Design patterns, modularity, scalability
+5. **Security**: Potential vulnerabilities, security best practices
+6. **Performance**: Code efficiency, optimization opportunities
+
+#### Results
+
+Results are saved to `llm_judge_results.json` and uploaded as GitHub Actions artifacts (30-day retention).
+
+#### Cost Optimization
+
+- **Quick Mode:** Reduces token usage by 60-80%
+- **Cheap Model:** Uses `gpt-3.5-turbo` by default
+- **Smart Triggering:** Only runs on relevant changes
+- **Parallel Execution:** Doesn't block other CI jobs
+
+#### Setup Requirements
+
+- `OPENAI_API_KEY` in GitHub secrets
+- Optional: `OPENAI_MODEL`, `LLM_JUDGE_THRESHOLD` as repo variables
+
+#### Testing
+
+- Local: `python scripts/test_openai_evaluation.py` or `python evaluators/check_llm_judge_openai.py --quick`
+- CI: Runs on main branch pushes and same-repo PRs
+
+#### Troubleshooting
+
+- **Missing API Key:** Set `OPENAI_API_KEY` in GitHub secrets
+- **Model Not Found:** Check model name in config
+- **Timeout:** Increase timeout or use quick mode
+- **JSON Parse Error:** Model response format issues
+
+#### Future Enhancements
+
+- Support for other LLM providers
+- Custom evaluation criteria
+- Historical trend analysis
+- Integration with code review tools
+- Automated fix suggestions
+
+---
 
 ## Files
 
@@ -123,7 +226,6 @@ The evaluator integrates seamlessly with:
 
 - [CI Optimization](CI_OPTIMIZATION.md) - CI/CD pipeline optimization details
 - [GitHub Models Integration](GITHUB_MODELS_INTEGRATION.md) - GitHub Models API integration
-- [LLM Judge Flow](LLM_JUDGE_FLOW.md) - Detailed evaluation workflow
 - [Testing Strategy](TESTING_STRATEGY.md) - Testing approach and methodology
 
 ## Support
@@ -136,4 +238,6 @@ For issues or questions:
 
 ---
 
-[← Back to Documentation](../README.md#documentation) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) 
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

@@ -1,4 +1,12 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # CI/CD Optimization Strategy
+
+> **TL;DR:** Optimize CI/CD with fast, parallel LLM evaluation jobs, model caching, and GitHub Models integration for speed and cost savings.
+
+---
 
 ## Overview
 
@@ -324,3 +332,7 @@ The optimization strategy successfully addresses the original problems:
 - **Scalable**: Foundation for future enhancements
 
 The LLM Judge now provides immediate quality feedback while maintaining high standards and reducing operational costs. GitHub Models provides the optimal solution for most use cases, with Ollama as a reliable fallback option. 
+
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

@@ -1,8 +1,10 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # System Architecture
 
-This document provides a comprehensive overview of BasicChat's technical architecture, including component interactions, data flows, and system design principles.
-
-[← Back to README](../README.md)
+> **TL;DR:** BasicChat uses a layered microservices architecture for privacy, modularity, and scalability—ensuring all AI processing is local and secure.
 
 ---
 
@@ -625,4 +627,6 @@ This diagram explains how the system scales to support more users, with a load b
 
 ---
 
-[← Back to README](../README.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

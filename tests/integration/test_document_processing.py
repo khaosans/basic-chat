@@ -6,9 +6,10 @@ Test script to verify document processing and vector search functionality
 import os
 import sys
 import tempfile
+from pathlib import Path
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from document_processor import DocumentProcessor
 from app import DocumentSummaryTool

@@ -1,4 +1,16 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # GitHub Models Integration Guide
+
+> **TL;DR:** Use GitHub's built-in Models for instant, cost-free LLM evaluation in CI—no setup, downloads, or extra costs required.
+
+---
+
+[← Back to Documentation](../README.md#documentation) | [Technical Overview →](TECHNICAL_OVERVIEW.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) | [Reasoning Features →](REASONING_FEATURES.md) | [LLM Judge Evaluator →](EVALUATORS.md) | [CI Optimization →](CI_OPTIMIZATION.md) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md) | [Testing →](TESTING.md)
+
+---
 
 ## Overview
 
@@ -316,3 +328,7 @@ GitHub Models integration provides the optimal solution for LLM Judge evaluation
 - **High-quality** models available
 
 This approach transforms the LLM Judge from a bottleneck into a fast, reliable quality gate that provides immediate feedback while maintaining high standards. 
+
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

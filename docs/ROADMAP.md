@@ -1,8 +1,10 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # Project Roadmap
 
-This document outlines the strategic direction and planned enhancements for BasicChat, organized by development phases and priority levels.
-
-[← Back to README](../README.md)
+> **TL;DR:** See what's next for BasicChat: upcoming features, performance improvements, and long-term vision for private, local AI.
 
 ---
 
@@ -94,7 +96,7 @@ The security enhancements will implement enterprise-grade protection mechanisms 
 
 ```mermaid
 graph TB
-    subgraph "🧠 Enhanced Reasoning"
+    subgraph "🎯 Enhanced Reasoning"
         MULTI_MODEL[Multi-Model Reasoning]
         ENSEMBLE[Ensemble Methods]
         ADAPTIVE[Adaptive Reasoning]
@@ -519,4 +521,6 @@ This diagram shows the community and ecosystem strategy that fosters open source
 
 ---
 
-[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) 
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

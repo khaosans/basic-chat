@@ -1,85 +1,87 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # Reasoning Capabilities - Feature Summary
+
+> **TL;DR:** Learn how BasicChat's reasoning engine combines multiple strategies and tools for accurate, explainable answers—locally and securely.
+
+---
+
+[← Back to Documentation](../README.md#documentation) | [Technical Overview →](TECHNICAL_OVERVIEW.md) | [Features →](FEATURES.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) | [Reasoning Features →](REASONING_FEATURES.md) | [LLM Judge Evaluator →](EVALUATORS.md) | [CI Optimization →](CI_OPTIMIZATION.md) | [GitHub Models Integration →](GITHUB_MODELS_INTEGRATION.md) | [Testing →](TESTING.md)
+
+---
 
 ## Core Features
 
 ### **Reasoning Engine Architecture**
 
-<div align="center">
-
 ```mermaid
-graph TB
-    subgraph "📥 Input Layer"
+graph TD
+    %% Layer labels
+    subgraph Input Layer
         QUERY[User Query]
         MODE[Reasoning Mode]
         CONTEXT[Document Context]
     end
-    
-    subgraph "🧠 Reasoning Layer"
+    subgraph Reasoning Layer
+        AUTO[Auto Mode]
         COT[Chain-of-Thought]
         MULTI[Multi-Step]
         AGENT[Agent-Based]
-        AUTO[Auto Mode]
     end
-    
-    subgraph "🛠️ Tool Layer"
+    subgraph Tool Layer
         CALC[Calculator]
         TIME[Time Tools]
         SEARCH[Web Search]
         DOCS[Document Tools]
     end
-    
-    subgraph "⚡ Performance Layer"
+    subgraph Performance Layer
         CACHE[Smart Caching]
         ASYNC[Async Processing]
         POOL[Connection Pool]
     end
-    
-    subgraph "📤 Output Layer"
+    subgraph Output Layer
         RESULT[Final Answer]
         STEPS[Reasoning Steps]
         CONFIDENCE[Confidence Score]
     end
-    
-    %% Clear flow from input to reasoning
+
+    %% Flow arrows (vertical, clear progression)
     QUERY --> AUTO
     MODE --> AUTO
     CONTEXT --> AUTO
-    
-    %% Reasoning modes flow
     AUTO --> COT
     AUTO --> MULTI
     AUTO --> AGENT
-    
-    %% Tools for each reasoning mode
-    COT --> CALC
-    MULTI --> DOCS
-    AGENT --> SEARCH
+    %% Only Agent-Based connects to tools
+    AGENT --> CALC
     AGENT --> TIME
-    
-    %% Performance optimization
+    AGENT --> SEARCH
+    AGENT --> DOCS
     CALC --> CACHE
     SEARCH --> ASYNC
     DOCS --> POOL
-    
-    %% Final output
+    %% Performance to output
     CACHE --> RESULT
     ASYNC --> STEPS
     POOL --> CONFIDENCE
-    
+
+    %% Styling for clarity
     classDef input fill:#E3F2FD,stroke:#1976D2,stroke-width:2px,color:#0D47A1
     classDef reasoning fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#4A148C
     classDef tools fill:#E8F5E8,stroke:#388E3C,stroke-width:2px,color:#1B5E20
     classDef performance fill:#FFF3E0,stroke:#F57C00,stroke-width:2px,color:#E65100
     classDef output fill:#FCE4EC,stroke:#C2185B,stroke-width:2px,color:#880E4F
-    
+
     class QUERY,MODE,CONTEXT input
-    class COT,MULTI,AGENT,AUTO reasoning
+    class AUTO,COT,MULTI,AGENT reasoning
     class CALC,TIME,SEARCH,DOCS tools
     class CACHE,ASYNC,POOL performance
     class RESULT,STEPS,CONFIDENCE output
 ```
 
-</div>
+> **Note:** Only Agent-Based reasoning has direct access to enhanced tools (calculator, time, web search, document tools). Chain-of-Thought and Multi-Step modes rely solely on the LLM's internal reasoning and do not invoke external tools.
 
 **Diagram Narrative: Reasoning Engine Architecture**
 
@@ -790,7 +792,9 @@ ENABLE_STRUCTURED_LOGGING=true
 
 ---
 
-[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Development →](DEVELOPMENT.md) 
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._
 
 ## 📝 Recent Updates
 

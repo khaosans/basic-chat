@@ -1,8 +1,10 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # Features Overview
 
-This document provides a comprehensive overview of BasicChat's capabilities, organized by functional areas with detailed explanations and usage examples.
-
-[← Back to README](../README.md)
+> **TL;DR:** Explore BasicChat's core features: multi-modal reasoning, advanced document processing, privacy-first design, and seamless local operation.
 
 ---
 
@@ -754,7 +756,9 @@ python scripts/cleanup_chroma.py --force
 
 ---
 
-[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Development →](DEVELOPMENT.md) | [Roadmap →](ROADMAP.md) 
+[🏠 Documentation Home](../README.md#documentation)
+
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._
 
 ## Core Features
 - **Background Task Management**: Run complex queries and document processing in the background. Monitor, cancel, and manage tasks directly from the chat UI and sidebar. Powered by Celery, Redis, and Flower for robust async processing. 

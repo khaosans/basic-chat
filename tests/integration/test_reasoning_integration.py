@@ -3,6 +3,10 @@ Integration tests for reasoning engine functionality
 Tests that require external services or complex interactions
 """
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from reasoning_engine import (

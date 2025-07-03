@@ -1,8 +1,10 @@
+[🏠 Documentation Home](../README.md#documentation)
+
+---
+
 # Development Guide
 
-This guide provides comprehensive instructions for developers contributing to BasicChat, including environment setup, testing, code quality, and project management workflows.
-
-[← Back to README](../README.md)
+> **TL;DR:** Set up, develop, and contribute to BasicChat with clear instructions for local development, environment configuration, and testing.
 
 ---
 
@@ -731,12 +733,6 @@ class ReasoningResult:
 - **[Project Roadmap](ROADMAP.md)** - Future features and development plans
 - **[Reasoning Features](REASONING_FEATURES.md)** - Advanced reasoning engine details
 
----
-
-[← Back to README](../README.md) | [Architecture →](ARCHITECTURE.md) | [Features →](FEATURES.md) | [Roadmap →](ROADMAP.md) 
-
----
-
 ## ⏳ Running with Background Tasks
 
 BasicChat supports background processing for long-running tasks (complex queries, large document processing) using Celery, Redis, and Flower. This enables a responsive UI and robust task management.
@@ -745,34 +741,7 @@ BasicChat supports background processing for long-running tasks (complex queries
 
 To launch all services (Redis, Celery workers, Flower, Streamlit app) for local development:
 
-```bash
-./start_dev.sh
 ```
+[🏠 Documentation Home](../README.md#documentation)
 
-Or with Docker Compose:
-
-```bash
-docker-compose up --build
-```
-
-- **Main App:** http://localhost:8501
-- **Task Monitor (Flower):** http://localhost:5555
-- **Redis:** localhost:6379
-
-### **Task Management in the UI**
-- View task progress, status, and results in the chat and sidebar
-- Cancel running tasks or clean up completed/failed tasks from the sidebar
-- Monitor task metrics (active, completed, failed, cancelled)
-
-### **Monitoring & Debugging**
-- Use Flower (http://localhost:5555) to monitor, retry, or revoke tasks in real time
-- Check logs for Celery worker output and errors
-- Redis must be running for background tasks to work
-
-### **Troubleshooting**
-- **Redis not running:** Start Redis manually or via the dev script
-- **Celery worker not processing tasks:** Check worker logs for errors, ensure Redis is reachable
-- **Flower not showing tasks:** Ensure workers are running and connected to the same Redis instance
-- **Fallback mode:** If Redis/Celery are unavailable, tasks run in-process (for dev/testing only)
-
-See the [README](../README.md#long-running-tasks--background-processing) and [Architecture](ARCHITECTURE.md#background-task-system) for more details. 
+_For the latest navigation and all documentation links, see the [README Documentation Index](../README.md#documentation)._

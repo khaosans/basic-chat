@@ -29,14 +29,12 @@ def test_web_search():
             print(f"   URL: {result.link}")
             print(f"   Snippet: {result.snippet[:80]}...")
             print()
-        
-        return True
-        
+        assert len(results) > 0, "No results returned from web search"
     except Exception as e:
         print(f"❌ Web search test failed: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        assert False, f"Web search test failed: {e}"
 
 def test_task_manager():
     """Test task manager functionality"""
@@ -64,14 +62,12 @@ def test_task_manager():
             print(f"✅ Task status retrieved: {task_status.status}")
         else:
             print("❌ Could not retrieve task status")
-        
-        return True
-        
+        assert task_status is not None, "Could not retrieve task status"
     except Exception as e:
         print(f"❌ Task manager test failed: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        assert False, f"Task manager test failed: {e}"
 
 def test_ollama_connection():
     """Test Ollama connection"""
@@ -82,19 +78,14 @@ def test_ollama_connection():
         import requests
         
         response = requests.get("http://localhost:11434/api/tags", timeout=5)
-        if response.status_code == 200:
-            models = response.json()
-            print(f"✅ Ollama is running with {len(models.get('models', []))} models")
-            for model in models.get('models', [])[:3]:
-                print(f"   - {model.get('name', 'Unknown')}")
-            return True
-        else:
-            print(f"❌ Ollama returned status code: {response.status_code}")
-            return False
-            
+        assert response.status_code == 200, f"Ollama returned status code: {response.status_code}"
+        models = response.json()
+        print(f"✅ Ollama is running with {len(models.get('models', []))} models")
+        for model in models.get('models', [])[:3]:
+            print(f"   - {model.get('name', 'Unknown')}")
     except Exception as e:
         print(f"❌ Ollama connection failed: {e}")
-        return False
+        assert False, f"Ollama connection failed: {e}"
 
 def main():
     """Main test function"""
