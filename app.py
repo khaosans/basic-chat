@@ -522,6 +522,56 @@ def display_reasoning_result(result: ReasoningResult):
     with col2:
         st.write("**Sources:**", ", ".join(result.sources))
 
+def inject_attention_js():
+    """Inject JS to track typing, scrolling, and tab focus in Streamlit session state."""
+    st.markdown(
+        """
+        <script>
+        // Track typing in chat input
+        window.isUserTyping = false;
+        document.addEventListener('input', function(e) {
+            if (e.target && e.target.tagName === 'TEXTAREA') {
+                window.isUserTyping = e.target.value.length > 0;
+                window.parent.postMessage({type: 'typing', value: window.isUserTyping}, '*');
+            }
+        });
+        // Track scrolling
+        window.isUserScrolling = false;
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+            window.isUserScrolling = true;
+            window.parent.postMessage({type: 'scrolling', value: true}, '*');
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(function() {
+                window.isUserScrolling = false;
+                window.parent.postMessage({type: 'scrolling', value: false}, '*');
+            }, 1000);
+        });
+        // Track tab focus
+        window.isTabFocused = document.hasFocus();
+        window.addEventListener('focus', function() {
+            window.isTabFocused = true;
+            window.parent.postMessage({type: 'tabfocus', value: true}, '*');
+        });
+        window.addEventListener('blur', function() {
+            window.isTabFocused = false;
+            window.parent.postMessage({type: 'tabfocus', value: false}, '*');
+        });
+        // Listen for messages in Streamlit
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type && window.streamlitWebsocket) {
+                window.streamlitWebsocket.send(JSON.stringify({
+                    type: 'streamlit:setComponentValue',
+                    key: event.data.type,
+                    value: event.data.value
+                }));
+            }
+        });
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+
 def enhanced_chat_interface(doc_processor):
     """Enhanced chat interface with reasoning modes and document processing"""
     
@@ -697,6 +747,55 @@ def enhanced_chat_interface(doc_processor):
             
             # Add audio button for assistant messages
             if msg["role"] == "assistant" and not msg.get("is_task"):
+                analysis = msg.get("analysis_result")
+                if analysis:
+                    # Try to parse as JSON for structured data (charts/metrics)
+                    import json
+                    try:
+                        analysis_data = json.loads(analysis)
+                    except Exception:
+                        analysis_data = None
+                    with st.expander("🧠 Analysis Details", expanded=False):
+                        # If structured, show multi-level expanders and charts
+                        if analysis_data and isinstance(analysis_data, dict):
+                            if "summary" in analysis_data:
+                                with st.expander("📝 Summary", expanded=True):
+                                    st.markdown(analysis_data["summary"])
+                            if "reasoning_steps" in analysis_data:
+                                with st.expander("🔍 Reasoning Steps", expanded=False):
+                                    for i, step in enumerate(analysis_data["reasoning_steps"], 1):
+                                        st.markdown(f"**Step {i}:** {step}")
+                            if "metrics" in analysis_data:
+                                with st.expander("📊 Metrics", expanded=False):
+                                    for metric in analysis_data["metrics"]:
+                                        label = metric.get("label", "Metric")
+                                        value = metric.get("value", "-")
+                                        tooltip = metric.get("tooltip", "")
+                                        st.markdown(f'<span title="{tooltip}"><b>{label}:</b> {value}</span>', unsafe_allow_html=True)
+                            if "chart" in analysis_data:
+                                chart = analysis_data["chart"]
+                                chart_type = chart.get("type", "bar")
+                                data = chart.get("data", {})
+                                if chart_type == "bar":
+                                    st.bar_chart(data)
+                                elif chart_type == "line":
+                                    st.line_chart(data)
+                                elif chart_type == "pie":
+                                    import pandas as pd
+                                    df = pd.DataFrame({"value": data.values()}, index=list(data.keys()))
+                                    st.write(df.plot.pie(y="value", legend=False, autopct="%1.1f%%"))
+                                    st.pyplot()
+                        else:
+                            # Fallback: show as markdown
+                            st.markdown(analysis)
+                        # Contextual action buttons
+                        col1, col2, col3 = st.columns([1,1,1])
+                        with col1:
+                            st.button("Show More", key=f"showmore_{hash(msg['content'])}")
+                        with col2:
+                            st.button("Download", key=f"download_{hash(msg['content'])}")
+                        with col3:
+                            st.button("Ask Follow-up", key=f"followup_{hash(msg['content'])}")
                 create_enhanced_audio_button(msg["content"], hash(msg['content']))
 
     # Chat input with deep research toggle
@@ -822,7 +921,11 @@ def enhanced_chat_interface(doc_processor):
                                 # Show final answer separately
                                 st.markdown("### 📝 Final Answer")
                                 st.markdown(result.final_answer)
-                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
+                                st.session_state.messages.append({
+                                    "role": "assistant",
+                                    "content": result.final_answer,
+                                    "analysis_result": result.thought_process
+                                })
                                 
                             elif st.session_state.reasoning_mode == "Multi-Step":
                                 result = multi_step.step_by_step_reasoning(query=prompt, context=context)
@@ -833,7 +936,11 @@ def enhanced_chat_interface(doc_processor):
                                 
                                 st.markdown("### 📝 Final Answer")
                                 st.markdown(result.final_answer)
-                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
+                                st.session_state.messages.append({
+                                    "role": "assistant",
+                                    "content": result.final_answer,
+                                    "analysis_result": result.thought_process
+                                })
                                 
                             elif st.session_state.reasoning_mode == "Agent-Based":
                                 result = reasoning_agent.run(query=prompt, context=context)
@@ -844,7 +951,11 @@ def enhanced_chat_interface(doc_processor):
                                 
                                 st.markdown("### 📝 Final Answer")
                                 st.markdown(result.final_answer)
-                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
+                                st.session_state.messages.append({
+                                    "role": "assistant",
+                                    "content": result.final_answer,
+                                    "analysis_result": result.thought_process
+                                })
                                 
                             elif st.session_state.reasoning_mode == "Auto":
                                 auto_reasoning = AutoReasoning(selected_model)
@@ -859,13 +970,21 @@ def enhanced_chat_interface(doc_processor):
                                 
                                 st.markdown("### 📝 Final Answer")
                                 st.markdown(result.final_answer)
-                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
+                                st.session_state.messages.append({
+                                    "role": "assistant",
+                                    "content": result.final_answer,
+                                    "analysis_result": result.thought_process
+                                })
                                 
                             else:  # Standard mode
                                 # Note: The standard mode now also benefits from context
                                 if response := ollama_chat.query({"inputs": enhanced_prompt}):
                                     st.markdown(response)
-                                    st.session_state.messages.append({"role": "assistant", "content": response})
+                                    st.session_state.messages.append({
+                                        "role": "assistant",
+                                        "content": response,
+                                        "analysis_result": ""
+                                    })
                                 else:
                                     st.error("Failed to get response")
                                     
@@ -876,7 +995,11 @@ def enhanced_chat_interface(doc_processor):
                             # Fallback to standard mode
                             if response := ollama_chat.query({"inputs": prompt}):
                                 st.write(response)
-                                st.session_state.messages.append({"role": "assistant", "content": response})
+                                st.session_state.messages.append({
+                                    "role": "assistant",
+                                    "content": response,
+                                    "analysis_result": ""
+                                })
             
             # Add audio button for the assistant's response
             if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
@@ -930,6 +1053,38 @@ def main():
                 logger.warning(f"Failed to cleanup old tasks: {e}")
         
     doc_processor = st.session_state.doc_processor
+
+    # Inject attention JS
+    inject_attention_js()
+
+    # Helper to get attention state from session_state
+    user_typing = st.session_state.get('typing', False)
+    user_scrolling = st.session_state.get('scrolling', False)
+    tab_focused = st.session_state.get('tabfocus', True)
+
+    # Smart auto-refresh logic
+    current_time = time.time()
+    def should_auto_refresh():
+        # Only refresh if user is NOT typing, NOT scrolling, and tab is focused
+        if user_typing or user_scrolling or not tab_focused:
+            return False
+        # Existing logic for background tasks, audio, etc.
+        if config.enable_background_tasks and "task_manager" in st.session_state:
+            active_tasks = st.session_state.task_manager.get_active_tasks()
+            running_tasks = [task for task in active_tasks if task.status in ["pending", "running"]]
+            if running_tasks:
+                return True
+        for key in st.session_state.keys():
+            if key.startswith("audio_state_"):
+                if st.session_state[key].get("status") == "loading":
+                    return True
+        if st.session_state.get("document_processing", False):
+            return True
+        return False
+
+    if should_auto_refresh() and (current_time - st.session_state.last_refresh_time) > 2:
+        st.session_state.last_refresh_time = current_time
+        st.rerun()
 
     # Enhanced chat interface
     enhanced_chat_interface(doc_processor)
