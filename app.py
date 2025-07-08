@@ -34,6 +34,7 @@ import tempfile
 from gtts import gTTS
 import hashlib
 import base64
+import websockets
 
 # Import our new reasoning engine
 from reasoning_engine import (
@@ -100,6 +101,9 @@ Please be concise, accurate, and helpful in your responses.
 If you don't know something, just say so instead of making up information.
 Always show your reasoning process when appropriate.
 """
+
+API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8080")
+USE_API = os.environ.get("USE_API", "true").lower() == "true"
 
 @dataclass
 class ToolResponse:
@@ -522,6 +526,48 @@ def display_reasoning_result(result: ReasoningResult):
     with col2:
         st.write("**Sources:**", ", ".join(result.sources))
 
+class APIChatClient:
+    def __init__(self, base_url: str = API_BASE_URL):
+        self.base_url = base_url
+        self.session_id = f"streamlit_{int(time.time())}"
+    async def send_message_stream(self, message: str, model: str = DEFAULT_MODEL, reasoning_mode: str = "Auto"):
+        try:
+            uri = f"{self.base_url.replace('http', 'ws')}/ws/chat"
+            async with websockets.connect(uri) as websocket:
+                await websocket.send(json.dumps({
+                    "message": message,
+                    "model": model,
+                    "reasoning_mode": reasoning_mode,
+                    "session_id": self.session_id
+                }))
+                full_response = ""
+                async for message in websocket:
+                    data = json.loads(message)
+                    if data["type"] == "chunk":
+                        full_response += data["content"]
+                        yield data["content"]
+                    elif data["type"] == "complete":
+                        break
+                    elif data["type"] == "error":
+                        raise Exception(data["error"])
+                return full_response
+        except Exception as e:
+            logger.error(f"WebSocket error: {e}")
+            return await self.send_message_rest(message, model, reasoning_mode)
+    async def send_message_rest(self, message: str, model: str = DEFAULT_MODEL, reasoning_mode: str = "Auto"):
+        try:
+            response = requests.post(f"{self.base_url}/api/chat", json={
+                "message": message,
+                "model": model,
+                "reasoning_mode": reasoning_mode,
+                "session_id": self.session_id
+            })
+            response.raise_for_status()
+            return response.json()["content"]
+        except Exception as e:
+            logger.error(f"REST API error: {e}")
+            return f"Error: {str(e)}"
+
 def enhanced_chat_interface(doc_processor):
     """Enhanced chat interface with reasoning modes and document processing"""
     
@@ -720,167 +766,49 @@ def enhanced_chat_interface(doc_processor):
                 st.info("✅ Standard mode enabled. Switch back to deep research for comprehensive analysis.")
             st.rerun()
     
-    # Chat input
-    if prompt := st.chat_input("Type a message..."):
-        # Determine if this should be a deep research task
-        if st.session_state.deep_research_mode:
-            # Always use deep research for complex queries in research mode
-            should_be_research_task = True
-        else:
-            # Check if this should be a long-running task
-            should_be_long_task = should_use_background_task(prompt, st.session_state.reasoning_mode, config)
-            should_be_research_task = False
-        
-        if should_be_research_task:
-            # Submit as deep research task
-            task_id = st.session_state.task_manager.submit_task(
-                "deep_research",
-                query=prompt,
-                research_depth="comprehensive"
-            )
-            
-            # Add task message to chat
-            task_message = create_deep_research_message(task_id, prompt)
-            st.session_state.messages.append(task_message)
-            
-            # Add user message
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            
-            # Display the user message immediately
-            with st.chat_message("user"):
-                st.write(prompt)
-            
-            # Display task message
-            with st.chat_message("assistant"):
-                st.write(task_message["content"])
-                display_task_status(task_id, st.session_state.task_manager, "new_task")
-            
-            st.rerun()
-        elif should_be_long_task:
-            # Submit as background task (existing logic)
-            task_id = st.session_state.task_manager.submit_task(
-                "reasoning",
-                query=prompt,
-                mode=st.session_state.reasoning_mode
-            )
-            
-            # Add task message to chat
-            task_message = create_task_message(task_id, "Reasoning", query=prompt)
-            st.session_state.messages.append(task_message)
-            
-            # Add user message
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            
-            # Display the user message immediately
-            with st.chat_message("user"):
-                st.write(prompt)
-            
-            # Display task message
-            with st.chat_message("assistant"):
-                st.write(task_message["content"])
-                display_task_status(task_id, st.session_state.task_manager, "new_task")
-            
-            st.rerun()
-        else:
-            # Process normally (existing code)
-            # Add user message to session state immediately
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            
-            # Display the user message immediately
-            with st.chat_message("user"):
-                st.write(prompt)
-            
-            # Process response based on reasoning mode
-            with st.chat_message("assistant"):
-                # First check if it's a tool-based query
-                tool = tool_registry.get_tool(prompt)
-                if tool:
-                    with st.spinner(f"Using {tool.name()}..."):
-                        response = tool.execute(prompt)
-                        if response.success:
-                            st.write(response.content)
-                            st.session_state.messages.append({"role": "assistant", "content": response.content})
-                else:
-                    # Use reasoning modes with separated thought process and final output
-                    with st.spinner(f"Processing with {st.session_state.reasoning_mode} reasoning..."):
-                        try:
-                            # Get relevant document context first
-                            context = doc_processor.get_relevant_context(prompt) if doc_processor else ""
-                            
-                            # Add context to the prompt if available
-                            enhanced_prompt = prompt
-                            if context:
-                                enhanced_prompt = f"Context from uploaded documents:\n{context}\n\nQuestion: {prompt}"
-                            
-                            if st.session_state.reasoning_mode == "Chain-of-Thought":
-                                result = reasoning_chain.execute_reasoning(question=prompt, context=context)
-                                
-                                with st.expander("💭 Thought Process", expanded=False):
-                                    # Display the thought process
-                                    st.markdown(result.thought_process)
-                                
-                                # Show final answer separately
-                                st.markdown("### 📝 Final Answer")
-                                st.markdown(result.final_answer)
-                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
-                                
-                            elif st.session_state.reasoning_mode == "Multi-Step":
-                                result = multi_step.step_by_step_reasoning(query=prompt, context=context)
-                                
-                                with st.expander("🔍 Analysis & Planning", expanded=False):
-                                    # Display the analysis phase
-                                    st.markdown(result.thought_process)
-                                
-                                st.markdown("### 📝 Final Answer")
-                                st.markdown(result.final_answer)
-                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
-                                
-                            elif st.session_state.reasoning_mode == "Agent-Based":
-                                result = reasoning_agent.run(query=prompt, context=context)
-                                
-                                with st.expander("🤖 Agent Actions", expanded=False):
-                                    # Display agent actions
-                                    st.markdown(result.thought_process)
-                                
-                                st.markdown("### 📝 Final Answer")
-                                st.markdown(result.final_answer)
-                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
-                                
-                            elif st.session_state.reasoning_mode == "Auto":
-                                auto_reasoning = AutoReasoning(selected_model)
-                                result = auto_reasoning.auto_reason(query=prompt, context=context)
-                                
-                                # Show which mode was auto-selected
-                                st.info(f"🤖 Auto-selected: **{result.reasoning_mode}** reasoning")
-                                
-                                with st.expander("💭 Thought Process", expanded=False):
-                                    # Display the thought process
-                                    st.markdown(result.thought_process)
-                                
-                                st.markdown("### 📝 Final Answer")
-                                st.markdown(result.final_answer)
-                                st.session_state.messages.append({"role": "assistant", "content": result.final_answer})
-                                
-                            else:  # Standard mode
-                                # Note: The standard mode now also benefits from context
-                                if response := ollama_chat.query({"inputs": enhanced_prompt}):
-                                    st.markdown(response)
-                                    st.session_state.messages.append({"role": "assistant", "content": response})
-                                else:
-                                    st.error("Failed to get response")
-                                    
-                        except Exception as e:
-                            logger.error(f"Error in {st.session_state.reasoning_mode} mode: {str(e)}")
-                            logger.error(f"Traceback: {traceback.format_exc()}")
-                            st.error(f"Error in {st.session_state.reasoning_mode} mode: {str(e)}")
-                            # Fallback to standard mode
-                            if response := ollama_chat.query({"inputs": prompt}):
-                                st.write(response)
-                                st.session_state.messages.append({"role": "assistant", "content": response})
-            
-            # Add audio button for the assistant's response
-            if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
-                create_enhanced_audio_button(st.session_state.messages[-1]["content"], hash(st.session_state.messages[-1]["content"]))
+    # --- Playwright-friendly Chat UI ---
+    # Unique placeholder for chat input
+    user_input = st.text_input("Type a message...", key="chat_input")
+
+    # Unique label for send button
+    if st.button("Send", key="send_button") and user_input:
+        st.session_state.messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.write(user_input)
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            if USE_API:
+                try:
+                    full_response = ""
+                    async def stream_response():
+                        nonlocal full_response
+                        async for chunk in st.session_state.api_client.send_message_stream(
+                            user_input, 
+                            st.session_state.selected_model,
+                            st.session_state.reasoning_mode
+                        ):
+                            full_response += chunk
+                            message_placeholder.markdown(full_response + "▌")
+                        return full_response
+                    full_response = asyncio.run(stream_response())
+                    message_placeholder.markdown(full_response)
+                except Exception as e:
+                    error_msg = f"❌ API Error: {str(e)}"
+                    message_placeholder.error(error_msg)
+                    full_response = error_msg
+            else:
+                ollama_chat = OllamaChat(st.session_state.selected_model)
+                response = ollama_chat.query({"inputs": user_input})
+                full_response = response or "Sorry, I couldn't generate a response."
+                message_placeholder.write(full_response)
+            create_enhanced_audio_button(full_response, hash(full_response))
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        st.rerun()
+
+    # Consistent rendering of chat messages
+    for i, msg in enumerate(st.session_state.messages):
+        st.markdown(f'<div class="chat-message" id="chat-message-{i}">{msg["content"]}</div>', unsafe_allow_html=True)
+    # --- End Playwright-friendly Chat UI ---
 
 # Main Function
 def main():
@@ -930,6 +858,10 @@ def main():
                 logger.warning(f"Failed to cleanup old tasks: {e}")
         
     doc_processor = st.session_state.doc_processor
+
+    # Initialize API client if USE_API is enabled
+    if USE_API and "api_client" not in st.session_state:
+        st.session_state.api_client = APIChatClient()
 
     # Enhanced chat interface
     enhanced_chat_interface(doc_processor)
