@@ -23,6 +23,25 @@ REDIS_PID_FILE="./redis.pid"
 echo -e "${BLUE}🚀 BasicChat Enhanced Startup Script${NC}"
 echo "=================================="
 
+# Show cool ASCII animation/logo at startup
+ascii_logo=(
+"  ____            _      _      _____ _           _   "
+" |  _ \\          | |    | |    / ____| |         | |  "
+" | |_) | __ _ ___| | __ | |   | |    | |__   __ _| |_ "
+" |  _ < / _\` / __| |/ / | |   | |    | '_ \\ / _\` | __|"
+" | |_) | (_| \\__ \\   <  | |___| |____| | | | (_| | |_ "
+" |____/ \\__,_|___/_|\\_\\ |______\\_____|_| |_|\\__,_|\\__|"
+)
+
+for line in "${ascii_logo[@]}"; do
+  for ((i=0; i<${#line}; i++)); do
+    echo -ne "\033[1;36m${line:$i:1}\033[0m"
+    sleep 0.002
+  done
+  echo
+  sleep 0.03
+  done
+
 # Function to print colored output
 print_status() {
     echo -e "${GREEN}✅ $1${NC}"
@@ -50,28 +69,43 @@ check_port() {
     fi
 }
 
-# Function to wait for service to be ready
+# Spinner function for animated feedback
+spinner() {
+  local pid=$1
+  local msg="$2"
+  local spin='|/-\\'
+  local i=0
+  tput civis 2>/dev/null # Hide cursor
+  while kill -0 $pid 2>/dev/null; do
+    i=$(( (i+1) % 4 ))
+    printf "\r\033[1;36m%s %s\033[0m" "${spin:$i:1}" "$msg"
+    sleep 0.1
+  done
+  printf "\r\033[1;32m✔ %s\033[0m\n" "$msg"
+  tput cnorm 2>/dev/null # Show cursor
+}
+
+# Enhanced wait_for_service with spinner
 wait_for_service() {
-    local service_name=$1
-    local port=$2
-    local max_attempts=30
-    local attempt=1
-    
-    print_info "Waiting for $service_name to be ready on port $port..."
-    
-    while [ $attempt -le $max_attempts ]; do
-        if check_port $port; then
-            print_status "$service_name is ready!"
-            return 0
-        fi
-        
-        echo -n "."
-        sleep 1
-        attempt=$((attempt + 1))
-    done
-    
-    print_error "$service_name failed to start within $max_attempts seconds"
-    return 1
+  local service_name=$1
+  local port=$2
+  local max_attempts=30
+  local attempt=1
+  local spin='|/-\\'
+  local i=0
+  print_info "Waiting for $service_name to be ready on port $port..."
+  while [ $attempt -le $max_attempts ]; do
+    if check_port $port; then
+      printf "\r\033[1;32m✔ %s is ready!\033[0m\n" "$service_name"
+      return 0
+    fi
+    i=$(( (i+1) % 4 ))
+    printf "\r\033[1;36m%s Waiting for %s...\033[0m" "${spin:$i:1}" "$service_name"
+    sleep 0.2
+    attempt=$((attempt + 1))
+  done
+  printf "\r\033[1;31m✖ %s failed to start within %s seconds\033[0m\n" "$service_name" "$max_attempts"
+  return 1
 }
 
 # Function to start Redis
