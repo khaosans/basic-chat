@@ -1,4 +1,3 @@
-
 # BasicChat Documentation
 
 This document provides a consolidated overview of the BasicChat application, including its architecture, features, and technical specifications.
@@ -176,6 +175,65 @@ graph LR
 ```
 **Diagram 3: Document Processing Pipeline**
 This diagram shows how documents and images are processed for Retrieval-Augmented Generation (RAG). Text and images are extracted, chunked, embedded, and stored for semantic search.
+
+## Attention-Aware Auto-Refresh (2024)
+
+### Rationale
+
+Traditional auto-refresh in Streamlit apps can be disruptive, especially when users are typing, scrolling, or have the tab unfocused. To provide a smoother, smarter user experience, BasicChat now includes an **attention-aware auto-refresh** system that only triggers updates when the user is not actively interacting with the app.
+
+### How It Works
+
+- **Typing Detection:** The app detects when the user is typing in the chat input and pauses auto-refresh to prevent interrupting message composition.
+- **Scrolling Detection:** If the user is scrolling through the chat or sidebar, auto-refresh is paused to avoid jarring UI jumps.
+- **Tab Focus Awareness:** Auto-refresh only occurs when the browser tab is focused, reducing unnecessary updates when the user is away.
+
+This is achieved by injecting a small JavaScript snippet that communicates typing, scrolling, and tab focus state to Streamlit's session state. The Python logic then checks these states before triggering a rerun.
+
+### Implementation Details
+
+- **JavaScript Injection:** A script is injected into the app to monitor input, scroll, and focus events. These are sent to Streamlit via the browser's messaging system.
+- **Session State Integration:** The app reads these states (`typing`, `scrolling`, `tabfocus`) from `st.session_state`.
+- **Smart Refresh Logic:** Auto-refresh is only triggered if the user is not typing, not scrolling, and the tab is focused. This is checked every 2 seconds when background tasks or audio generation are active.
+
+### Usage
+
+- Users can type, scroll, or switch tabs without worrying about losing their place or having their input interrupted.
+- When the user is idle and a background task completes, the app will auto-refresh to show the latest results.
+
+### Example (ASCII Diagram)
+
+```
++-------------------+         +-------------------+
+| User is typing?   |  Yes -> |  Do NOT refresh   |
++-------------------+         +-------------------+
+         |
+         No
+         |
++-------------------+         +-------------------+
+| User is scrolling?|  Yes -> |  Do NOT refresh   |
++-------------------+         +-------------------+
+         |
+         No
+         |
++-------------------+         +-------------------+
+| Tab is focused?   |  No  -> |  Do NOT refresh   |
++-------------------+         +-------------------+
+         |
+         Yes
+         |
++-------------------+
+|   Auto-refresh!   |
++-------------------+
+```
+
+### Benefits
+
+- 🚫 No more disruptive refreshes while typing or scrolling
+- 🧠 Smarter, context-aware updates
+- ⚡ Improved user experience and performance
+
+---
 
 ## Development
 
