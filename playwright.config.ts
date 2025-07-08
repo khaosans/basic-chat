@@ -43,10 +43,18 @@ export default defineConfig({
       use: { ...devices['iPhone 12'] },
     },
   ],
-  webServer: {
-    command: `streamlit run app.py --server.port ${E2E_PORT} --server.headless true --server.address 0.0.0.0`,
-    url: BASE_URL,
-    timeout: 120 * 1000,
-    reuseExistingServer: true,
-  },
+  webServer: [
+    {
+      command: 'bash ./backend/start.sh',
+      url: 'http://localhost:8080/health',
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: 'bash ./start_basicchat.sh',
+      url: BASE_URL,
+      timeout: 120 * 1000,
+      reuseExistingServer: !process.env.CI,
+    }
+  ],
 }); 

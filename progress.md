@@ -12,6 +12,47 @@
 - Added package.json and playwright.config.ts for Playwright
 - To be followed by E2E test suites, fixtures, and CI integration
 
+## 2025-07-03 — Streaming API for E2E & Real-Time Chat (by SourC)
+
+### 🚀 New FastAPI Streaming Backend
+- **File:** `backend/main.py` (to be created)
+- **Features:**
+  - WebSocket streaming endpoint (`/ws/chat`) for real-time chat responses
+  - REST endpoint (`/api/chat`) as fallback
+  - Health check endpoint (`/health`) for E2E and infra
+  - Session and model management
+  - CORS enabled for frontend integration
+
+### 🔧 Streamlit Integration
+- **Enhanced:** `app.py` to use the API for chat (WebSocket streaming, REST fallback)
+- **Config:** `USE_API` env var toggles API usage for backward compatibility
+- **Behavior:**
+  - Real-time streaming with typing indicator
+  - Fallback to local OllamaChat if API is down
+
+### 🧪 E2E Test & Infra Updates
+- **E2E:** `tests/e2e/specs/basic-e2e.spec.ts` updated to wait for streaming completion and verify response
+- **Infra:** `playwright.config.ts` launches both API and Streamlit servers for tests
+- **Startup:** `backend/start.sh` script to launch API backend (to be created)
+
+### 🛠️ Usage
+```sh
+# Start API backend
+./backend/start.sh &
+# Start Streamlit app
+./start_basicchat.sh &
+# Run E2E test
+bunx playwright test tests/e2e/specs/basic-e2e.spec.ts --project=chromium --headed
+```
+
+### ✅ Benefits
+- Real-time streaming for chat and E2E
+- Robust, testable, and backward compatible
+- Health checks and error handling for CI/CD
+- Easy local and CI usage
+
+---
+
 # Progress Log
 
 ## [Date: YYYY-MM-DD]
