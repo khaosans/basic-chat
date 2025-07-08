@@ -70,6 +70,11 @@ from ollama_api import get_available_models
 # Import enhanced tools
 from utils.enhanced_tools import text_to_speech, get_professional_audio_html, get_audio_file_size, cleanup_audio_files
 
+try:
+    import pandas as pd  # Only if used for charts
+except ImportError:
+    pd = None
+
 load_dotenv(".env.local")  # Load environment variables from .env.local
 
 # Configure logging
@@ -523,54 +528,64 @@ def display_reasoning_result(result: ReasoningResult):
         st.write("**Sources:**", ", ".join(result.sources))
 
 def inject_attention_js():
-    """Inject JS to track typing, scrolling, and tab focus in Streamlit session state."""
-    st.markdown(
-        """
-        <script>
-        // Track typing in chat input
-        window.isUserTyping = false;
-        document.addEventListener('input', function(e) {
-            if (e.target && e.target.tagName === 'TEXTAREA') {
-                window.isUserTyping = e.target.value.length > 0;
-                window.parent.postMessage({type: 'typing', value: window.isUserTyping}, '*');
-            }
-        });
-        // Track scrolling
-        window.isUserScrolling = false;
-        let scrollTimeout;
-        window.addEventListener('scroll', function() {
-            window.isUserScrolling = true;
-            window.parent.postMessage({type: 'scrolling', value: true}, '*');
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(function() {
-                window.isUserScrolling = false;
-                window.parent.postMessage({type: 'scrolling', value: false}, '*');
-            }, 1000);
-        });
-        // Track tab focus
-        window.isTabFocused = document.hasFocus();
-        window.addEventListener('focus', function() {
-            window.isTabFocused = true;
-            window.parent.postMessage({type: 'tabfocus', value: true}, '*');
-        });
-        window.addEventListener('blur', function() {
-            window.isTabFocused = false;
-            window.parent.postMessage({type: 'tabfocus', value: false}, '*');
-        });
-        // Listen for messages in Streamlit
-        window.addEventListener('message', function(event) {
-            if (event.data && event.data.type && window.streamlitWebsocket) {
-                window.streamlitWebsocket.send(JSON.stringify({
-                    type: 'streamlit:setComponentValue',
-                    key: event.data.type,
-                    value: event.data.value
-                }));
-            }
-        });
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
+    """
+    Injects JS for user-attention tracking.
+    Relies on window.streamlitWebsocket (Streamlit >=1.20).
+    Fallback: No-op if not present.
+    Security: Only inject trusted JS, avoid dynamic user content.
+    WARNING: Do not inject user-generated content into this JS block to prevent XSS.
+    """
+    js_code = """
+    <script>
+    try {
+        if (window.streamlitWebsocket) {
+            // Track typing in chat input
+            window.isUserTyping = false;
+            document.addEventListener('input', function(e) {
+                if (e.target && e.target.tagName === 'TEXTAREA') {
+                    window.isUserTyping = e.target.value.length > 0;
+                    window.parent.postMessage({type: 'typing', value: window.isUserTyping}, '*');
+                }
+            });
+            // Track scrolling
+            window.isUserScrolling = false;
+            let scrollTimeout;
+            window.addEventListener('scroll', function() {
+                window.isUserScrolling = true;
+                window.parent.postMessage({type: 'scrolling', value: true}, '*');
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(function() {
+                    window.isUserScrolling = false;
+                    window.parent.postMessage({type: 'scrolling', value: false}, '*');
+                }, 1000);
+            });
+            // Track tab focus
+            window.isTabFocused = document.hasFocus();
+            window.addEventListener('focus', function() {
+                window.isTabFocused = true;
+                window.parent.postMessage({type: 'tabfocus', value: true}, '*');
+            });
+            window.addEventListener('blur', function() {
+                window.isTabFocused = false;
+                window.parent.postMessage({type: 'tabfocus', value: false}, '*');
+            });
+            // Listen for messages in Streamlit
+            window.addEventListener('message', function(event) {
+                if (event.data && event.data.type && window.streamlitWebsocket) {
+                    window.streamlitWebsocket.send(JSON.stringify({
+                        type: 'streamlit:setComponentValue',
+                        key: event.data.type,
+                        value: event.data.value
+                    }));
+                }
+            });
+        }
+    } catch (e) {
+        // Fallback: do nothing
+    }
+    </script>
+    """
+    st.markdown(js_code, unsafe_allow_html=True)
 
 def enhanced_chat_interface(doc_processor):
     """Enhanced chat interface with reasoning modes and document processing"""
@@ -585,10 +600,9 @@ def enhanced_chat_interface(doc_processor):
     
     # Initialize last refresh time
     if "last_refresh_time" not in st.session_state:
-        st.session_state.last_refresh_time = 0
+        st.session_state.last_refresh_time = time.time()
     
     # Auto-refresh for active tasks (every 3 seconds)
-    import time
     current_time = time.time()
     active_tasks = st.session_state.task_manager.get_active_tasks()
     running_tasks = [task for task in active_tasks if task.status in ["pending", "running"]]
@@ -750,7 +764,6 @@ def enhanced_chat_interface(doc_processor):
                 analysis = msg.get("analysis_result")
                 if analysis:
                     # Try to parse as JSON for structured data (charts/metrics)
-                    import json
                     try:
                         analysis_data = json.loads(analysis)
                     except Exception:
@@ -781,10 +794,10 @@ def enhanced_chat_interface(doc_processor):
                                 elif chart_type == "line":
                                     st.line_chart(data)
                                 elif chart_type == "pie":
-                                    import pandas as pd
-                                    df = pd.DataFrame({"value": data.values()}, index=list(data.keys()))
-                                    st.write(df.plot.pie(y="value", legend=False, autopct="%1.1f%%"))
-                                    st.pyplot()
+                                    if pd:
+                                        df = pd.DataFrame({"value": data.values()}, index=list(data.keys()))
+                                        st.write(df.plot.pie(y="value", legend=False, autopct="%1.1f%%"))
+                                        st.pyplot()
                         else:
                             # Fallback: show as markdown
                             st.markdown(analysis)
