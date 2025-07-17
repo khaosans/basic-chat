@@ -35,6 +35,8 @@ from gtts import gTTS
 import hashlib
 import base64
 import websockets
+import sqlite3
+import random
 
 # Import our new reasoning engine
 from reasoning_engine import (
@@ -62,7 +64,8 @@ from task_ui import (
     display_task_metrics,
     display_active_tasks,
     should_use_background_task,
-    create_deep_research_message
+    create_deep_research_message,
+    display_deep_research_result
 )
 
 # Import Ollama API functions
@@ -70,6 +73,7 @@ from ollama_api import get_available_models
 
 # Import enhanced tools
 from utils.enhanced_tools import text_to_speech, get_professional_audio_html, get_audio_file_size, cleanup_audio_files
+from utils.chat_db import ChatDB
 
 load_dotenv(".env.local")  # Load environment variables from .env.local
 
@@ -341,7 +345,7 @@ class ToolRegistry:
                 return tool
         return None
 
-def create_enhanced_audio_button(content: str, message_key: str):
+def create_enhanced_audio_button(content: str, message_key: str, idx: int = 0):
     """
     Create a professional, streamlined audio button with clean UX patterns.
     
@@ -394,7 +398,7 @@ def create_enhanced_audio_button(content: str, message_key: str):
             with col3:
                 if st.button(
                     "🔊",
-                    key=f"audio_btn_{message_key}",
+                    key=f"audio_btn_{message_key}_{idx}",
                     help="Click to generate audio version of this message",
                     use_container_width=False
                 ):
@@ -409,7 +413,7 @@ def create_enhanced_audio_button(content: str, message_key: str):
                 # Disabled button with loading indicator
                 st.button(
                     "⏳",
-                    key=f"audio_btn_{message_key}",
+                    key=f"audio_btn_{message_key}_{idx}",
                     help="Generating audio...",
                     use_container_width=False,
                     disabled=True
@@ -444,7 +448,7 @@ def create_enhanced_audio_button(content: str, message_key: str):
                 with col2:
                     if st.button(
                         "🔄 Regenerate Audio",
-                        key=f"regenerate_{message_key}",
+                        key=f"regenerate_{message_key}_{idx}",
                         help="Generate new audio version",
                         use_container_width=True
                     ):
@@ -483,7 +487,7 @@ def create_enhanced_audio_button(content: str, message_key: str):
                 
                 if st.button(
                     "Try Again",
-                    key=f"retry_{message_key}",
+                    key=f"retry_{message_key}_{idx}",
                     help="Retry audio generation",
                     use_container_width=True
                 ):
@@ -544,16 +548,21 @@ class APIChatClient:
                 async for message in websocket:
                     data = json.loads(message)
                     if data["type"] == "chunk":
-                        full_response += data["content"]
+                        if first_chunk:
+                            first_chunk = False
+                            full_response = data["content"]
+                        else:
+                            full_response += data["content"]
                         yield data["content"]
                     elif data["type"] == "complete":
                         break
                     elif data["type"] == "error":
                         raise Exception(data["error"])
-                return full_response
+                return  # Fixed: remove value from return in async generator
         except Exception as e:
             logger.error(f"WebSocket error: {e}")
-            return await self.send_message_rest(message, model, reasoning_mode)
+            yield await self.send_message_rest(message, model, reasoning_mode)
+            return
     async def send_message_rest(self, message: str, model: str = DEFAULT_MODEL, reasoning_mode: str = "Auto"):
         try:
             response = requests.post(f"{self.base_url}/api/chat", json={
@@ -602,13 +611,18 @@ def enhanced_chat_interface(doc_processor):
             "🧠 Reasoning Mode",
             options=REASONING_MODES,
             index=REASONING_MODES.index(st.session_state.reasoning_mode),
-            help="Choose how the AI should approach your questions"
+            help="Choose how the AI should approach your question."
         )
-        
-        # Update session state if mode changed
-        if reasoning_mode != st.session_state.reasoning_mode:
-            st.session_state.reasoning_mode = reasoning_mode
-            st.rerun()
+        st.session_state.reasoning_mode = reasoning_mode
+        # --- Deep Research toggle controlled by feature flag ---
+        if config.deep_research_enabled:
+            deep_research_enabled = st.checkbox(
+                "🔬 Deep Research Mode",
+                value=st.session_state.get("deep_research_enabled", False),
+                help="Enable multi-step, multi-source research for your next message."
+            )
+            st.session_state.deep_research_enabled = deep_research_enabled
+        # else: do not show toggle
         
         st.info(f"""
         - **Active Model**: `{st.session_state.selected_model}`
@@ -714,101 +728,284 @@ def enhanced_chat_interface(doc_processor):
     multi_step = MultiStepReasoning(selected_model)
     reasoning_agent = ReasoningAgent(selected_model)
     
-    # Initialize welcome message if needed
+    # --- App logic ---
+    chat_db = ChatDB()
     if "messages" not in st.session_state:
-        st.session_state.messages = [{
-            "role": "assistant",
-            "content": "👋 Hello! I'm your AI assistant with enhanced reasoning capabilities. Choose a reasoning mode from the sidebar and let's start exploring!"
-        }]
+        loaded = chat_db.load_messages()
+        if not loaded:
+            welcome = {"role": "assistant", "content": "👋 Hello! I'm your AI assistant with enhanced reasoning capabilities. Choose a reasoning mode from the sidebar and let's start exploring!"}
+            st.session_state.messages = [welcome]
+            chat_db.save_message(welcome["role"], welcome["content"])
+        else:
+            st.session_state.messages = loaded
 
-    # Display chat messages
-    for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
-            
-            # Handle task messages
-            if msg.get("is_task"):
-                task_id = msg.get("task_id")
-                if task_id:
-                    task_status = st.session_state.task_manager.get_task_status(task_id)
-                    if task_status:
-                        if task_status.status == "completed":
-                            # Display task result
-                            display_task_result(task_status)
-                        elif task_status.status == "failed":
-                            st.error(f"Task failed: {task_status.error}")
-                        else:
-                            # Show task status
-                            display_task_status(task_id, st.session_state.task_manager, "message_loop")
-            
-            # Add audio button for assistant messages
-            if msg["role"] == "assistant" and not msg.get("is_task"):
-                create_enhanced_audio_button(msg["content"], hash(msg['content']))
-
-    # Chat input with deep research toggle
-    st.markdown("---")
-    
-    # Deep Research Toggle (ChatGPT-style)
-    col1, col2, col3 = st.columns([1, 3, 1])
-    with col2:
-        deep_research_toggle = st.toggle(
-            "🔬 Deep Research Mode",
-            value=st.session_state.deep_research_mode,
-            help="Enable comprehensive research with multiple sources and detailed analysis"
-        )
-        
-        # Update session state if toggle changed
-        if deep_research_toggle != st.session_state.deep_research_mode:
-            st.session_state.deep_research_mode = deep_research_toggle
-            if deep_research_toggle:
-                st.info("🔬 Deep Research Mode enabled! Your queries will now trigger comprehensive research with multiple sources.")
-            else:
-                st.info("✅ Standard mode enabled. Switch back to deep research for comprehensive analysis.")
-            st.rerun()
-    
-    # --- Playwright-friendly Chat UI ---
-    # Unique placeholder for chat input
-    user_input = st.text_input("Type a message...", key="chat_input")
-
-    # Unique label for send button
-    if st.button("Send", key="send_button") and user_input:
-        st.session_state.messages.append({"role": "user", "content": user_input})
+    # --- Unified message sending logic ---
+    def send_user_message(user_message: str):
+        chat_db.save_message("user", user_message)
+        st.session_state.messages.append({"role": "user", "content": user_message})
         with st.chat_message("user"):
-            st.write(user_input)
+            st.markdown(
+                f"""
+                <div style='font-size: 1.05em; line-height: 1.6;'>
+                    {user_message}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        # --- Deep Research Mode ---
+        # if st.session_state.get("deep_research_mode", False):
+        #     # Submit deep research task
+        #     task_id = st.session_state.task_manager.submit_task(
+        #         "deep_research",
+        #         query=user_message,
+        #         research_depth="comprehensive"
+        #     )
+        #     # Add deep research message to chat
+        #     deep_msg = create_deep_research_message(task_id, user_message)
+        #     st.session_state.messages.append(deep_msg)
+        #     chat_db.save_message("assistant", deep_msg["content"])
+        #     with st.chat_message("assistant"):
+        #         st.info("🔬 Deep Research in progress. You can continue chatting while research completes.")
+        #         display_task_status(task_id, st.session_state.task_manager, context="chat")
+        #         # If completed, show results
+        #         task_status = st.session_state.task_manager.get_task_status(task_id)
+        #         if task_status and task_status.status == "completed" and task_status.result:
+        #             display_deep_research_result(task_status.result)
+        #     st.rerun()
+        #     return
         with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            if USE_API:
-                try:
-                    full_response = ""
-                    async def stream_response():
-                        nonlocal full_response
+            thinking_container = st.container()
+            output_container = st.container()
+            # Modern animated skeleton loader
+            skeleton_html = '''
+            <div style="background: linear-gradient(90deg,#e5e7eb 25%,#f3f4f6 50%,#e5e7eb 75%); background-size: 200% 100%; animation: skeleton 1.2s linear infinite; height: 2.5em; border-radius: 0.7em; margin: 0.5em 0; box-shadow: 0 2px 8px #a3a3a322;">
+            </div>
+            <style>
+            @keyframes skeleton {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+            .fade-in {
+                animation: fadeIn 0.5s;
+            }
+            .fade-out {
+                animation: fadeOut 0.5s;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            .thinking-expander {
+                background: linear-gradient(90deg,#ede9fe 0%,#f3f4f6 100%);
+                border: 1.5px solid #a78bfa;
+                border-radius: 1.2em;
+                box-shadow: 0 2px 12px #a78bfa22;
+                padding: 0.7em 1.2em;
+                margin: 0.7em 0;
+            }
+            .thinking-label {
+                display: flex; align-items: center; gap: 0.5em; font-size: 1.08em; font-weight: 500; color: #7c3aed;
+            }
+            .thinking-dots {
+                display: inline-block; width: 1.2em; text-align: left;
+            }
+            .thinking-dots span {
+                display: inline-block; width: 0.3em; height: 0.3em; margin-right: 0.1em; background: #7c3aed; border-radius: 50%; animation: bounce 1.2s infinite both;
+            }
+            .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+            .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+            @keyframes bounce {
+                0%, 80%, 100% { transform: scale(0.8); }
+                40% { transform: scale(1.2); }
+            }
+            </style>'''
+            st.markdown(skeleton_html, unsafe_allow_html=True)
+            thinking_placeholder = thinking_container.empty()
+            output_placeholder = output_container.empty()
+            thinking_placeholder.markdown(skeleton_html, unsafe_allow_html=True)
+
+        full_response = ""
+        if USE_API:
+            try:
+                first_chunk = True
+                min_thinking_time = 2.0
+                import time as pytime
+                start_time = pytime.time()
+                async def stream_response():
+                    nonlocal full_response, first_chunk
+                    first_chunk_value = None
+                    # Collapsible expander for thinking tokens
+                    with st.expander(
+                        """
+                        <div class='thinking-label'>🤖 AI is thinking... <span class='thinking-dots'><span></span><span></span><span></span></span> (click to expand)</div>
+                        """,
+                        expanded=False
+                    ):
+                        exp_placeholder = st.empty()
                         async for chunk in st.session_state.api_client.send_message_stream(
-                            user_input, 
+                            user_message, 
                             st.session_state.selected_model,
                             st.session_state.reasoning_mode
                         ):
-                            full_response += chunk
-                            message_placeholder.markdown(full_response + "▌")
-                        return full_response
+                            if first_chunk:
+                                first_chunk = False
+                                first_chunk_value = chunk
+                                elapsed = pytime.time() - start_time
+                                if elapsed < min_thinking_time:
+                                    pytime.sleep(min_thinking_time - elapsed)
+                                thinking_placeholder.markdown('<div class="fade-out">'+skeleton_html+'</div>', unsafe_allow_html=True)
+                                pytime.sleep(0.3)
+                                full_response = first_chunk_value
+                            else:
+                                full_response += chunk
+                            # Show tokens in the expander as they arrive
+                            exp_placeholder.markdown(
+                                f'<div class="thinking-expander"><div style="font-family:monospace;font-size:1.05em;background:#f3f4f6;padding:0.6em 1em;border-radius:0.7em;box-shadow:0 0 8px #a3a3a3;">{full_response}▌</div></div>',
+                                unsafe_allow_html=True
+                            )
+                    return full_response
+                with st.spinner(None):
                     full_response = asyncio.run(stream_response())
-                    message_placeholder.markdown(full_response)
-                except Exception as e:
-                    error_msg = f"❌ API Error: {str(e)}"
-                    message_placeholder.error(error_msg)
-                    full_response = error_msg
-            else:
+                thinking_placeholder.empty()
+                if full_response:
+                    output_placeholder.markdown(
+                        f'<div class="fade-in" style="font-family:monospace;font-size:1.1em;background:#23272e;padding:0.7em 1em;border-radius:0.7em;box-shadow:0 0 8px #9333ea;">{full_response}</div>',
+                        unsafe_allow_html=True
+                    )
+                else:
+                    output_placeholder.markdown(
+                        """
+                        <div style='color:#f87171;'>Sorry, I couldn't generate a response.</div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+            except Exception as e:
+                error_msg = f"❌ API Error: {str(e)}"
+                output_container.error(error_msg)
+                full_response = error_msg
+        else:
+            thinking_placeholder = thinking_container.empty()
+            output_placeholder = output_container.empty()
+            thinking_placeholder.markdown(skeleton_html, unsafe_allow_html=True)
+            with st.spinner(None):
                 ollama_chat = OllamaChat(st.session_state.selected_model)
-                response = ollama_chat.query({"inputs": user_input})
+                response = ollama_chat.query({"inputs": user_message})
                 full_response = response or "Sorry, I couldn't generate a response."
-                message_placeholder.write(full_response)
+            thinking_placeholder.empty()
+            if full_response:
+                output_placeholder.write(full_response)
+            else:
+                output_placeholder.write("Sorry, I couldn't generate a response.")
             create_enhanced_audio_button(full_response, hash(full_response))
-        st.session_state.messages.append({"role": "assistant", "content": full_response})
+        if full_response:
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+            chat_db.save_message("assistant", full_response)
         st.rerun()
 
-    # Consistent rendering of chat messages
-    for i, msg in enumerate(st.session_state.messages):
-        st.markdown(f'<div class="chat-message" id="chat-message-{i}">{msg["content"]}</div>', unsafe_allow_html=True)
-    # --- End Playwright-friendly Chat UI ---
+    # --- Chat Bubble Rendering Function ---
+    def render_chat_bubble(role: str, content: str, idx: int, msg=None):
+        # Deep Research Card Rendering
+        if msg and msg.get("is_deep_research", False):
+            task_id = msg.get("task_id")
+            task_manager = st.session_state.task_manager
+            task_status = task_manager.get_task_status(task_id) if task_manager else None
+            # Card container
+            st.markdown('''
+                <div style="background: linear-gradient(90deg,#ede9fe 0%,#f3f4f6 100%); border: 1.5px solid #a78bfa; border-radius: 1.2em; box-shadow: 0 2px 12px #a78bfa22; padding: 1.2em 1.5em; margin: 1.2em 0;">
+            ''', unsafe_allow_html=True)
+            st.markdown("<div style='font-size:1.2em;font-weight:600;color:#7c3aed;margin-bottom:0.5em;'>🔬 Deep Research Report</div>", unsafe_allow_html=True)
+            if task_status:
+                if task_status.status in ["pending", "running"]:
+                    # Progress bar and status
+                    progress = task_status.progress if hasattr(task_status, 'progress') else 0.1
+                    st.progress(progress)
+                    status_msg = task_status.metadata.get('status', 'Research in progress...')
+                    st.markdown(f"<div style='color:#6d28d9;font-size:1.05em;margin-bottom:0.5em;'>⏳ {status_msg}</div>", unsafe_allow_html=True)
+                    # Refresh button
+                    if st.button("🔄 Refresh", key=f"refresh_deep_{task_id}_{idx}", help="Refresh research progress"):
+                        st.rerun()
+                elif task_status.status == "completed" and task_status.result:
+                    display_deep_research_result(task_status.result)
+                elif task_status.status == "failed":
+                    st.error(f"❌ Research failed: {task_status.error}")
+                elif task_status.status == "cancelled":
+                    st.warning("🚫 Research was cancelled.")
+            else:
+                st.info("Research task not found or expired.")
+            st.markdown('</div>', unsafe_allow_html=True)
+            return
+        if role == "user":
+            st.markdown(f'''
+                <div style="display: flex; justify-content: flex-end; margin: 0.5em 0;">
+                  <div style="max-width: 70%; display: flex; flex-direction: row-reverse; align-items: flex-end;">
+                    <div style="margin-left: 0.5em; font-size: 1.5em;">🧑‍💻</div>
+                    <div style="background: linear-gradient(90deg,#38bdf8 0%,#22d3ee 100%); color: #fff; padding: 0.8em 1.2em; border-radius: 1.2em 0.7em 1.2em 1.2em; box-shadow: 0 2px 8px rgba(56,189,248,0.08); font-size: 1.08em; line-height: 1.6; word-break: break-word;">
+                      {content}
+                    </div>
+                  </div>
+                </div>
+            ''', unsafe_allow_html=True)
+        else:
+            st.markdown(f'''
+                <div style="display: flex; justify-content: flex-start; margin: 0.5em 0;">
+                  <div style="max-width: 70%; display: flex; flex-direction: row; align-items: flex-end;">
+                    <div style="margin-right: 0.5em; font-size: 1.5em;">🤖</div>
+                    <div style="background: linear-gradient(90deg,#f3f4f6 0%,#e5e7eb 100%); color: #222; padding: 0.8em 1.2em; border-radius: 0.7em 1.2em 1.2em 1.2em; box-shadow: 0 2px 8px rgba(100,116,139,0.08); font-size: 1.08em; line-height: 1.6; word-break: break-word; position: relative;">
+                      {content}
+                    </div>
+                  </div>
+                </div>
+            ''', unsafe_allow_html=True)
+            st.markdown(
+                '''<div style="display: flex; justify-content: flex-start; margin-left: 3.2em; margin-top: -0.3em; margin-bottom: 0.7em;">
+                <div style="max-width: 70%;">
+                ''', unsafe_allow_html=True)
+            create_enhanced_audio_button(content, f"{hash(content)}_{idx}", idx)
+            st.markdown('</div></div>', unsafe_allow_html=True)
+
+    # --- Chat Area ---
+    chat_container = st.container()
+    with chat_container:
+        st.markdown(
+            '''<style>
+            .chat-scroll-area { max-height: 65vh; overflow-y: auto; margin-bottom: 1em; }
+            .chat-input-fixed { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; z-index: 100; padding: 0.75em 1em; border-top: 1px solid #eee; }
+            .assistant-bubble { background: #f3f4f6; color: #222; border-radius: 1.2em 1.2em 1.2em 0.3em; padding: 0.7em 1.1em; margin: 0.5em 0; display: inline-block; max-width: 80%; box-shadow: 0 1px 4px #0001; }
+            .user-bubble { background: #e0e7ff; color: #222; border-radius: 1.2em 1.2em 0.3em 1.2em; padding: 0.7em 1.1em; margin: 0.5em 0; display: inline-block; max-width: 80%; float: right; box-shadow: 0 1px 4px #0001; }
+            .thinking-inline { display: inline-flex; align-items: center; gap: 0.5em; color: #888; font-style: italic; }
+            .thinking-dots span { display: inline-block; width: 0.5em; height: 0.5em; margin: 0 0.1em; background: #bbb; border-radius: 50%; animation: thinking-bounce 1.2s infinite both; }
+            .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+            .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+            @keyframes thinking-bounce { 0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; } 40% { transform: scale(1.2); opacity: 1; } }
+            </style>''',
+            unsafe_allow_html=True
+        )
+        # --- Render messages ---
+        st.markdown('<div class="chat-scroll-area">', unsafe_allow_html=True)
+        for idx, msg in enumerate(st.session_state.messages):
+            role = msg.get("role", "assistant")
+            content = msg.get("content", "")
+            if msg.get("type") == "thinking":
+                st.markdown(
+                    f'<div class="assistant-bubble thinking-inline">🕰️ <span>AI is thinking</span> <span class="thinking-dots"><span></span><span></span><span></span></span></div>',
+                    unsafe_allow_html=True
+                )
+            elif role == "assistant":
+                st.markdown(f'<div class="assistant-bubble">{content}</div>', unsafe_allow_html=True)
+                # --- Enhanced audio button below assistant bubble ---
+                create_enhanced_audio_button(content, f"{hash(content)}_{idx}", idx)
+            else:
+                st.markdown(f'<div class="user-bubble">{content}</div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    # --- Fixed chat input at bottom ---
+    st.markdown('<div class="chat-input-fixed">', unsafe_allow_html=True)
+    user_input = st.text_input("Type a message...", key="chat_input", label_visibility="collapsed")
+    send_btn = st.button("Send", key="send_btn")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Main Function
 def main():
@@ -894,6 +1091,15 @@ def main():
                         st.warning("No task manager available")
                 except Exception as e:
                     st.error(f"Task cleanup failed: {e}")
+        
+        st.markdown("---")
+        if st.button("🧹 Clear All Chat", help="Clear all chat messages (this cannot be undone)"):
+            from utils.chat_db import ChatDB
+            chat_db = ChatDB()
+            chat_db.clear_messages()
+            st.session_state.messages = []
+            st.success("All chat messages cleared!")
+            st.rerun()
 
 if __name__ == "__main__":
     main()
