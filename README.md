@@ -82,6 +82,59 @@ ollama serve &
 
 ---
 
+## 🌐 Streaming API & Fallback
+
+BasicChat supports real-time streaming chat via a FastAPI backend, with robust fallback to local inference for maximum reliability and privacy.
+
+### 🔌 Enabling Streaming API
+- By default, the app uses the streaming API backend for chat.
+- Control this with the `USE_API` environment variable:
+  - `USE_API=true` (default): Use the API backend (WebSocket streaming, REST fallback)
+  - `USE_API=false`: Use local Ollama inference only (no API required)
+- Set this in your `.env.local` file:
+  ```env
+  USE_API=true
+  API_BASE_URL=http://localhost:8080
+  OLLAMA_API_URL=http://localhost:11434/api
+  OLLAMA_MODEL=mistral
+  ```
+
+### 🚀 Starting the Streaming Backend
+1. **Start the API backend:**
+   ```sh
+   ./backend/start.sh &
+   ```
+2. **Start the Streamlit app:**
+   ```sh
+   ./start_basicchat.sh &
+   ```
+3. **Run E2E tests:**
+   ```sh
+   bunx playwright test tests/e2e/specs/basic-e2e.spec.ts --project=chromium --headed
+   ```
+
+### 🔄 How Fallback Works
+- If the API backend is unavailable or `USE_API=false`, BasicChat automatically falls back to local Ollama inference.
+- WebSocket streaming is preferred; if it fails, REST API is used; if both fail, local inference is used.
+- This ensures chat always works, even if the backend is down or misconfigured.
+
+### 🩺 Health Checks & Troubleshooting
+- **Check API health:**
+  ```sh
+  curl http://localhost:8080/health
+  ```
+- **Run all service health checks before E2E:**
+  ```sh
+  poetry run python scripts/e2e_health_check.py
+  ```
+- **If chat is not streaming:**
+  - Ensure the backend is running on port 8080
+  - Check `.env.local` for correct `USE_API` and `API_BASE_URL`
+  - Review logs in `app.log` and backend console for errors
+  - Try setting `USE_API=false` to use local inference as a workaround
+
+---
+
 ## 🏆 Best Practices & Pro Tips
 
 <div style="background:#e3f2fd; padding:1em; border-radius:8px; border-left:5px solid #1976d2;">
