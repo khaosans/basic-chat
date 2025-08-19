@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import the evaluator
-from evaluators.check_llm_judge import LLMJudgeEvaluator
+from basicchat.evaluation.evaluators.check_llm_judge import LLMJudgeEvaluator
 
 class TestLLMJudgeEvaluator:
     """Test class for LLM Judge Evaluator"""

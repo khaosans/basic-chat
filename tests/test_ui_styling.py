@@ -11,8 +11,8 @@ class TestUIStyling:
     
     def test_dropdown_styling_in_app_py(self):
         """Test that dropdown styling improvements are present in app.py"""
-        app_py_path = Path("app.py")
-        assert app_py_path.exists(), "app.py should exist"
+        app_py_path = Path("basicchat/core/app.py")
+        assert app_py_path.exists(), "app.py should exist in basicchat/core/"
         
         with open(app_py_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -40,7 +40,7 @@ class TestUIStyling:
     
     def test_css_specificity_and_importance(self):
         """Test that CSS rules use proper specificity and !important declarations"""
-        app_py_path = Path("app.py")
+        app_py_path = Path("basicchat/core/app.py")
         
         with open(app_py_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -61,7 +61,7 @@ class TestUIStyling:
     
     def test_color_contrast_improvements(self):
         """Test that color contrast improvements are implemented"""
-        app_py_path = Path("app.py")
+        app_py_path = Path("basicchat/core/app.py")
         
         with open(app_py_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -76,7 +76,7 @@ class TestUIStyling:
     
     def test_font_weight_and_size_improvements(self):
         """Test that font weight and size improvements are implemented"""
-        app_py_path = Path("app.py")
+        app_py_path = Path("basicchat/core/app.py")
         
         with open(app_py_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -90,7 +90,7 @@ class TestUIStyling:
     
     def test_hover_and_interactive_states(self):
         """Test that hover and interactive states are properly styled"""
-        app_py_path = Path("app.py")
+        app_py_path = Path("basicchat/core/app.py")
         
         with open(app_py_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -104,7 +104,7 @@ class TestUIStyling:
     
     def test_accessibility_improvements(self):
         """Test that accessibility improvements are implemented"""
-        app_py_path = Path("app.py")
+        app_py_path = Path("basicchat/core/app.py")
         
         with open(app_py_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -119,7 +119,7 @@ class TestUIStyling:
     
     def test_cross_browser_compatibility(self):
         """Test that styling works across different browsers"""
-        app_py_path = Path("app.py")
+        app_py_path = Path("basicchat/core/app.py")
         
         with open(app_py_path, 'r', encoding='utf-8') as f:
             content = f.read()
@@ -138,7 +138,7 @@ class TestUIStyling:
     
     def test_performance_considerations(self):
         """Test that styling doesn't introduce performance issues"""
-        app_py_path = Path("app.py")
+        app_py_path = Path("basicchat/core/app.py")
         
         with open(app_py_path, 'r', encoding='utf-8') as f:
             content = f.read()

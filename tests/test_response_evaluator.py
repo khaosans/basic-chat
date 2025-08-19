@@ -5,7 +5,7 @@ import pytest
 import tempfile
 import os
 from datetime import datetime
-from response_evaluator import (
+from basicchat.evaluation.response_evaluator import (
     FrugalResponseEvaluator,
     EvaluationMetric,
     EvaluationResult,

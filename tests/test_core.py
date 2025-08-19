@@ -15,16 +15,16 @@ import tempfile
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import OllamaChat, text_to_speech, get_professional_audio_html, get_audio_file_size
-from reasoning_engine import ReasoningEngine
-from document_processor import DocumentProcessor
-from utils.enhanced_tools import EnhancedCalculator
-from config import config
+from basicchat.core.app import OllamaChat, text_to_speech, get_professional_audio_html, get_audio_file_size
+from basicchat.core.reasoning_engine import ReasoningEngine
+from basicchat.services.document_processor import DocumentProcessor
+from basicchat.utils.enhanced_tools import EnhancedCalculator
+from basicchat.core.config import config
 
 
 @pytest.fixture(autouse=True, scope="class")
 def mock_gtts_class(request):
-    patcher = patch('utils.enhanced_tools.gTTS')
+    patcher = patch('basicchat.utils.enhanced_tools.gTTS')
     mock_gtts = patcher.start()
     mock_tts_instance = MagicMock()
     def mock_save(filename):
@@ -79,7 +79,7 @@ class TestCoreFunctionality:
 class TestOllamaChat:
     """Test OllamaChat functionality"""
 
-    @patch('utils.async_ollama.AsyncOllamaChat.query')
+    @patch('basicchat.utils.async_ollama.AsyncOllamaChat.query')
     def test_query_method(self, mock_async_query):
         """Test OllamaChat query method"""
         # Mock async response
@@ -91,7 +91,7 @@ class TestOllamaChat:
         assert result == "Test response from Ollama"
         mock_async_query.assert_called_once()
 
-    @patch('app.requests.post')
+    @patch('basicchat.core.app.requests.post')
     def test_query_with_error_handling(self, mock_post):
         """Test OllamaChat error handling"""
         # Mock error response
@@ -118,7 +118,7 @@ class TestReasoningEngine:
         assert isinstance(engine.reasoning_modes, list)
         assert len(engine.reasoning_modes) > 0
 
-    @patch('app.OllamaChat')
+    @patch('basicchat.core.app.OllamaChat')
     def test_process_query(self, mock_ollama):
         """Test process_query method"""
         # Mock OllamaChat

@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from reasoning_engine import (
+from basicchat.core.reasoning_engine import (
     ReasoningAgent, ReasoningChain, MultiStepReasoning, 
     ReasoningResult, ReasoningEngine
 )
@@ -18,8 +18,8 @@ from reasoning_engine import (
 class TestReasoningIntegration:
     """Integration tests for reasoning components"""
     
-    @patch('reasoning_engine.ReasoningAgent')
-    @patch('reasoning_engine.ReasoningChain')
+    @patch('basicchat.core.reasoning_engine.ReasoningAgent')
+    @patch('basicchat.core.reasoning_engine.ReasoningChain')
     def test_should_integrate_all_reasoning_components(self, mock_chain_class, mock_agent_class):
         """Should integrate all reasoning components seamlessly"""
         mock_agent = Mock()
@@ -59,7 +59,7 @@ class TestReasoningIntegration:
 class TestReasoningErrorHandling:
     """Integration tests for error handling in reasoning components"""
     
-    @patch('reasoning_engine.ChatOllama')
+    @patch('basicchat.core.reasoning_engine.ChatOllama')
     def test_should_handle_llm_connection_errors(self, mock_chat_ollama):
         """Should handle LLM connection errors gracefully"""
         mock_chat_ollama.side_effect = Exception("Connection failed")
@@ -68,7 +68,7 @@ class TestReasoningErrorHandling:
         with pytest.raises(Exception):
             ReasoningAgent("test_model")
     
-    @patch('reasoning_engine.ReasoningAgent')
+    @patch('basicchat.core.reasoning_engine.ReasoningAgent')
     def test_should_handle_invalid_model_name(self, mock_agent_class):
         """Should handle invalid model names gracefully"""
         mock_agent = Mock()
@@ -84,8 +84,8 @@ class TestReasoningErrorHandling:
 class TestReasoningAgentIntegration:
     """Integration tests for ReasoningAgent"""
     
-    @patch('reasoning_engine.ChatOllama')
-    @patch('reasoning_engine.initialize_agent')
+    @patch('basicchat.core.reasoning_engine.ChatOllama')
+    @patch('basicchat.core.reasoning_engine.initialize_agent')
     def test_should_initialize_agent_with_llm(self, mock_initialize_agent, mock_chat_ollama):
         """Should initialize agent with LLM"""
         mock_llm = Mock()
@@ -98,8 +98,8 @@ class TestReasoningAgentIntegration:
         assert agent.llm is not None
         assert agent.agent is not None
     
-    @patch('reasoning_engine.ChatOllama')
-    @patch('reasoning_engine.initialize_agent')
+    @patch('basicchat.core.reasoning_engine.ChatOllama')
+    @patch('basicchat.core.reasoning_engine.initialize_agent')
     def test_should_reason_with_single_step(self, mock_initialize_agent, mock_chat_ollama):
         """Should perform single-step reasoning"""
         mock_llm = Mock()
@@ -122,7 +122,7 @@ class TestReasoningAgentIntegration:
 class TestReasoningChainIntegration:
     """Integration tests for ReasoningChain"""
     
-    @patch('reasoning_engine.ChatOllama')
+    @patch('basicchat.core.reasoning_engine.ChatOllama')
     def test_should_execute_reasoning_chain(self, mock_chat_ollama):
         """Should execute multi-step reasoning chain"""
         mock_llm = Mock()
@@ -141,7 +141,7 @@ class TestReasoningChainIntegration:
 class TestMultiStepReasoningIntegration:
     """Integration tests for MultiStepReasoning"""
     
-    @patch('reasoning_engine.ChatOllama')
+    @patch('basicchat.core.reasoning_engine.ChatOllama')
     def test_should_perform_multi_step_reasoning(self, mock_chat_ollama):
         """Should perform multi-step reasoning with intermediate steps"""
         mock_llm = Mock()
@@ -169,7 +169,7 @@ class TestReasoningEngineIntegration:
         assert engine.multi_step_reasoner is None
         assert engine.standard_reasoner is None
     
-    @patch('reasoning_engine.ReasoningAgent')
+    @patch('basicchat.core.reasoning_engine.ReasoningAgent')
     def test_should_reason_with_agent_mode(self, mock_agent_class):
         """Should reason using agent mode"""
         mock_agent = Mock()
@@ -190,7 +190,7 @@ class TestReasoningEngineIntegration:
         assert result.content == "Agent result"
         assert result.confidence > 0
     
-    @patch('reasoning_engine.ReasoningChain')
+    @patch('basicchat.core.reasoning_engine.ReasoningChain')
     def test_should_reason_with_chain_mode(self, mock_chain_class):
         """Should reason using chain-of-thought mode"""
         mock_chain = Mock()

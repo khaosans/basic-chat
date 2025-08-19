@@ -12,14 +12,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from document_processor import DocumentProcessor, ProcessedFile
+from basicchat.services.document_processor import DocumentProcessor, ProcessedFile
 from langchain_core.documents import Document
 
 class TestDocumentProcessor:
     """Test document processor core functionality"""
-    @patch('document_processor.chromadb.PersistentClient')
-    @patch('document_processor.ChatOllama')
-    @patch('document_processor.OllamaEmbeddings')
+    @patch('basicchat.services.document_processor.chromadb.PersistentClient')
+    @patch('basicchat.services.document_processor.ChatOllama')
+    @patch('basicchat.services.document_processor.OllamaEmbeddings')
     def test_should_initialize_successfully(self, mock_embeddings, mock_chat_ollama, mock_chroma):
         """Should initialize document processor with all components"""
         mock_embeddings.return_value = Mock()
@@ -34,11 +34,11 @@ class TestDocumentProcessor:
         assert processor.text_splitter is not None
         assert len(processor.processed_files) == 0
     
-    @patch('document_processor.OllamaEmbeddings')
-    @patch('document_processor.ChatOllama')
-    @patch('document_processor.chromadb.PersistentClient')
-    @patch('document_processor.PyPDFLoader')
-    @patch('document_processor.Chroma')
+    @patch('basicchat.services.document_processor.OllamaEmbeddings')
+    @patch('basicchat.services.document_processor.ChatOllama')
+    @patch('basicchat.services.document_processor.chromadb.PersistentClient')
+    @patch('basicchat.services.document_processor.PyPDFLoader')
+    @patch('basicchat.services.document_processor.Chroma')
     def test_should_process_pdf_files(self, mock_chroma_class, mock_pdf_loader, mock_chroma, mock_chat_ollama, mock_embeddings):
         """Should process PDF files correctly"""
         # Setup mocks
@@ -71,10 +71,10 @@ class TestDocumentProcessor:
         assert processor.processed_files[0].name == "test.pdf"
         assert processor.processed_files[0].type == "application/pdf"
     
-    @patch('document_processor.OllamaEmbeddings')
-    @patch('document_processor.ChatOllama')
-    @patch('document_processor.chromadb.PersistentClient')
-    @patch('document_processor.Chroma')
+    @patch('basicchat.services.document_processor.OllamaEmbeddings')
+    @patch('basicchat.services.document_processor.ChatOllama')
+    @patch('basicchat.services.document_processor.chromadb.PersistentClient')
+    @patch('basicchat.services.document_processor.Chroma')
     def test_should_process_image_files(self, mock_chroma_class, mock_chroma, mock_chat_ollama, mock_embeddings):
         """Should process image files with vision model"""
         # Setup mocks
@@ -107,9 +107,9 @@ class TestDocumentProcessor:
         assert processor.processed_files[0].type == "image/png"
         mock_vision_model.invoke.assert_called_once()
     
-    @patch('document_processor.OllamaEmbeddings')
-    @patch('document_processor.ChatOllama')
-    @patch('document_processor.chromadb.PersistentClient')
+    @patch('basicchat.services.document_processor.OllamaEmbeddings')
+    @patch('basicchat.services.document_processor.ChatOllama')
+    @patch('basicchat.services.document_processor.chromadb.PersistentClient')
     def test_should_handle_unsupported_file_types(self, mock_chroma, mock_chat_ollama, mock_embeddings):
         """Should raise error for unsupported file types"""
         mock_embeddings.return_value = Mock()
@@ -126,9 +126,9 @@ class TestDocumentProcessor:
         with pytest.raises(Exception, match="Unsupported file type"):
             processor.process_file(mock_file)
     
-    @patch('document_processor.OllamaEmbeddings')
-    @patch('document_processor.ChatOllama')
-    @patch('document_processor.chromadb.PersistentClient')
+    @patch('basicchat.services.document_processor.OllamaEmbeddings')
+    @patch('basicchat.services.document_processor.ChatOllama')
+    @patch('basicchat.services.document_processor.chromadb.PersistentClient')
     def test_should_search_documents(self, mock_chroma, mock_chat_ollama, mock_embeddings):
         """Should search documents and return relevant results"""
         # Setup mocks
@@ -160,9 +160,9 @@ class TestDocumentProcessor:
         else:
             assert "Relevant document content" in results[0]
     
-    @patch('document_processor.OllamaEmbeddings')
-    @patch('document_processor.ChatOllama')
-    @patch('document_processor.chromadb.PersistentClient')
+    @patch('basicchat.services.document_processor.OllamaEmbeddings')
+    @patch('basicchat.services.document_processor.ChatOllama')
+    @patch('basicchat.services.document_processor.chromadb.PersistentClient')
     def test_should_get_relevant_context(self, mock_chroma, mock_chat_ollama, mock_embeddings):
         """Should get relevant context for queries"""
         # Setup mocks
@@ -192,9 +192,9 @@ class TestDocumentProcessor:
         assert "test.pdf" in context
         assert "relevance" in context.lower()
     
-    @patch('document_processor.OllamaEmbeddings')
-    @patch('document_processor.ChatOllama')
-    @patch('document_processor.chromadb.PersistentClient')
+    @patch('basicchat.services.document_processor.OllamaEmbeddings')
+    @patch('basicchat.services.document_processor.ChatOllama')
+    @patch('basicchat.services.document_processor.chromadb.PersistentClient')
     def test_should_remove_files(self, mock_chroma, mock_chat_ollama, mock_embeddings):
         """Should remove files and clean up collections"""
         mock_embeddings.return_value = Mock()

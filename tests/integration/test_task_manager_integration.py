@@ -13,14 +13,14 @@ from datetime import datetime
 # Add the parent directory to the path to import modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from task_manager import TaskManager, TaskStatus
-from task_ui import (
+from basicchat.tasks.task_manager import TaskManager, TaskStatus
+from basicchat.tasks.task_ui import (
     is_long_running_query,
     should_use_background_task,
     create_task_message,
     display_task_result
 )
-from config import config
+from basicchat.core.config import config
 
 
 @pytest.mark.unit
@@ -88,7 +88,7 @@ class TestTaskStatus:
 class TestTaskManager:
     """Test TaskManager class"""
     
-    @patch('task_manager.Celery')
+    @patch('basicchat.tasks.task_manager.Celery')
     def test_task_manager_initialization_with_celery(self, mock_celery):
         """Test TaskManager initialization with Celery available"""
         mock_celery_instance = Mock()
@@ -101,7 +101,7 @@ class TestTaskManager:
         assert task_manager.completed_tasks == {}
         assert task_manager.max_completed_tasks == 100
     
-    @patch('task_manager.Celery', side_effect=Exception("Celery not available"))
+    @patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available"))
     def test_task_manager_initialization_without_celery(self, mock_celery):
         """Test TaskManager initialization without Celery"""
         task_manager = TaskManager()
@@ -112,7 +112,7 @@ class TestTaskManager:
     
     def test_submit_task_basic(self):
         """Test basic task submission"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             task_id = task_manager.submit_task("test_task", param1="value1")
@@ -128,7 +128,7 @@ class TestTaskManager:
         mock_celery_task = Mock()
         mock_celery_task.id = "celery-task-123"
         
-        with patch('task_manager.Celery') as mock_celery:
+        with patch('basicchat.tasks.task_manager.Celery') as mock_celery:
             mock_celery_instance = Mock()
             mock_celery_instance.send_task.return_value = mock_celery_task
             mock_celery.return_value = mock_celery_instance
@@ -144,7 +144,7 @@ class TestTaskManager:
     
     def test_get_task_status(self):
         """Test getting task status"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             # Submit a task
@@ -159,7 +159,7 @@ class TestTaskManager:
     
     def test_get_task_status_not_found(self):
         """Test getting task status for non-existent task"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             task_status = task_manager.get_task_status("non-existent")
@@ -168,7 +168,7 @@ class TestTaskManager:
     
     def test_cancel_task(self):
         """Test cancelling a task"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             # Submit a task
@@ -183,7 +183,7 @@ class TestTaskManager:
     
     def test_cancel_task_not_found(self):
         """Test cancelling a non-existent task"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             result = task_manager.cancel_task("non-existent")
@@ -192,7 +192,7 @@ class TestTaskManager:
     
     def test_get_active_tasks(self):
         """Test getting active tasks"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             # Submit multiple tasks
@@ -208,7 +208,7 @@ class TestTaskManager:
     
     def test_get_completed_tasks(self):
         """Test getting completed tasks"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             # Submit and complete a task
@@ -225,7 +225,7 @@ class TestTaskManager:
     
     def test_cleanup_old_tasks(self):
         """Test cleaning up old completed tasks"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             # Submit and complete a task
@@ -243,7 +243,7 @@ class TestTaskManager:
     
     def test_get_task_metrics(self):
         """Test getting task metrics"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             # Submit tasks in different states
@@ -336,7 +336,7 @@ class TestTaskIntegration:
     
     def test_task_lifecycle(self):
         """Test complete task lifecycle"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             # Submit task
@@ -367,7 +367,7 @@ class TestTaskIntegration:
     
     def test_task_error_handling(self):
         """Test task error handling"""
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             task_manager = TaskManager()
             
             # Submit task

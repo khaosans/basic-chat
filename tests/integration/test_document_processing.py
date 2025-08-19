@@ -11,8 +11,8 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from document_processor import DocumentProcessor
-from app import DocumentSummaryTool
+from basicchat.services.document_processor import DocumentProcessor
+from basicchat.core.app import DocumentSummaryTool
 
 def create_test_document():
     """Create a simple test document"""
