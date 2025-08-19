@@ -225,20 +225,16 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
         run: |
-          # Parallelize for speed
-          TEST_OUTPUT=$(poetry run pytest -n auto tests/ -m "performance" -v --tb=short 2>&1)
-          TEST_EXIT_CODE=$?
-          echo "$TEST_OUTPUT"
+          # Run performance regression test directly
+          echo "Running performance regression test..."
+          poetry run python scripts/test_performance_regression.py
           
-          # Check if any tests were actually run
-          if echo "$TEST_OUTPUT" | grep -q "no tests ran"; then
-            echo "No performance tests found, running fallback script..."
-            poetry run python scripts/test_performance_regression.py
-          elif [ $TEST_EXIT_CODE -ne 0 ]; then
-            echo "Performance tests failed, running fallback script..."
-            poetry run python scripts/test_performance_regression.py
+          # Verify the test output
+          if [ $? -eq 0 ]; then
+            echo "✅ Performance regression test completed successfully"
           else
-            echo "Performance tests completed successfully"
+            echo "❌ Performance regression test failed"
+            exit 1
           fi
       - name: Upload Performance Metrics
         if: always()
