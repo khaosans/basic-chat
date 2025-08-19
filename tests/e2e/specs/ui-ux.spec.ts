@@ -12,6 +12,11 @@
 import { test, expect } from '@playwright/test';
 import { ChatHelper } from '../helpers/chat-helpers';
 
+// CSS color regex patterns for consistent testing
+const WHITE_RGB_REGEX = /rgb\(255,\s*255,\s*255\)/;
+const BLACK_RGB_REGEX = /rgb\(0,\s*0,\s*0\)/;
+const GREEN_RGB_REGEX = /rgb\(16,\s*163,\s*127\)/;
+
 test.describe('UI/UX Improvements', () => {
   let chatHelper: ChatHelper;
 
@@ -39,8 +44,8 @@ test.describe('UI/UX Improvements', () => {
     });
 
     // Verify dropdown has white background and dark text
-    expect(dropdownStyles.backgroundColor).toMatch(/rgb\(255,\s*255,\s*255\)/);
-    expect(dropdownStyles.color).toMatch(/rgb\(0,\s*0,\s*0\)/);
+    expect(dropdownStyles.backgroundColor).toMatch(WHITE_RGB_REGEX);
+    expect(dropdownStyles.color).toMatch(BLACK_RGB_REGEX);
     expect(parseInt(dropdownStyles.fontWeight)).toBeGreaterThanOrEqual(600);
     expect(dropdownStyles.fontSize).toBe('14px');
   });
@@ -128,8 +133,8 @@ test.describe('UI/UX Improvements', () => {
       });
 
       // Verify button has proper contrast
-      expect(buttonStyles.backgroundColor).toMatch(/rgb\(16,\s*163,\s*127\)/);
-      expect(buttonStyles.color).toMatch(/rgb\(255,\s*255,\s*255\)/);
+      expect(buttonStyles.backgroundColor).toMatch(GREEN_RGB_REGEX);
+      expect(buttonStyles.color).toMatch(WHITE_RGB_REGEX);
     }
   });
 

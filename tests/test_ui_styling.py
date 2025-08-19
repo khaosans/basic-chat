@@ -18,10 +18,10 @@ class TestUIStyling:
             content = f.read()
         
         # Check for comprehensive dropdown styling
-        assert '.stSelectbox * {' in content, "Should have universal dropdown styling"
-        assert 'color: #000000 !important;' in content, "Should have black text color"
-        assert 'font-weight: 700 !important;' in content, "Should have bold font weight"
-        assert 'font-size: 14px !important;' in content, "Should have 14px font size"
+        assert '.stSelectbox select,' in content, "Should have specific dropdown selectors"
+        assert 'color: var(--color-dropdown-text) !important;' in content, "Should have CSS custom property for text color"
+        assert 'font-weight: var(--font-weight-bold) !important;' in content, "Should have CSS custom property for font weight"
+        assert 'font-size: var(--font-size-dropdown) !important;' in content, "Should have CSS custom property for font size"
         
         # Check for specific dropdown targeting
         assert '[data-baseweb="select"] *' in content, "Should target baseweb select elements"
@@ -30,13 +30,13 @@ class TestUIStyling:
         
         # Check for sidebar styling
         assert '.css-1d391kg {' in content, "Should have sidebar styling"
-        assert 'background-color: #f8f9fa !important;' in content, "Should have sidebar background"
-        assert 'border-right: 1px solid #e5e7eb !important;' in content, "Should have sidebar border"
+        assert 'background-color: var(--color-sidebar-bg) !important;' in content, "Should have sidebar background"
+        assert 'border-right: 1px solid var(--color-sidebar-border) !important;' in content, "Should have sidebar border"
         
         # Check for enhanced selectbox container
         assert 'min-height: 40px !important;' in content, "Should have minimum height for dropdowns"
         assert 'border: 2px solid #d1d5db !important;' in content, "Should have enhanced border"
-        assert 'box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;' in content, "Should have shadow"
+        assert 'box-shadow: var(--shadow-light) !important;' in content, "Should have shadow"
     
     def test_css_specificity_and_importance(self):
         """Test that CSS rules use proper specificity and !important declarations"""
@@ -67,11 +67,11 @@ class TestUIStyling:
             content = f.read()
         
         # Check for black text on white background
-        assert '#000000 !important' in content, "Should use black text for maximum contrast"
-        assert '#ffffff !important' in content, "Should use white background"
+        assert '--color-dropdown-text: #000000;' in content, "Should use black text for maximum contrast"
+        assert '--color-dropdown-bg: #ffffff;' in content, "Should use white background"
         
         # Check for proper sidebar contrast
-        assert '#f8f9fa !important' in content, "Should have light sidebar background"
+        assert 'background-color: var(--color-sidebar-bg) !important;' in content, "Should have CSS custom property for sidebar background"
         assert '#1f2937 !important' in content, "Should have dark text in sidebar"
     
     def test_font_weight_and_size_improvements(self):
@@ -82,11 +82,11 @@ class TestUIStyling:
             content = f.read()
         
         # Check for bold font weights
-        assert 'font-weight: 700 !important' in content, "Should use bold font weight"
-        assert 'font-weight: 600 !important' in content, "Should use semi-bold font weight"
+        assert '--font-weight-bold: 700;' in content, "Should use bold font weight"
+        assert '--font-weight-medium: 600;' in content, "Should use semi-bold font weight"
         
         # Check for consistent font sizes
-        assert 'font-size: 14px !important' in content, "Should use 14px font size"
+        assert '--font-size-dropdown: 14px;' in content, "Should use 14px font size"
     
     def test_hover_and_interactive_states(self):
         """Test that hover and interactive states are properly styled"""
@@ -97,7 +97,7 @@ class TestUIStyling:
         
         # Check for hover effects
         assert ':hover' in content, "Should have hover effects"
-        assert '#10a37f !important' in content, "Should use green color for hover states"
+        assert '--color-button-bg: #10a37f;' in content, "Should use green color for button background"
         
         # Check for focus states
         assert 'box-shadow' in content, "Should have box shadow effects"
@@ -110,8 +110,8 @@ class TestUIStyling:
             content = f.read()
         
         # Check for proper contrast ratios
-        assert '#000000' in content, "Should use black text for maximum contrast"
-        assert '#ffffff' in content, "Should use white background for maximum contrast"
+        assert '--color-dropdown-text: #000000;' in content, "Should use black text for maximum contrast"
+        assert '--color-dropdown-bg: #ffffff;' in content, "Should use white background for maximum contrast"
         
         # Check for proper spacing
         assert 'padding: 8px 12px !important' in content, "Should have proper padding"

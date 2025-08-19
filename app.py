@@ -988,6 +988,24 @@ def enhanced_chat_interface(doc_processor):
     # Main Chat Area - ChatGPT Style with Design Rules
     st.markdown("""
     <style>
+    /* CSS Custom Properties for Theming */
+    :root {
+        --color-dropdown-text: #000000;
+        --color-dropdown-bg: #ffffff;
+        --color-sidebar-bg: #f8f9fa;
+        --color-sidebar-border: #e5e7eb;
+        --color-button-bg: #10a37f;
+        --color-button-text: #ffffff;
+        --color-button-hover: #0d8f6c;
+        --font-weight-bold: 700;
+        --font-weight-medium: 600;
+        --font-size-dropdown: 14px;
+        --border-radius: 8px;
+        --border-radius-small: 6px;
+        --shadow-light: 0 1px 3px rgba(0,0,0,0.1);
+        --shadow-medium: 0 2px 6px rgba(16, 163, 127, 0.2);
+    }
+    
     /* Global ChatGPT-style theme with improved contrast */
     .main .block-container {
         padding-top: 1rem;
@@ -1043,17 +1061,17 @@ def enhanced_chat_interface(doc_processor):
     
     /* Improved contrast for buttons and UI elements */
     .stButton > button {
-        background-color: #10a37f !important;
-        color: white !important;
+        background-color: var(--color-button-bg) !important;
+        color: var(--color-button-text) !important;
         border: none !important;
-        border-radius: 8px !important;
+        border-radius: var(--border-radius) !important;
         font-weight: 500 !important;
     }
     
     .stButton > button:hover {
-        background-color: #0d8f6c !important;
+        background-color: var(--color-button-hover) !important;
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        box-shadow: var(--shadow-light) !important;
     }
     
     /* Toggle styling - Enhanced for better visibility */
@@ -1107,11 +1125,15 @@ def enhanced_chat_interface(doc_processor):
         box-shadow: 0 2px 6px rgba(16, 163, 127, 0.2) !important;
     }
     
-    /* Comprehensive dropdown text visibility fix */
-    .stSelectbox * {
-        color: #000000 !important;
-        font-weight: 700 !important;
-        font-size: 14px !important;
+    /* Comprehensive dropdown text visibility fix - More specific selectors */
+    .stSelectbox select,
+    .stSelectbox option,
+    .stSelectbox div,
+    .stSelectbox span,
+    .stSelectbox p {
+        color: var(--color-dropdown-text) !important;
+        font-weight: var(--font-weight-bold) !important;
+        font-size: var(--font-size-dropdown) !important;
     }
     
     /* Target all possible dropdown text elements */
@@ -1213,8 +1235,8 @@ def enhanced_chat_interface(doc_processor):
     
     /* Sidebar styling - Enhanced for better visibility */
     .css-1d391kg {
-        background-color: #f8f9fa !important;
-        border-right: 1px solid #e5e7eb !important;
+        background-color: var(--color-sidebar-bg) !important;
+        border-right: 1px solid var(--color-sidebar-border) !important;
     }
     
     /* Sidebar content styling */
