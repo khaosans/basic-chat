@@ -136,6 +136,7 @@ class TestUIStyling:
         assert 'font-weight' in content, "Should use standard font-weight property"
         assert 'font-size' in content, "Should use standard font-size property"
     
+    @pytest.mark.performance
     def test_performance_considerations(self):
         """Test that styling doesn't introduce performance issues"""
         app_py_path = Path("basicchat/core/app.py")

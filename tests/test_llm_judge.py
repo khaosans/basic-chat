@@ -207,20 +207,10 @@ class TestLLMJudgeEvaluator:
             assert status == "FAIL"  # 5.5 < 8.0 threshold
             assert score == 5.5
     
+    @pytest.mark.performance
     @patch('evaluators.check_llm_judge.OllamaChat')
-    @patch('evaluators.check_llm_judge.LLMJudgeEvaluator.collect_codebase_info')
-    def test_should_run_complete_evaluation(self, mock_collect_info, mock_ollama_chat_class):
+    def test_should_run_complete_evaluation(self, mock_ollama_chat_class):
         """Test complete evaluation process with mocked expensive operations"""
-        # Mock the expensive collect_codebase_info method
-        mock_collect_info.return_value = {
-            'file_count': 25,
-            'lines_of_code': 2500,
-            'test_files': 15,
-            'test_coverage': 85.5,
-            'documentation_files': 8,
-            'dependencies': ['requests', 'pytest', 'flask']
-        }
-        
         # Mock OllamaChat
         mock_ollama_chat = MagicMock()
         mock_ollama_chat_class.return_value = mock_ollama_chat
@@ -242,6 +232,16 @@ class TestLLMJudgeEvaluator:
         '''
         
         evaluator = LLMJudgeEvaluator()
+        
+        # Mock the collect_codebase_info method on the instance
+        evaluator.collect_codebase_info = MagicMock(return_value={
+            'file_count': 25,
+            'lines_of_code': 2500,
+            'test_files': 15,
+            'test_coverage': 85.5,
+            'documentation_files': 8,
+            'dependencies': ['requests', 'pytest', 'flask']
+        })
         
         # Mock file writing
         with patch('builtins.open', create=True) as mock_open:

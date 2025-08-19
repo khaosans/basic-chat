@@ -226,7 +226,20 @@ jobs:
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
         run: |
           # Parallelize for speed
-          poetry run pytest -n auto tests/ -m "performance" -v --tb=short || poetry run python temp/one-off-scripts/test_performance_regression.py
+          TEST_OUTPUT=$(poetry run pytest -n auto tests/ -m "performance" -v --tb=short 2>&1)
+          TEST_EXIT_CODE=$?
+          echo "$TEST_OUTPUT"
+          
+          # Check if any tests were actually run
+          if echo "$TEST_OUTPUT" | grep -q "no tests ran"; then
+            echo "No performance tests found, running fallback script..."
+            poetry run python temp/one-off-scripts/test_performance_regression.py
+          elif [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "Performance tests failed, running fallback script..."
+            poetry run python temp/one-off-scripts/test_performance_regression.py
+          else
+            echo "Performance tests completed successfully"
+          fi
       - name: Upload Performance Metrics
         if: always()
         uses: actions/upload-artifact@v4

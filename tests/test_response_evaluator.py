@@ -36,6 +36,7 @@ class TestFrugalResponseEvaluator:
         assert evaluator.max_tokens == 200
         assert evaluator.temperature == 0.2
     
+    @pytest.mark.performance
     def test_fallback_evaluation_relevance(self):
         """Test fallback evaluation for relevance metric"""
         evaluator = FrugalResponseEvaluator()
@@ -46,6 +47,7 @@ class TestFrugalResponseEvaluator:
         assert 0.0 <= score <= 1.0
         assert score > 0.0  # Should have some relevance
     
+    @pytest.mark.performance
     def test_fallback_evaluation_completeness(self):
         """Test fallback evaluation for completeness metric"""
         evaluator = FrugalResponseEvaluator()
