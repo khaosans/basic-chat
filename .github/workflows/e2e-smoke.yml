@@ -43,7 +43,9 @@ jobs:
           cache: 'npm'
 
       - name: Install Python dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install poetry
+          poetry install
 
       - name: Install Node dependencies
         run: npm ci
@@ -59,7 +61,7 @@ jobs:
           fi
 
       - name: Start Streamlit app (background)
-        run: streamlit run app.py --server.port 8501 --server.headless true --server.address 0.0.0.0 &
+        run: poetry run streamlit run main.py --server.port 8501 --server.headless true --server.address 0.0.0.0 &
 
       - name: Wait for Streamlit to be ready
         run: |
@@ -84,6 +86,6 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip- 
