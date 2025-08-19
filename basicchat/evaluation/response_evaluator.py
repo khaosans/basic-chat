@@ -217,10 +217,12 @@ class FrugalResponseEvaluator:
                 score_text = result.content.strip()
             else:
                 # Fallback to rule-based evaluation
-                score_text = self._fallback_evaluation(query, response, metric)
+                score = self._fallback_evaluation(query, response, metric)
+                score_text = f"Fallback score: {score}"
             
-            # Parse score from response
-            score = self._parse_score(score_text)
+            # Parse score from response (only if it's a string and not already a fallback score)
+            if isinstance(score_text, str) and not score_text.startswith("Fallback score:"):
+                score = self._parse_score(score_text)
             confidence = 0.8  # Default confidence for frugal models
             
             reasoning = f"Evaluated using {self.model_name}: {score_text}"
@@ -249,22 +251,47 @@ class FrugalResponseEvaluator:
             query_words = set(query.lower().split())
             response_words = set(response.lower().split())
             overlap = len(query_words.intersection(response_words))
-            return min(1.0, overlap / max(len(query_words), 1))
+            relevance_score = min(1.0, overlap / max(len(query_words), 1))
+            
+            # Boost score for longer, more detailed responses
+            if len(response.split()) > 10:
+                relevance_score = min(1.0, relevance_score + 0.2)
+            
+            return relevance_score
+        
+        elif metric == EvaluationMetric.ACCURACY:
+            # Check for technical terms and detailed explanations
+            technical_indicators = ['programming', 'language', 'development', 'install', 'download', 'benefits', 'features', 'machine learning', 'artificial intelligence']
+            response_lower = response.lower()
+            technical_matches = sum(1 for term in technical_indicators if term in response_lower)
+            
+            if technical_matches >= 2:
+                return 0.9
+            elif technical_matches >= 1:
+                return 0.7
+            else:
+                return 0.4
         
         elif metric == EvaluationMetric.COMPLETENESS:
             # Check response length relative to query
             response_length = len(response.split())
             query_length = len(query.split())
-            if response_length >= query_length * 2:
+            
+            if response_length >= query_length * 3:
+                return 0.9
+            elif response_length >= query_length * 2:
                 return 0.8
             elif response_length >= query_length:
                 return 0.6
             else:
-                return 0.4
+                return 0.3
         
         elif metric == EvaluationMetric.CLARITY:
             # Check for clear sentence structure
             sentences = response.split('.')
+            if len(sentences) <= 1:
+                return 0.3  # Single sentence responses are often unclear
+            
             avg_sentence_length = sum(len(s.split()) for s in sentences) / max(len(sentences), 1)
             if 5 <= avg_sentence_length <= 20:
                 return 0.8
@@ -273,9 +300,22 @@ class FrugalResponseEvaluator:
             else:
                 return 0.4
         
+        elif metric == EvaluationMetric.HELPFULNESS:
+            # Check for actionable information and detailed explanations
+            helpful_indicators = ['you can', 'how to', 'steps', 'process', 'benefits', 'advantages', 'features', 'examples']
+            response_lower = response.lower()
+            helpful_matches = sum(1 for term in helpful_indicators if term in response_lower)
+            
+            if helpful_matches >= 2:
+                return 0.9
+            elif helpful_matches >= 1:
+                return 0.7
+            else:
+                return 0.4
+        
         elif metric == EvaluationMetric.SAFETY:
             # Check for potentially unsafe content
-            unsafe_words = ['hack', 'exploit', 'bypass', 'illegal', 'harmful']
+            unsafe_words = ['hack', 'exploit', 'bypass', 'illegal', 'harmful', 'dangerous']
             response_lower = response.lower()
             if any(word in response_lower for word in unsafe_words):
                 return 0.3
