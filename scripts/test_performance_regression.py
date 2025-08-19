@@ -105,8 +105,20 @@ def main():
             sys.exit(1)
         evaluator = OpenAIEvaluator(quick_mode=True, model=OPENAI_MODEL)
 
+    print(f"\n🚀 Starting Performance Regression Test")
+    print(f"📅 Test Date: {time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())}")
+    print(f"🔧 Backend: {BACKEND}")
+    print(f"⚡ Quick Mode: Enabled")
+    print(f"🎯 Time Threshold: {THRESHOLD_SECONDS}s")
+    print(f"💾 Memory Threshold: {THRESHOLD_MB}MB")
+    print(f"🤖 Model: {OPENAI_MODEL if BACKEND == 'OPENAI' else 'Local Model'}")
+    print("-" * 60)
+
     start_time = time.time()
     start_mem = get_memory_mb()
+
+    print(f"📊 Initial Memory Usage: {start_mem:.2f}MB")
+    print(f"⏱️  Starting evaluation at: {time.strftime('%H:%M:%S')}")
 
     # Run the evaluation (do not print results to avoid CI log noise)
     evaluator.run_evaluation()
@@ -116,31 +128,112 @@ def main():
 
     elapsed = end_time - start_time
     mem_used = max(0.0, end_mem - start_mem)
+    mem_peak = end_mem
+
+    print(f"⏱️  Evaluation completed at: {time.strftime('%H:%M:%S')}")
+    print(f"📊 Final Memory Usage: {end_mem:.2f}MB")
+
+    # Calculate performance ratios
+    time_ratio = (elapsed / THRESHOLD_SECONDS) * 100
+    memory_ratio = (mem_used / THRESHOLD_MB) * 100
+
+    # Determine performance grade
+    if elapsed <= THRESHOLD_SECONDS * 0.5 and mem_used <= THRESHOLD_MB * 0.5:
+        grade = "🟢 EXCELLENT"
+    elif elapsed <= THRESHOLD_SECONDS * 0.8 and mem_used <= THRESHOLD_MB * 0.8:
+        grade = "🟡 GOOD"
+    elif elapsed <= THRESHOLD_SECONDS and mem_used <= THRESHOLD_MB:
+        grade = "🟠 ACCEPTABLE"
+    else:
+        grade = "🔴 FAILED"
 
     metrics = {
-        "backend": BACKEND,
-        "elapsed_seconds": round(elapsed, 2),
-        "memory_mb": round(mem_used, 2),
-        "threshold_seconds": THRESHOLD_SECONDS,
-        "threshold_mb": THRESHOLD_MB,
-        "status": "PASS" if elapsed <= THRESHOLD_SECONDS and mem_used <= THRESHOLD_MB else "FAIL"
+        "test_info": {
+            "date": time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime()),
+            "backend": BACKEND,
+            "model": OPENAI_MODEL if BACKEND == 'OPENAI' else 'Local Model',
+            "quick_mode": True,
+            "test_type": "LLM Judge Evaluation Performance"
+        },
+        "performance": {
+            "elapsed_seconds": round(elapsed, 3),
+            "memory_mb": round(mem_used, 3),
+            "memory_peak_mb": round(mem_peak, 3),
+            "time_ratio_percent": round(time_ratio, 1),
+            "memory_ratio_percent": round(memory_ratio, 1)
+        },
+        "thresholds": {
+            "time_seconds": THRESHOLD_SECONDS,
+            "memory_mb": THRESHOLD_MB
+        },
+        "status": {
+            "overall": "PASS" if elapsed <= THRESHOLD_SECONDS and mem_used <= THRESHOLD_MB else "FAIL",
+            "time_status": "PASS" if elapsed <= THRESHOLD_SECONDS else "FAIL",
+            "memory_status": "PASS" if mem_used <= THRESHOLD_MB else "FAIL",
+            "grade": grade
+        }
     }
 
     # Output results for CI artifact
     with open("performance_metrics.json", "w") as f:
         json.dump(metrics, f, indent=2)
 
-    print("\n===== Performance Regression Metrics =====")
-    print(json.dumps(metrics, indent=2))
-    print("========================================\n")
+    # Print detailed results
+    print(f"\n{'='*60}")
+    print(f"📈 PERFORMANCE REGRESSION TEST RESULTS")
+    print(f"{'='*60}")
+    print(f"📅 Test Date: {metrics['test_info']['date']}")
+    print(f"🔧 Backend: {metrics['test_info']['backend']}")
+    print(f"🤖 Model: {metrics['test_info']['model']}")
+    print(f"⚡ Mode: Quick Evaluation")
+    print(f"")
+    print(f"⏱️  EXECUTION TIME:")
+    print(f"   • Elapsed: {metrics['performance']['elapsed_seconds']}s")
+    print(f"   • Threshold: {metrics['thresholds']['time_seconds']}s")
+    print(f"   • Usage: {metrics['performance']['time_ratio_percent']}% of threshold")
+    print(f"   • Status: {metrics['status']['time_status']}")
+    print(f"")
+    print(f"💾 MEMORY USAGE:")
+    print(f"   • Used: {metrics['performance']['memory_mb']}MB")
+    print(f"   • Peak: {metrics['performance']['memory_peak_mb']}MB")
+    print(f"   • Threshold: {metrics['thresholds']['memory_mb']}MB")
+    print(f"   • Usage: {metrics['performance']['memory_ratio_percent']}% of threshold")
+    print(f"   • Status: {metrics['status']['memory_status']}")
+    print(f"")
+    print(f"🎯 OVERALL RESULT:")
+    print(f"   • Grade: {metrics['status']['grade']}")
+    print(f"   • Status: {metrics['status']['overall']}")
+    print(f"")
+    
+    if metrics['status']['overall'] == "PASS":
+        print(f"✅ PERFORMANCE TEST PASSED")
+        if grade == "🟢 EXCELLENT":
+            print(f"   🎉 Excellent performance! Well under thresholds.")
+        elif grade == "🟡 GOOD":
+            print(f"   👍 Good performance within safe margins.")
+        else:
+            print(f"   ⚠️  Acceptable performance, but close to thresholds.")
+    else:
+        print(f"❌ PERFORMANCE TEST FAILED")
+        print(f"   🚨 Performance regression detected!")
+        if metrics['status']['time_status'] == "FAIL":
+            print(f"   ⏱️  Time exceeded threshold by {elapsed - THRESHOLD_SECONDS:.2f}s")
+        if metrics['status']['memory_status'] == "FAIL":
+            print(f"   💾 Memory exceeded threshold by {mem_used - THRESHOLD_MB:.2f}MB")
+    
+    print(f"{'='*60}")
+    print(f"📄 Results saved to: performance_metrics.json")
+    print(f"📊 CI Artifact: performance-metrics.zip")
+    print(f"{'='*60}\n")
 
     # Robust CI failure: assertion + sys.exit(1)
-    assert metrics["status"] == "PASS", (
-        f"Performance regression: time={elapsed:.2f}s, mem={mem_used:.2f}MB"
-    )
-    if metrics["status"] != "PASS":
-        print(f"Performance regression: time={elapsed:.2f}s, mem={mem_used:.2f}MB", file=sys.stderr)
+    if metrics['status']['overall'] != "PASS":
+        print(f"❌ PERFORMANCE REGRESSION DETECTED", file=sys.stderr)
+        print(f"   Time: {elapsed:.3f}s (threshold: {THRESHOLD_SECONDS}s)", file=sys.stderr)
+        print(f"   Memory: {mem_used:.3f}MB (threshold: {THRESHOLD_MB}MB)", file=sys.stderr)
         sys.exit(1)
+    
+    print(f"✅ Performance test completed successfully!")
 
 if __name__ == "__main__":
     main() 
