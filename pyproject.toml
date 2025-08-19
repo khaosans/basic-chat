@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "AI-powered chat application with reasoning capabilities"
 authors = ["Souriya Khaosanga <sour@chainable.ai>"]
 readme = "README.md"
-package-mode = false
+packages = [{include = "basicchat"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -45,10 +45,7 @@ pytest-mock = "^3.10.0"
 playwright = "^1.40.0"
 
 [tool.poetry.scripts]
-start = "streamlit run app.py"
-test = "pytest"
-test-e2e = "playwright test"
-dev = "streamlit run app.py --server.port 8501"
+basicchat = "basicchat.core.app:main"
 
 [build-system]
 requires = ["poetry-core"]
