@@ -85,6 +85,8 @@ com.basicchat.startup.plist
 
 # LLM Judge Results
 llm_judge_results.json
+llm_judge_action_items.md
+llm_judge_improvement_tips.md
 
 # Temporary test files
 tests/data/
