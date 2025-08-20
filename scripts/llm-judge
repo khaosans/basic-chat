@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Quick LLM Judge - One-liner for local development
-# Usage: ./scripts/llm-judge [quick|full] [ollama|openai]
+# Usage: ./scripts/llm-judge [quick|full] [auto|ollama|openai]
 
 set -e
 
 MODE=${1:-"quick"}
-BACKEND=${2:-"ollama"}
+BACKEND=${2:-"auto"}
 
 echo "🤖 LLM Judge - $MODE mode with $BACKEND backend"
 echo "================================================"
@@ -17,16 +17,13 @@ if [ ! -f "pyproject.toml" ]; then
     exit 1
 fi
 
-# Run the evaluation
-if [ "$BACKEND" = "openai" ]; then
-    if [ -z "$OPENAI_API_KEY" ]; then
-        echo "❌ OPENAI_API_KEY environment variable is required for OpenAI backend"
-        exit 1
-    fi
-    poetry run python basicchat/evaluation/evaluators/check_llm_judge_openai.py $([ "$MODE" = "quick" ] && echo "--quick")
-else
-    poetry run python basicchat/evaluation/evaluators/check_llm_judge.py $([ "$MODE" = "quick" ] && echo "--quick")
+# Force backend if specified (not auto)
+if [ "$BACKEND" != "auto" ]; then
+    export LLM_JUDGE_FORCE_BACKEND=$(echo $BACKEND | tr '[:lower:]' '[:upper:]')
 fi
+
+# Run the evaluation with smart backend selection
+poetry run python basicchat/evaluation/evaluators/check_llm_judge_smart.py $([ "$MODE" = "quick" ] && echo "--quick")
 
 # Generate action items if evaluation succeeded
 if [ $? -eq 0 ] && [ -f "llm_judge_results.json" ]; then

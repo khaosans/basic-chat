@@ -122,18 +122,19 @@ BasicChat includes an intelligent LLM Judge that evaluates code quality, test co
 # Automatic setup
 ./scripts/setup_local_llm_judge.sh
 
-# Quick evaluation
+# Quick evaluation (smart backend selection)
 make llm-judge-quick
 
-# Full evaluation
+# Full evaluation (smart backend selection)
 make llm-judge
 ```
 
 ### Features
+- **Smart Backend Selection**: Automatically chooses Ollama (local) or OpenAI (remote/CI)
 - **Comprehensive Evaluation**: 6 categories with weighted scoring
 - **Actionable Reports**: Prioritized improvement plans
-- **Multiple Backends**: Ollama (local) and OpenAI (cloud)
-- **CI/CD Integration**: Automated quality gates
+- **Multiple Backends**: Ollama (local) and OpenAI (cloud) with automatic fallback
+- **CI/CD Integration**: Automated quality gates with OpenAI for remote environments
 - **Deterministic Results**: Consistent evaluation standards
 
 ### Generated Reports

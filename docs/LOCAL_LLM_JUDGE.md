@@ -64,16 +64,16 @@ If you prefer to set up manually, follow these steps:
 
 ### Basic Commands
 
-#### Quick Evaluation (Recommended for development)
+#### Smart Evaluation (Recommended - automatically chooses best backend)
 ```bash
 # Using Makefile
 make llm-judge-quick
 
 # Using script directly
-./scripts/run_llm_judge.sh quick ollama 7.0
+./scripts/run_llm_judge.sh quick auto 7.0
 
 # Using poetry directly
-poetry run python basicchat/evaluation/evaluators/check_llm_judge.py --quick
+poetry run python basicchat/evaluation/evaluators/check_llm_judge_smart.py --quick
 ```
 
 #### Full Evaluation (Comprehensive analysis)
@@ -82,19 +82,22 @@ poetry run python basicchat/evaluation/evaluators/check_llm_judge.py --quick
 make llm-judge
 
 # Using script directly
-./scripts/run_llm_judge.sh full ollama 7.0
+./scripts/run_llm_judge.sh full auto 7.0
 
 # Using poetry directly
-poetry run python basicchat/evaluation/evaluators/check_llm_judge.py
+poetry run python basicchat/evaluation/evaluators/check_llm_judge_smart.py
 ```
 
-#### OpenAI Backend (Alternative)
+#### Force Specific Backend
 ```bash
-# Set OpenAI API key
-export OPENAI_API_KEY="your-api-key-here"
+# Force Ollama backend
+LLM_JUDGE_FORCE_BACKEND=OLLAMA poetry run python basicchat/evaluation/evaluators/check_llm_judge_smart.py --quick
 
-# Run with OpenAI
-make llm-judge-openai-quick
+# Force OpenAI backend
+LLM_JUDGE_FORCE_BACKEND=OPENAI poetry run python basicchat/evaluation/evaluators/check_llm_judge_smart.py --quick
+
+# Using scripts with specific backend
+./scripts/run_llm_judge.sh quick ollama 7.0
 ./scripts/run_llm_judge.sh quick openai 7.0
 ```
 
@@ -102,8 +105,10 @@ make llm-judge-openai-quick
 
 | Command | Description |
 |---------|-------------|
-| `make llm-judge-quick` | Quick evaluation with Ollama |
-| `make llm-judge` | Full evaluation with Ollama |
+| `make llm-judge-quick` | Quick evaluation (smart backend) |
+| `make llm-judge` | Full evaluation (smart backend) |
+| `make llm-judge-ollama-quick` | Quick evaluation with Ollama |
+| `make llm-judge-ollama` | Full evaluation with Ollama |
 | `make llm-judge-openai-quick` | Quick evaluation with OpenAI |
 | `make llm-judge-openai` | Full evaluation with OpenAI |
 | `make test-and-evaluate` | Run tests + quick LLM judge |
@@ -145,7 +150,7 @@ After running an evaluation, you'll get several files:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `LLM_JUDGE_THRESHOLD` | `7.0` | Minimum passing score |
-| `LLM_JUDGE_BACKEND` | `OLLAMA` | Backend to use (OLLAMA/OPENAI) |
+| `LLM_JUDGE_FORCE_BACKEND` | - | Force specific backend (OLLAMA/OPENAI) |
 | `OLLAMA_API_URL` | `http://localhost:11434/api` | Ollama API URL |
 | `OLLAMA_MODEL` | `mistral` | Ollama model to use |
 | `OPENAI_API_KEY` | - | OpenAI API key (required for OpenAI backend) |

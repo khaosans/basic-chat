@@ -9,11 +9,21 @@ test-last-failed:
 
 # LLM Judge Evaluation Commands
 llm-judge:
+	@echo "🤖 Running LLM Judge evaluation (Smart backend, full mode)..."
+	@chmod +x scripts/run_llm_judge.sh
+	@./scripts/run_llm_judge.sh full auto 7.0
+
+llm-judge-quick:
+	@echo "🤖 Running LLM Judge evaluation (Smart backend, quick mode)..."
+	@chmod +x scripts/run_llm_judge.sh
+	@./scripts/run_llm_judge.sh quick auto 7.0
+
+llm-judge-ollama:
 	@echo "🤖 Running LLM Judge evaluation (Ollama, full mode)..."
 	@chmod +x scripts/run_llm_judge.sh
 	@./scripts/run_llm_judge.sh full ollama 7.0
 
-llm-judge-quick:
+llm-judge-ollama-quick:
 	@echo "🤖 Running LLM Judge evaluation (Ollama, quick mode)..."
 	@chmod +x scripts/run_llm_judge.sh
 	@./scripts/run_llm_judge.sh quick ollama 7.0

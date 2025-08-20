@@ -290,30 +290,18 @@ jobs:
           mkdir -p tests/data
           mkdir -p test_chroma_db
           poetry run python scripts/generate_test_assets.py || echo "Test assets generation failed, continuing..."
-      - name: Run LLM Judge Evaluation (Ollama)
+      - name: Run LLM Judge Evaluation (Smart Backend)
         env:
           LLM_JUDGE_THRESHOLD: "7.0"
-          LLM_JUDGE_BACKEND: "OLLAMA"
-          OLLAMA_MODEL: "mistral"
-          MOCK_EXTERNAL_SERVICES: "true"
-          CHROMA_PERSIST_DIR: "./test_chroma_db"
-          TESTING: "true"
-        run: |
-          echo "🤖 Starting LLM Judge evaluation..."
-          poetry run python basicchat/evaluation/evaluators/check_llm_judge.py --quick
-      - name: Run LLM Judge Evaluation (OpenAI) - Fallback
-        if: failure()
-        env:
-          LLM_JUDGE_THRESHOLD: "7.0"
-          LLM_JUDGE_BACKEND: "OPENAI"
+          LLM_JUDGE_FORCE_BACKEND: "OPENAI"
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
           MOCK_EXTERNAL_SERVICES: "true"
           CHROMA_PERSIST_DIR: "./test_chroma_db"
           TESTING: "true"
         run: |
-          echo "🤖 Starting LLM Judge evaluation (OpenAI fallback)..."
-          poetry run python basicchat/evaluation/evaluators/check_llm_judge_openai.py --quick
+          echo "🤖 Starting Smart LLM Judge evaluation..."
+          poetry run python basicchat/evaluation/evaluators/check_llm_judge_smart.py --quick
       - name: Generate Actionable Report
         if: always()
         run: |

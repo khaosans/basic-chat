@@ -48,7 +48,7 @@ fi
 
 # Parse command line arguments
 MODE=${1:-"quick"}
-BACKEND=${2:-"ollama"}
+BACKEND=${2:-"auto"}
 THRESHOLD=${3:-"7.0"}
 
 print_header
@@ -94,9 +94,13 @@ case $BACKEND in
         fi
         print_success "OpenAI API key is configured"
         ;;
+    "auto")
+        print_subheader "🔧 Auto Backend Selection"
+        print_status "Will automatically choose the best available backend"
+        ;;
     *)
         print_error "Unknown backend: $BACKEND"
-        print_status "Available backends: ollama, openai"
+        print_status "Available backends: auto, ollama, openai"
         exit 1
         ;;
 esac
@@ -107,23 +111,17 @@ print_status "Backend: $BACKEND"
 print_status "Mode: $MODE"
 print_status "Threshold: $THRESHOLD"
 
-# Determine the command based on backend and mode
-case $BACKEND in
-    "ollama")
-        if [ "$MODE" = "quick" ]; then
-            CMD="poetry run python basicchat/evaluation/evaluators/check_llm_judge.py --quick"
-        else
-            CMD="poetry run python basicchat/evaluation/evaluators/check_llm_judge.py"
-        fi
-        ;;
-    "openai")
-        if [ "$MODE" = "quick" ]; then
-            CMD="poetry run python basicchat/evaluation/evaluators/check_llm_judge_openai.py --quick"
-        else
-            CMD="poetry run python basicchat/evaluation/evaluators/check_llm_judge_openai.py"
-        fi
-        ;;
-esac
+# Use smart evaluator that automatically chooses the best backend
+if [ "$MODE" = "quick" ]; then
+    CMD="poetry run python basicchat/evaluation/evaluators/check_llm_judge_smart.py --quick"
+else
+    CMD="poetry run python basicchat/evaluation/evaluators/check_llm_judge_smart.py"
+fi
+
+# Force backend if specified
+if [ "$BACKEND" != "auto" ]; then
+    export LLM_JUDGE_FORCE_BACKEND=$(echo $BACKEND | tr '[:lower:]' '[:upper:]')
+fi
 
 print_status "Running: $CMD"
 eval $CMD
