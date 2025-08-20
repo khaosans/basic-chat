@@ -260,3 +260,80 @@ jobs:
           name: final-test-report-performance-regression-${{ github.run_id }}
           path: final_test_report.md
           retention-days: 30
+
+  llm-judge:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    if: |
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry install
+      - name: Setup test environment
+        run: |
+          mkdir -p tests/data
+          mkdir -p test_chroma_db
+          poetry run python scripts/generate_test_assets.py || echo "Test assets generation failed, continuing..."
+      - name: Run LLM Judge Evaluation (Ollama)
+        env:
+          LLM_JUDGE_THRESHOLD: "7.0"
+          LLM_JUDGE_BACKEND: "OLLAMA"
+          OLLAMA_MODEL: "mistral"
+          MOCK_EXTERNAL_SERVICES: "true"
+          CHROMA_PERSIST_DIR: "./test_chroma_db"
+          TESTING: "true"
+        run: |
+          echo "🤖 Starting LLM Judge evaluation..."
+          poetry run python basicchat/evaluation/evaluators/check_llm_judge.py --quick
+      - name: Run LLM Judge Evaluation (OpenAI) - Fallback
+        if: failure()
+        env:
+          LLM_JUDGE_THRESHOLD: "7.0"
+          LLM_JUDGE_BACKEND: "OPENAI"
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-3.5-turbo' }}
+          MOCK_EXTERNAL_SERVICES: "true"
+          CHROMA_PERSIST_DIR: "./test_chroma_db"
+          TESTING: "true"
+        run: |
+          echo "🤖 Starting LLM Judge evaluation (OpenAI fallback)..."
+          poetry run python basicchat/evaluation/evaluators/check_llm_judge_openai.py --quick
+      - name: Generate Actionable Report
+        if: always()
+        run: |
+          poetry run python scripts/generate_llm_judge_report.py || echo "Report generation failed"
+      - name: Upload LLM Judge Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: llm-judge-results
+          path: |
+            llm_judge_results.json
+            llm_judge_action_items.md
+            llm_judge_improvement_tips.md
+          retention-days: 30
+      - name: Generate Final Test Report
+        run: |
+          poetry run python scripts/generate_final_report.py || true
+      - name: Upload Final Test Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-test-report-llm-judge-${{ github.run_id }}
+          path: final_test_report.md
+          retention-days: 30

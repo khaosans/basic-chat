@@ -1,0 +1,264 @@
+{
+  "version": "2.0.0",
+  "name": "BasicChat Code Quality Standards",
+  "description": "Comprehensive rules and standards for LLM Judge evaluation",
+  "evaluation_mode": "deterministic",
+  "consistency_checks": true,
+  
+  "thresholds": {
+    "overall_minimum": 7.0,
+    "critical_minimum": 6.0,
+    "excellent_threshold": 8.5
+  },
+  
+  "categories": {
+    "code_quality": {
+      "weight": 1.0,
+      "critical": true,
+      "priority": "high",
+      "rules": [
+        "Follow PEP 8 style guidelines consistently",
+        "Use meaningful, descriptive variable and function names",
+        "Keep functions under 50 lines and classes under 500 lines",
+        "Maintain cyclomatic complexity under 10 per function",
+        "Use type hints for function parameters and return values",
+        "Avoid code duplication - follow DRY principle",
+        "Write self-documenting code with clear logic flow",
+        "Use proper exception handling with specific exceptions",
+        "Follow single responsibility principle",
+        "Use constants for magic numbers and configuration values"
+      ],
+      "rubric": {
+        "10": "Exemplary: Perfect adherence to all Python best practices, excellent readability",
+        "9": "Excellent: Minor style issues, excellent structure and organization",
+        "8": "Very Good: Good structure with few issues, clear and maintainable",
+        "7": "Good: Generally good with some improvements needed",
+        "6": "Acceptable: Basic structure with notable issues but functional",
+        "5": "Poor: Significant structural problems affecting maintainability",
+        "4": "Very Poor: Major issues requiring substantial refactoring",
+        "3": "Critical: Serious problems requiring immediate attention",
+        "2": "Unacceptable: Major refactoring required",
+        "1": "Failed: Complete rewrite needed"
+      }
+    },
+    
+    "test_coverage": {
+      "weight": 1.0,
+      "critical": true,
+      "priority": "high",
+      "rules": [
+        "Maintain >80% code coverage for production code",
+        "Test all public functions and methods",
+        "Include edge case testing and boundary conditions",
+        "Use meaningful, descriptive test names",
+        "Test both success and failure scenarios",
+        "Mock external dependencies and API calls",
+        "Use parameterized tests for similar test cases",
+        "Test integration points and data flow",
+        "Include performance tests for critical paths",
+        "Ensure tests are independent and repeatable"
+      ],
+      "rubric": {
+        "10": ">95% coverage with comprehensive edge case testing and excellent test quality",
+        "9": ">90% coverage with excellent test quality and good edge case coverage",
+        "8": ">85% coverage with good test quality and reasonable edge case testing",
+        "7": ">80% coverage with acceptable test quality and basic edge case testing",
+        "6": ">70% coverage with basic testing and minimal edge case coverage",
+        "5": ">60% coverage with minimal testing and poor edge case coverage",
+        "4": ">50% coverage with inadequate testing and no edge case coverage",
+        "3": ">40% coverage with poor testing quality",
+        "2": ">30% coverage with very poor testing",
+        "1": "<30% coverage or no meaningful tests"
+      }
+    },
+    
+    "documentation": {
+      "weight": 0.8,
+      "critical": false,
+      "priority": "medium",
+      "rules": [
+        "Maintain comprehensive README.md with setup instructions",
+        "Include API documentation with examples",
+        "Document complex algorithms and business logic",
+        "Provide usage examples and code snippets",
+        "Keep documentation up-to-date with code changes",
+        "Use clear, concise language and proper formatting",
+        "Include troubleshooting guides and common issues",
+        "Document configuration options and environment variables",
+        "Provide architecture diagrams where helpful",
+        "Include contribution guidelines for developers"
+      ],
+      "rubric": {
+        "10": "Comprehensive documentation with examples, guides, and diagrams",
+        "9": "Excellent documentation with good examples and clear instructions",
+        "8": "Very good documentation with some examples and clear structure",
+        "7": "Good documentation with basic examples and clear information",
+        "6": "Acceptable documentation with minimal examples but functional",
+        "5": "Basic documentation present but lacking examples",
+        "4": "Minimal documentation with poor organization",
+        "3": "Poor documentation with unclear information",
+        "2": "Very poor documentation with missing critical information",
+        "1": "No or inadequate documentation"
+      }
+    },
+    
+    "architecture": {
+      "weight": 1.0,
+      "critical": true,
+      "priority": "high",
+      "rules": [
+        "Follow SOLID principles (Single Responsibility, Open/Closed, Liskov Substitution, Interface Segregation, Dependency Inversion)",
+        "Use appropriate design patterns for the problem domain",
+        "Maintain loose coupling between components",
+        "Ensure high cohesion within modules",
+        "Plan for scalability and future growth",
+        "Use dependency injection for better testability",
+        "Implement proper error handling and logging",
+        "Follow separation of concerns",
+        "Use consistent architectural patterns throughout",
+        "Design for maintainability and extensibility"
+      ],
+      "rubric": {
+        "10": "Excellent architecture with perfect SOLID principles and excellent scalability",
+        "9": "Very good architecture with minor improvements needed",
+        "8": "Good architecture with some scalability concerns",
+        "7": "Acceptable architecture with notable issues but functional",
+        "6": "Basic architecture with significant issues",
+        "5": "Poor architecture with major problems",
+        "4": "Very poor architecture requiring redesign",
+        "3": "Critical architectural problems",
+        "2": "Unacceptable architecture",
+        "1": "Failed architecture requiring complete redesign"
+      }
+    },
+    
+    "security": {
+      "weight": 0.9,
+      "critical": true,
+      "priority": "high",
+      "rules": [
+        "Validate and sanitize all user inputs",
+        "Use parameterized queries to prevent SQL injection",
+        "Implement proper authentication and authorization",
+        "Follow OWASP security guidelines",
+        "Use secure defaults and fail-safe configurations",
+        "Implement proper session management",
+        "Use HTTPS for all communications",
+        "Implement rate limiting and request validation",
+        "Log security events and suspicious activities",
+        "Keep dependencies updated and scan for vulnerabilities"
+      ],
+      "rubric": {
+        "10": "Comprehensive security practices with all OWASP guidelines implemented",
+        "9": "Excellent security with minor gaps",
+        "8": "Very good security practices with good coverage",
+        "7": "Good security with some improvements needed",
+        "6": "Acceptable security with notable gaps",
+        "5": "Basic security practices with significant vulnerabilities",
+        "4": "Poor security with significant vulnerabilities",
+        "3": "Very poor security with critical issues",
+        "2": "Unacceptable security practices",
+        "1": "Failed security with major vulnerabilities"
+      }
+    },
+    
+    "performance": {
+      "weight": 0.7,
+      "critical": false,
+      "priority": "medium",
+      "rules": [
+        "Optimize database queries and use proper indexing",
+        "Use efficient algorithms and data structures",
+        "Implement caching where appropriate",
+        "Minimize memory usage and avoid memory leaks",
+        "Use async/await for I/O operations",
+        "Profile and optimize performance bottlenecks",
+        "Use connection pooling for database connections",
+        "Optimize startup time and resource usage",
+        "Implement proper resource cleanup",
+        "Monitor and log performance metrics"
+      ],
+      "rubric": {
+        "10": "Highly optimized with excellent performance and efficiency",
+        "9": "Very good performance with minor optimizations possible",
+        "8": "Good performance with some room for improvement",
+        "7": "Acceptable performance with notable optimizations possible",
+        "6": "Basic performance with significant improvements needed",
+        "5": "Poor performance with major optimizations required",
+        "4": "Very poor performance affecting user experience",
+        "3": "Critical performance issues",
+        "2": "Unacceptable performance",
+        "1": "Failed performance requiring complete optimization"
+      }
+    }
+  },
+  
+  "file_patterns": {
+    "include": [".py", ".js", ".ts", ".jsx", ".tsx"],
+    "exclude": [".git", "venv", "__pycache__", "node_modules", ".pytest_cache", "htmlcov", "logs", "temp"],
+    "documentation": [".md", ".rst", ".txt", ".adoc"],
+    "test_files": ["test_*", "*_test", "*test*"],
+    "config_files": ["*.toml", "*.yaml", "*.yml", "*.json", "*.ini", "*.cfg"]
+  },
+  
+  "consistency_checks": {
+    "enabled": true,
+    "max_score_variance": 1.0,
+    "min_evaluation_confidence": 0.8,
+    "require_detailed_justification": true,
+    "check_score_consistency": true
+  },
+  
+  "best_practices": {
+    "python": [
+      "Use type hints for better code clarity and IDE support",
+      "Follow PEP 8 style guidelines consistently",
+      "Use virtual environments for dependency management",
+      "Write comprehensive docstrings for functions and classes",
+      "Use context managers for resource management",
+      "Implement proper logging with appropriate levels",
+      "Use dataclasses for simple data structures",
+      "Follow the Zen of Python principles",
+      "Use list comprehensions and generator expressions appropriately",
+      "Implement proper error handling with specific exceptions"
+    ],
+    "general": [
+      "Write clean, readable, and self-documenting code",
+      "Use meaningful and descriptive names for variables, functions, and classes",
+      "Keep functions and methods small and focused",
+      "Avoid magic numbers - use named constants",
+      "Use configuration files for environment-specific settings",
+      "Implement proper error handling and user feedback",
+      "Write code that is easy to test and maintain",
+      "Follow the DRY (Don't Repeat Yourself) principle",
+      "Use version control effectively with meaningful commit messages",
+      "Document complex business logic and algorithms"
+    ]
+  },
+  
+  "deterministic_evaluation": {
+    "enabled": true,
+    "seed": 42,
+    "temperature": 0.1,
+    "max_retries": 3,
+    "consistency_threshold": 0.9,
+    "require_structured_output": true
+  },
+  
+  "action_items": {
+    "priority_levels": {
+      "critical": "Must fix immediately - affects functionality or security",
+      "high": "Should fix soon - affects maintainability or performance",
+      "medium": "Good to fix - improves code quality",
+      "low": "Nice to have - minor improvements"
+    },
+    "categories": {
+      "security": "Security-related issues",
+      "performance": "Performance and efficiency issues",
+      "maintainability": "Code maintainability and readability",
+      "testing": "Test coverage and quality issues",
+      "documentation": "Documentation and clarity issues",
+      "architecture": "Architectural and design issues"
+    }
+  }
+}

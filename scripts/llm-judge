@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Quick LLM Judge - One-liner for local development
+# Usage: ./scripts/llm-judge [quick|full] [ollama|openai]
+
+set -e
+
+MODE=${1:-"quick"}
+BACKEND=${2:-"ollama"}
+
+echo "🤖 LLM Judge - $MODE mode with $BACKEND backend"
+echo "================================================"
+
+# Check if we're in the right directory
+if [ ! -f "pyproject.toml" ]; then
+    echo "❌ Please run from the BasicChat root directory"
+    exit 1
+fi
+
+# Run the evaluation
+if [ "$BACKEND" = "openai" ]; then
+    if [ -z "$OPENAI_API_KEY" ]; then
+        echo "❌ OPENAI_API_KEY environment variable is required for OpenAI backend"
+        exit 1
+    fi
+    poetry run python basicchat/evaluation/evaluators/check_llm_judge_openai.py $([ "$MODE" = "quick" ] && echo "--quick")
+else
+    poetry run python basicchat/evaluation/evaluators/check_llm_judge.py $([ "$MODE" = "quick" ] && echo "--quick")
+fi
+
+# Generate action items if evaluation succeeded
+if [ $? -eq 0 ] && [ -f "llm_judge_results.json" ]; then
+    echo ""
+    echo "📋 Generating action items..."
+    poetry run python scripts/generate_llm_judge_report.py
+    echo ""
+    echo "✅ Check llm_judge_action_items.md for improvements"
+fi
