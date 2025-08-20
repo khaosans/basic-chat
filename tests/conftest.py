@@ -55,10 +55,10 @@ def temp_dir():
 @pytest.fixture(scope="function")
 def mock_external_services():
     """Mock external services for unit tests."""
-    with patch('document_processor.OllamaEmbeddings') as mock_embeddings, \
-         patch('document_processor.ChatOllama') as mock_chat, \
-         patch('document_processor.chromadb.PersistentClient') as mock_chroma, \
-         patch('app.gTTS') as mock_gtts:
+    with patch('basicchat.services.document_processor.OllamaEmbeddings') as mock_embeddings, \
+         patch('basicchat.services.document_processor.ChatOllama') as mock_chat, \
+         patch('basicchat.services.document_processor.chromadb.PersistentClient') as mock_chroma, \
+         patch('basicchat.core.app.gTTS') as mock_gtts:
         
         # Configure mocks
         mock_embeddings.return_value = Mock()
@@ -167,11 +167,11 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture(scope="function")
 def mock_all_external_services():
     """Comprehensive mock for all external services in integration tests."""
-    with patch('document_processor.OllamaEmbeddings') as mock_embeddings, \
-         patch('document_processor.ChatOllama') as mock_chat, \
-         patch('document_processor.chromadb.PersistentClient') as mock_chroma, \
-         patch('app.gTTS') as mock_gtts, \
-         patch('web_search.DDGS') as mock_ddgs, \
+    with patch('basicchat.services.document_processor.OllamaEmbeddings') as mock_embeddings, \
+         patch('basicchat.services.document_processor.ChatOllama') as mock_chat, \
+         patch('basicchat.services.document_processor.chromadb.PersistentClient') as mock_chroma, \
+         patch('basicchat.core.app.gTTS') as mock_gtts, \
+         patch('basicchat.services.web_search.DDGS') as mock_ddgs, \
          patch('openai.OpenAI') as mock_openai, \
          patch('langchain_ollama.OllamaEmbeddings') as mock_langchain_embeddings, \
          patch('langchain_ollama.ChatOllama') as mock_langchain_chat:

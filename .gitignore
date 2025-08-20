@@ -22,11 +22,14 @@ venv/
 ENV/
 
 # Data and Logs
-chroma_db/
-chroma_db_*/
+data/
 logs/
 *.log
-app.log
+
+# Temporary files and directories
+temp/
+*.tmp
+*.temp
 
 # OS specific
 .DS_Store
@@ -37,23 +40,6 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
-
-# Project specific
-temp/
-uploads/
-temp_audio/
-
-# Text-to-speech generated files
-temp_*.mp3
-
-# VSCode
-.vscode/
-
-# Python
-*.pyc
-
-# Mac
-.DS_Store
 
 # Node
 node_modules/
@@ -99,6 +85,8 @@ com.basicchat.startup.plist
 
 # LLM Judge Results
 llm_judge_results.json
+llm_judge_action_items.md
+llm_judge_improvement_tips.md
 
 # Temporary test files
 tests/data/
@@ -118,3 +106,16 @@ test-results.json
 test-results.xml
 *.webm
 *.png
+
+# Temporary audio files
+*.mp3
+
+# Performance metrics
+performance_metrics.json
+
+# Debug files
+debug-*.png
+npm-debug.log
+
+# Test output files
+qa_test_output.txt

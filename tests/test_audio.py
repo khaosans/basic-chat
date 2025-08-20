@@ -16,7 +16,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from utils.enhanced_tools import text_to_speech, get_professional_audio_html, get_audio_file_size
+from basicchat.utils.enhanced_tools import text_to_speech, get_professional_audio_html, get_audio_file_size
 
 def mock_text_to_speech_func(text):
     """Mock function for text_to_speech that creates a dummy file"""
@@ -35,7 +35,7 @@ def mock_text_to_speech_func(text):
 @pytest.fixture(autouse=True, scope="class")
 def mock_gtts_class(request):
     """Fixture to mock gTTS for all tests in this class."""
-    patcher = patch('utils.enhanced_tools.gTTS')
+    patcher = patch('basicchat.utils.enhanced_tools.gTTS')
     mock_gtts = patcher.start()
     mock_tts_instance = MagicMock()
     
@@ -71,7 +71,7 @@ class TestAudioFunctionality:
         """Clean up test files after each test."""
         self.setup_method()
 
-    @patch('utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
+    @patch('basicchat.utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
     def test_should_generate_audio_file(self, mock_tts):
         """Should generate an audio file for valid text input"""
         test_text = "Hello, this is a test message."
@@ -89,7 +89,7 @@ class TestAudioFunctionality:
         except Exception:
             pass
     
-    @patch('utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
+    @patch('basicchat.utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
     @pytest.mark.parametrize("test_text", [
         "Hello, this is a test message.",
         "This is a longer test message that should still work properly."
@@ -109,7 +109,7 @@ class TestAudioFunctionality:
         except Exception:
             pass
     
-    @patch('utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
+    @patch('basicchat.utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
     def test_should_generate_consistent_audio_for_same_text(self, mock_tts):
         """Should generate consistent audio files for same text"""
         test_text = "Hello, this is a test message."
@@ -127,7 +127,7 @@ class TestAudioFunctionality:
         except Exception:
             pass
     
-    @patch('utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
+    @patch('basicchat.utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
     @pytest.mark.parametrize("invalid_text", [
         "",
         None,
@@ -138,7 +138,7 @@ class TestAudioFunctionality:
         audio_file = mock_tts(invalid_text)
         assert audio_file is None
     
-    @patch('utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
+    @patch('basicchat.utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
     def test_should_create_valid_audio_html(self, mock_tts):
         """Should create valid HTML for audio playback"""
         test_text = "Test audio content"
@@ -157,7 +157,7 @@ class TestAudioFunctionality:
         except Exception:
             pass
     
-    @patch('utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
+    @patch('basicchat.utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
     def test_should_handle_missing_audio_file(self, mock_tts):
         """Should handle missing audio file gracefully"""
         non_existent_file = "temp_nonexistent_file.mp3"
@@ -167,7 +167,7 @@ class TestAudioFunctionality:
         assert html is not None
         assert "Audio file not found" in html
     
-    @patch('utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
+    @patch('basicchat.utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
     def test_should_create_professional_audio_html(self, mock_tts):
         """Should create professional audio HTML with styling"""
         test_text = "Test audio content"
@@ -218,9 +218,9 @@ class TestAudioFunctionality:
         size = get_audio_file_size("nonexistent_file.mp3")
         assert size == "Unknown size"
 
-    @patch('utils.enhanced_tools.gTTS')
-    @patch('utils.enhanced_tools.os.path.exists')
-    @patch('utils.enhanced_tools.os.path.getsize')
+    @patch('basicchat.utils.enhanced_tools.gTTS')
+    @patch('basicchat.utils.enhanced_tools.os.path.exists')
+    @patch('basicchat.utils.enhanced_tools.os.path.getsize')
     def test_should_integrate_with_gtts_library(self, mock_getsize, mock_exists, mock_gtts):
         """Should integrate with gTTS library correctly"""
         # Mock gTTS
@@ -254,7 +254,7 @@ class TestAudioFunctionality:
             html = get_professional_audio_html("any_file.mp3")
             assert "Error loading audio" in html
     
-    @patch('utils.enhanced_tools.gTTS')
+    @patch('basicchat.utils.enhanced_tools.gTTS')
     def test_should_handle_tts_errors(self, mock_gtts):
         """Should handle TTS errors during audio generation"""
         mock_tts_instance = MagicMock()
@@ -266,7 +266,7 @@ class TestAudioFunctionality:
         
         assert "Failed to generate audio: TTS API is down" in str(excinfo.value)
 
-    @patch('utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
+    @patch('basicchat.utils.enhanced_tools.text_to_speech', side_effect=mock_text_to_speech_func)
     def test_should_cleanup_temp_files(self, mock_tts):
         """Should not leave temporary files after processing"""
         test_text = "Temporary test message"

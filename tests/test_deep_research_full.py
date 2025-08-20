@@ -12,7 +12,7 @@ from pathlib import Path
 # Add the parent directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from task_manager import TaskManager
+from basicchat.tasks.task_manager import TaskManager
 
 def test_deep_research():
     """Test the deep research functionality"""
@@ -116,7 +116,7 @@ def test_web_search():
     print("=" * 40)
     
     try:
-        from web_search import WebSearch
+        from basicchat.services.web_search import WebSearch
         
         web_search = WebSearch()
         query = "quantum computing 2024"

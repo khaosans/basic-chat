@@ -9,7 +9,7 @@ CHANGELOG:
 
 import pytest
 from unittest.mock import patch, MagicMock
-from web_search import SearchResult, search_web, WebSearch
+from basicchat.services.web_search import SearchResult, search_web, WebSearch
 
 class TestWebSearch:
     """Test web search functionality"""
@@ -20,7 +20,7 @@ class TestWebSearch:
         """Setup for each test"""
         self.test_query = "Python programming"
     
-    @patch('web_search.DDGS')
+    @patch('basicchat.services.web_search.DDGS')
     def test_should_perform_basic_search(self, mock_ddgs):
         """Should perform basic web search successfully"""
         # Mock successful search results
@@ -47,7 +47,7 @@ class TestWebSearch:
         results = search_web("")
         assert results == "No results found."
     
-    @patch('web_search.DDGS')
+    @patch('basicchat.services.web_search.DDGS')
     def test_should_respect_max_results_parameter(self, mock_ddgs):
         """Should respect max_results parameter"""
         # Mock many results
@@ -70,7 +70,7 @@ class TestWebSearch:
         result_count = results.count("1. **") + results.count("2. **") + results.count("3. **")
         assert result_count == 3
     
-    @patch('web_search.DDGS')
+    @patch('basicchat.services.web_search.DDGS')
     def test_should_handle_rate_limit_errors(self, mock_ddgs):
         """Should handle rate limiting gracefully"""
         mock_instance = MagicMock()

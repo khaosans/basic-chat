@@ -113,6 +113,37 @@ ollama serve &
 
 ---
 
+## 🤖 LLM Judge Quality Assurance
+
+BasicChat includes an intelligent LLM Judge that evaluates code quality, test coverage, documentation, architecture, security, and performance.
+
+### Quick Start
+```bash
+# Automatic setup
+./scripts/setup_local_llm_judge.sh
+
+# Quick evaluation (smart backend selection)
+make llm-judge-quick
+
+# Full evaluation (smart backend selection)
+make llm-judge
+```
+
+### Features
+- **Smart Backend Selection**: Automatically chooses Ollama (local) or OpenAI (remote/CI)
+- **Comprehensive Evaluation**: 6 categories with weighted scoring
+- **Actionable Reports**: Prioritized improvement plans
+- **Multiple Backends**: Ollama (local) and OpenAI (cloud) with automatic fallback
+- **CI/CD Integration**: Automated quality gates with OpenAI for remote environments
+- **Deterministic Results**: Consistent evaluation standards
+
+### Generated Reports
+- `llm_judge_action_items.md` - Prioritized action plan
+- `llm_judge_improvement_tips.md` - Specific improvement tips
+- `llm_judge_results.json` - Detailed evaluation data
+
+📖 **Full Documentation**: [Local LLM Judge Setup](docs/LOCAL_LLM_JUDGE.md)
+
 ## 🧩 Troubleshooting
 
 - **Redis not running?**: `brew services start redis` or `sudo systemctl start redis`
@@ -121,6 +152,7 @@ ollama serve &
 - **Permission issues?**: `chmod +x *.sh`
 - **Check logs**: `tail -f basicchat.log`
 - **Health check**: `poetry run python scripts/e2e_health_check.py`
+- **LLM Judge issues?**: See [Local LLM Judge Setup](docs/LOCAL_LLM_JUDGE.md#troubleshooting)
 
 ---
 
@@ -194,6 +226,7 @@ graph TB
 - [Technical Overview](docs/TECHNICAL_OVERVIEW.md)
 - [Planning & Roadmap](docs/ROADMAP.md)
 - [Evaluators & LLM Judge](docs/EVALUATORS.md)
+- [Local LLM Judge Setup](docs/LOCAL_LLM_JUDGE.md)
 - [progress.md](progress.md) — always up-to-date best practices
 
 ---

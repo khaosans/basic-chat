@@ -10,7 +10,7 @@ CHANGELOG:
 import pytest
 import math
 from unittest.mock import patch
-from utils.enhanced_tools import EnhancedCalculator, EnhancedTimeTools, CalculationResult, TimeResult
+from basicchat.utils.enhanced_tools import EnhancedCalculator, EnhancedTimeTools, CalculationResult, TimeResult
 
 class TestEnhancedCalculator:
     """Test enhanced calculator functionality"""
@@ -160,7 +160,7 @@ class TestEnhancedTimeTools:
         assert result.success is False
         assert result.error is not None
     
-    @patch('utils.enhanced_tools.pytz')
+    @patch('basicchat.utils.enhanced_tools.pytz')
     def test_should_handle_pytz_import_errors(self, mock_pytz):
         """Should handle pytz import errors gracefully"""
         mock_pytz.timezone.side_effect = ImportError("pytz not available")

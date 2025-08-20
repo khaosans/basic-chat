@@ -15,7 +15,7 @@ def test_web_search():
     print("=" * 40)
     
     try:
-        from web_search import WebSearch
+        from basicchat.services.web_search import WebSearch
         
         web_search = WebSearch()
         query = "quantum computing 2024"
@@ -42,7 +42,7 @@ def test_task_manager():
     print("=" * 30)
     
     try:
-        from task_manager import TaskManager
+        from basicchat.tasks.task_manager import TaskManager
         
         task_manager = TaskManager()
         print("✅ Task manager initialized successfully")

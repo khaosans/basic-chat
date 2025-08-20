@@ -15,8 +15,8 @@ import time
 # Add the parent directory to the path so we can import from app
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from task_manager import TaskManager, TaskStatus
-from task_ui import (
+from basicchat.tasks.task_manager import TaskManager, TaskStatus
+from basicchat.tasks.task_ui import (
     display_task_status, 
     create_task_message, 
     display_task_result,
@@ -26,7 +26,7 @@ from task_ui import (
     create_deep_research_message,
     is_long_running_query
 )
-from config import config
+from basicchat.core.config import config
 
 
 @pytest.mark.unit
@@ -72,7 +72,7 @@ class TestTaskManager:
     def test_cancel_task(self):
         """Test cancelling a task"""
         # Patch Celery to simulate fallback mode
-        with patch('task_manager.Celery', side_effect=Exception("Celery not available")):
+        with patch('basicchat.tasks.task_manager.Celery', side_effect=Exception("Celery not available")):
             manager = TaskManager()
             task_id = manager.submit_task("reasoning", query="test query", mode="Standard")
             # Give it a moment to start

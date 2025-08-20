@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 # Add the parent directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from document_processor import DocumentProcessor
-from config import EMBEDDING_MODEL, VISION_MODEL
+from basicchat.services.document_processor import DocumentProcessor
+from basicchat.core.config import EMBEDDING_MODEL, VISION_MODEL
 
 class MockUploadedFile:
     """Mock uploaded file for testing"""
@@ -169,7 +169,7 @@ class TestUploadIntegration:
         doc_processor.process_file(mock_file)
         logger.info("Image file processed successfully")
         # Simulate asking a question about the image
-        from reasoning_engine import ReasoningEngine
+        from basicchat.core.reasoning_engine import ReasoningEngine
         engine = ReasoningEngine()
         question = "What is the polynomial in the image?"
         result = engine.run(question, mode="Agent", document_processor=doc_processor)
